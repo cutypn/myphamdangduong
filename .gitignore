@@ -1,0 +1,25 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# WordPress runtime
+wp-content/uploads/
+*.log
+
+# Build / package artifacts
+*.zip
+*.tar.gz
+node_modules/
+vendor/
+
+# Secrets
+.env
+.env.*
+wp-config.php
+
+# Local production image assets
+*.psd
+*.tif
+*.tiff
