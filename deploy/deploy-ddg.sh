@@ -102,8 +102,8 @@ else
   log "Bizrise Core payload not complete yet; skipping Core without blocking theme release"
 fi
 
-# cPanel Git deploy actively bootstraps the MU hotfix. Repair is bounded to 12 successful imports
-# per batch; repeated bootstraps let a large catalogue progress during the same deployment.
+# cPanel Git deploy now actively bootstraps the MU hotfix. The hotfix works in bounded batches,
+# so several bootstraps let a large catalogue finish in one deployment while keeping each request bounded.
 WP_BIN="$(command -v wp || true)"
 if [ -n "$WP_BIN" ] && [ -f "$WP_ROOT/wp-load.php" ] && [ -f "$HOTFIX_TARGET/bizrise-ddg-media-hotfix.php" ]; then
   log "Running DDG media repair batches through WP-CLI"
@@ -116,6 +116,28 @@ if [ -n "$WP_BIN" ] && [ -f "$WP_ROOT/wp-load.php" ] && [ -f "$HOTFIX_TARGET/biz
   done
 else
   log "WP-CLI bootstrap unavailable; MU hotfix will run automatically on the first normal WordPress request"
+fi
+
+# Bootstrap scheduled pull-deployment for future GitHub commits. cPanel documents this UAPI
+# command for deployment cron jobs; installation is idempotent and preserves unrelated cron entries.
+REPO_ROOT="/home/dangduon6a72/repositories/myphamdangduong"
+UAPI_BIN="$(command -v uapi || true)"
+if [ -x /usr/local/cpanel/bin/uapi ]; then UAPI_BIN="/usr/local/cpanel/bin/uapi"; fi
+CRONTAB_BIN="$(command -v crontab || true)"
+if [ -n "$UAPI_BIN" ] && [ -n "$CRONTAB_BIN" ] && [ -d "$REPO_ROOT/.git" ]; then
+  CRON_MARKER="Bizrise-DDG-auto-deploy"
+  CRON_LINE="*/5 * * * * $UAPI_BIN VersionControlDeployment create repository_root=$REPO_ROOT >/dev/null 2>&1 # $CRON_MARKER"
+  {
+    "$CRONTAB_BIN" -l 2>/dev/null | grep -Fv "$CRON_MARKER" || true
+    printf '%s\n' "$CRON_LINE"
+  } > "$STAGE/ddg-crontab"
+  if "$CRONTAB_BIN" "$STAGE/ddg-crontab"; then
+    log "Installed scheduled cPanel pull-deployment for future GitHub commits"
+  else
+    log "Could not install deployment cron; current release remains valid"
+  fi
+else
+  log "cPanel UAPI/crontab unavailable; scheduled pull-deployment was not installed"
 fi
 
 log "Release deployed successfully"
