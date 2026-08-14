@@ -1,10 +1,4 @@
 ---
 deployment:
   tasks:
-    - export WP_ROOT=/home/dangduon6a72/public_html
-    - export THEME_PATH=$WP_ROOT/wp-content/themes/ddg-beauty-premium
-    - export PLUGIN_PATH=$WP_ROOT/wp-content/plugins/bizrise-ddg-media-importer
-    - /bin/mkdir -p $THEME_PATH
-    - /bin/mkdir -p $PLUGIN_PATH
-    - /bin/cp -R apps/ddg-beauty-premium/. $THEME_PATH/
-    - /bin/cp -R apps/bizrise-ddg-media-importer/. $PLUGIN_PATH/
+    - /bin/bash deploy/deploy-ddg.sh
