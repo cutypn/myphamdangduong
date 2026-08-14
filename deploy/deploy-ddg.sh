@@ -52,14 +52,21 @@ fi
 log "Deploying DDG Beauty Premium theme"
 cp -a "$THEME_SRC/." "$THEME_TARGET/"
 
-# Deploy the media importer source. It is not executed automatically by this script.
+# Deploy the media importer source.
 if [ -f "apps/bizrise-ddg-media-importer/bizrise-ddg-media-importer.php" ]; then
+  if [ -n "$PHP_BIN" ]; then
+    "$PHP_BIN" -l apps/bizrise-ddg-media-importer/bizrise-ddg-media-importer.php >/dev/null || fail "PHP lint failed: media importer"
+  fi
   log "Deploying Bizrise DDG Media Importer"
   cp -a apps/bizrise-ddg-media-importer/. "$IMPORTER_TARGET/"
 fi
 
-# Always-on, one-time media repair. This reuses existing first-party attachments and only fills missing thumbnails/banners.
+# Always-on media repair. It first reuses/imports deterministic local assets, then fills missing
+# product Featured Images from exact brand/title source pages into the local WordPress Media Library.
 if [ -f "apps/bizrise-ddg-media-hotfix/bizrise-ddg-media-hotfix.php" ]; then
+  if [ -n "$PHP_BIN" ]; then
+    "$PHP_BIN" -l apps/bizrise-ddg-media-hotfix/bizrise-ddg-media-hotfix.php >/dev/null || fail "PHP lint failed: media hotfix"
+  fi
   log "Deploying DDG media featured-image hotfix"
   cp -a apps/bizrise-ddg-media-hotfix/bizrise-ddg-media-hotfix.php "$HOTFIX_TARGET/bizrise-ddg-media-hotfix.php"
 fi
@@ -93,6 +100,22 @@ if [ "${#CORE_PARTS[@]}" -eq 9 ] && [ -f "${CORE_PARTS[0]}" ]; then
   fi
 else
   log "Bizrise Core payload not complete yet; skipping Core without blocking theme release"
+fi
+
+# cPanel Git deploy actively bootstraps the MU hotfix. Repair is bounded to 12 successful imports
+# per batch; repeated bootstraps let a large catalogue progress during the same deployment.
+WP_BIN="$(command -v wp || true)"
+if [ -n "$WP_BIN" ] && [ -f "$WP_ROOT/wp-load.php" ] && [ -f "$HOTFIX_TARGET/bizrise-ddg-media-hotfix.php" ]; then
+  log "Running DDG media repair batches through WP-CLI"
+  for attempt in 1 2 3 4 5 6; do
+    if ! WP_CLI_PHP_ARGS='-d max_execution_time=0 -d memory_limit=512M' \
+      "$WP_BIN" --path="$WP_ROOT" eval 'if (class_exists("Bizrise_DDG_Media_Hotfix")) { Bizrise_DDG_Media_Hotfix::maybe_repair(); }' >/dev/null 2>&1; then
+      log "Media repair bootstrap $attempt failed; MU hotfix will retry on a normal WordPress request"
+      break
+    fi
+  done
+else
+  log "WP-CLI bootstrap unavailable; MU hotfix will run automatically on the first normal WordPress request"
 fi
 
 log "Release deployed successfully"
