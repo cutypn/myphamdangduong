@@ -4,6 +4,7 @@ set -euo pipefail
 WP_ROOT="/home/dangduon6a72/public_html"
 THEME_TARGET="$WP_ROOT/wp-content/themes/ddg-beauty-premium"
 IMPORTER_TARGET="$WP_ROOT/wp-content/plugins/bizrise-ddg-media-importer"
+HOTFIX_TARGET="$WP_ROOT/wp-content/mu-plugins"
 CORE_TARGET="$WP_ROOT/wp-content/plugins/bizrise-core"
 BACKUP_ROOT="/home/dangduon6a72/ddg-deploy-backups"
 STAGE="$(mktemp -d /tmp/ddg-release.XXXXXX)"
@@ -15,7 +16,7 @@ trap cleanup EXIT
 log() { printf '[DDG DEPLOY] %s\n' "$*"; }
 fail() { printf '[DDG DEPLOY][ERROR] %s\n' "$*" >&2; exit 1; }
 
-mkdir -p "$BACKUP_ROOT" "$THEME_TARGET" "$IMPORTER_TARGET"
+mkdir -p "$BACKUP_ROOT" "$THEME_TARGET" "$IMPORTER_TARGET" "$HOTFIX_TARGET"
 
 # Backup only the code folders touched by this release. Never touch uploads, wp-config.php, database or .htaccess.
 if [ -d "$THEME_TARGET" ] && [ "$(find "$THEME_TARGET" -mindepth 1 -maxdepth 1 -print -quit 2>/dev/null)" ]; then
@@ -57,6 +58,12 @@ if [ -f "apps/bizrise-ddg-media-importer/bizrise-ddg-media-importer.php" ]; then
   cp -a apps/bizrise-ddg-media-importer/. "$IMPORTER_TARGET/"
 fi
 
+# Always-on, one-time media repair. This reuses existing first-party attachments and only fills missing thumbnails/banners.
+if [ -f "apps/bizrise-ddg-media-hotfix/bizrise-ddg-media-hotfix.php" ]; then
+  log "Deploying DDG media featured-image hotfix"
+  cp -a apps/bizrise-ddg-media-hotfix/bizrise-ddg-media-hotfix.php "$HOTFIX_TARGET/bizrise-ddg-media-hotfix.php"
+fi
+
 # Bizrise Core is optional for this release because the DDG theme has a product CPT fallback.
 # Install it only when the complete 9-part v0.8.1 payload is present.
 CORE_PARTS=(deploy/payloads/bizrise-core-v0.8.1.part-*.b64)
@@ -90,4 +97,5 @@ fi
 
 log "Release deployed successfully"
 log "Theme target: $THEME_TARGET"
+log "Media hotfix: $HOTFIX_TARGET/bizrise-ddg-media-hotfix.php"
 log "Backup: $BACKUP_ROOT/$STAMP"
