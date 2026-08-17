@@ -61,6 +61,18 @@ if [ -f "apps/bizrise-ddg-media-importer/bizrise-ddg-media-importer.php" ]; then
   cp -a apps/bizrise-ddg-media-importer/. "$IMPORTER_TARGET/"
 fi
 
+# Deploy Product Master sync as an MU plugin so every environment runs the same deterministic 2026 dataset.
+# Product sync runs on init priority 95, before the media hotfix at priority 99.
+if [ -f "apps/bizrise-ddg-product-sync/bizrise-ddg-product-sync.php" ] && [ -f "apps/bizrise-ddg-product-sync/data/products-master-2026.psv" ]; then
+  if [ -n "$PHP_BIN" ]; then
+    "$PHP_BIN" -l apps/bizrise-ddg-product-sync/bizrise-ddg-product-sync.php >/dev/null || fail "PHP lint failed: product sync"
+  fi
+  log "Deploying DDG Product Master sync"
+  mkdir -p "$HOTFIX_TARGET/data"
+  cp -a apps/bizrise-ddg-product-sync/bizrise-ddg-product-sync.php "$HOTFIX_TARGET/bizrise-ddg-product-sync.php"
+  cp -a apps/bizrise-ddg-product-sync/data/products-master-2026.psv "$HOTFIX_TARGET/data/products-master-2026.psv"
+fi
+
 # Always-on media repair. It first reuses/imports deterministic local assets, then fills missing
 # product Featured Images from exact brand/title source pages into the local WordPress Media Library.
 if [ -f "apps/bizrise-ddg-media-hotfix/bizrise-ddg-media-hotfix.php" ]; then
@@ -102,20 +114,20 @@ else
   log "Bizrise Core payload not complete yet; skipping Core without blocking theme release"
 fi
 
-# cPanel Git deploy now actively bootstraps the MU hotfix. The hotfix works in bounded batches,
-# so several bootstraps let a large catalogue finish in one deployment while keeping each request bounded.
+# Bootstrap WordPress once. During init, Product Sync (priority 95) creates/updates the full master first,
+# then Media Hotfix (priority 99) can repair images against the complete product dataset.
 WP_BIN="$(command -v wp || true)"
-if [ -n "$WP_BIN" ] && [ -f "$WP_ROOT/wp-load.php" ] && [ -f "$HOTFIX_TARGET/bizrise-ddg-media-hotfix.php" ]; then
-  log "Running DDG media repair batches through WP-CLI"
+if [ -n "$WP_BIN" ] && [ -f "$WP_ROOT/wp-load.php" ]; then
+  log "Running DDG product/data sync and media repair through WP-CLI"
   for attempt in 1 2 3 4 5 6; do
     if ! WP_CLI_PHP_ARGS='-d max_execution_time=0 -d memory_limit=512M' \
-      "$WP_BIN" --path="$WP_ROOT" eval 'if (class_exists("Bizrise_DDG_Media_Hotfix")) { Bizrise_DDG_Media_Hotfix::maybe_repair(); }' >/dev/null 2>&1; then
-      log "Media repair bootstrap $attempt failed; MU hotfix will retry on a normal WordPress request"
+      "$WP_BIN" --path="$WP_ROOT" eval 'if (class_exists("Bizrise_DDG_Product_Sync")) { Bizrise_DDG_Product_Sync::maybe_sync(); } if (class_exists("Bizrise_DDG_Media_Hotfix")) { Bizrise_DDG_Media_Hotfix::maybe_repair(); }' >/dev/null 2>&1; then
+      log "WordPress data/media bootstrap $attempt failed; MU plugins will retry on a normal WordPress request"
       break
     fi
   done
 else
-  log "WP-CLI bootstrap unavailable; MU hotfix will run automatically on the first normal WordPress request"
+  log "WP-CLI bootstrap unavailable; Product Sync and Media Hotfix will run on the first normal WordPress request"
 fi
 
 # Bootstrap scheduled pull-deployment for future GitHub commits. cPanel documents this UAPI
@@ -142,5 +154,6 @@ fi
 
 log "Release deployed successfully"
 log "Theme target: $THEME_TARGET"
+log "Product sync: $HOTFIX_TARGET/bizrise-ddg-product-sync.php"
 log "Media hotfix: $HOTFIX_TARGET/bizrise-ddg-media-hotfix.php"
 log "Backup: $BACKUP_ROOT/$STAMP"
