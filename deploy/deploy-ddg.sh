@@ -70,6 +70,15 @@ if [ -f "apps/bizrise-ddg-product-sync/bizrise-ddg-product-sync.php" ] && [ -f "
   cp -a apps/bizrise-ddg-product-sync/data/products-master-2026.psv "$HOTFIX_TARGET/data/products-master-2026.psv"
 fi
 
+# Structured corporate + brand page layer. Kept as an MU plugin so old theme payloads cannot overwrite it.
+if [ -f "apps/bizrise-ddg-site-pages/bizrise-ddg-site-pages.php" ]; then
+  if [ -n "$PHP_BIN" ]; then
+    "$PHP_BIN" -l apps/bizrise-ddg-site-pages/bizrise-ddg-site-pages.php >/dev/null || fail "PHP lint failed: site pages"
+  fi
+  log "Deploying DDG corporate and brand pages"
+  cp -a apps/bizrise-ddg-site-pages/bizrise-ddg-site-pages.php "$HOTFIX_TARGET/bizrise-ddg-site-pages.php"
+fi
+
 if [ -f "apps/bizrise-ddg-media-hotfix/bizrise-ddg-media-hotfix.php" ]; then
   if [ -n "$PHP_BIN" ]; then
     "$PHP_BIN" -l apps/bizrise-ddg-media-hotfix/bizrise-ddg-media-hotfix.php >/dev/null || fail "PHP lint failed: media hotfix"
@@ -107,19 +116,20 @@ else
   log "Bizrise Core payload not complete yet; skipping Core without blocking theme release"
 fi
 
-# Bootstrap WordPress: Product Sync runs at init 95, Media Hotfix at init 99.
+# Bootstrap WordPress: Product Sync at init 95, Media Hotfix at init 99, page creation at init 120.
 WP_BIN="$(command -v wp || true)"
 if [ -n "$WP_BIN" ] && [ -f "$WP_ROOT/wp-load.php" ]; then
-  log "Running DDG product/data sync and media repair through WP-CLI"
+  log "Running DDG product/data, media and site-page bootstrap through WP-CLI"
   for attempt in 1 2 3 4 5 6; do
     if ! WP_CLI_PHP_ARGS='-d max_execution_time=0 -d memory_limit=512M' \
-      "$WP_BIN" --path="$WP_ROOT" eval 'if (class_exists("Bizrise_DDG_Product_Sync")) { Bizrise_DDG_Product_Sync::maybe_sync(); } if (class_exists("Bizrise_DDG_Media_Hotfix")) { Bizrise_DDG_Media_Hotfix::maybe_repair(); }' >/dev/null 2>&1; then
-      log "WordPress data/media bootstrap $attempt failed; MU plugins will retry on a normal WordPress request"
+      "$WP_BIN" --path="$WP_ROOT" eval 'if (class_exists("Bizrise_DDG_Product_Sync")) { Bizrise_DDG_Product_Sync::maybe_sync(); } if (class_exists("Bizrise_DDG_Media_Hotfix")) { Bizrise_DDG_Media_Hotfix::maybe_repair(); } if (class_exists("Bizrise_DDG_Site_Pages")) { Bizrise_DDG_Site_Pages::ensure_pages(); }' >/dev/null 2>&1; then
+      log "WordPress bootstrap $attempt failed; MU plugins will retry on a normal WordPress request"
       break
     fi
   done
+  "$WP_BIN" --path="$WP_ROOT" cache flush >/dev/null 2>&1 || true
 else
-  log "WP-CLI bootstrap unavailable; Product Sync and Media Hotfix will run on the first normal WordPress request"
+  log "WP-CLI bootstrap unavailable; Product Sync, Media Hotfix and Site Pages will run on the first normal WordPress request"
 fi
 
 REPO_ROOT="/home/dangduon6a72/repositories/myphamdangduong"
@@ -145,5 +155,6 @@ fi
 log "Release deployed successfully"
 log "Theme target: $THEME_TARGET"
 log "Product sync: $HOTFIX_TARGET/bizrise-ddg-product-sync.php"
+log "Site pages: $HOTFIX_TARGET/bizrise-ddg-site-pages.php"
 log "Media hotfix: $HOTFIX_TARGET/bizrise-ddg-media-hotfix.php"
 log "Backup: $BACKUP_ROOT/$STAMP"
