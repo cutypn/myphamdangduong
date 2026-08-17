@@ -70,13 +70,15 @@ if [ -f "apps/bizrise-ddg-product-sync/bizrise-ddg-product-sync.php" ] && [ -f "
   cp -a apps/bizrise-ddg-product-sync/data/products-master-2026.psv "$HOTFIX_TARGET/data/products-master-2026.psv"
 fi
 
-# Structured corporate + brand page layer. Kept as an MU plugin so old theme payloads cannot overwrite it.
+# Structured corporate + brand page layer. Every PHP file in this app is an MU plugin component.
 if [ -f "apps/bizrise-ddg-site-pages/bizrise-ddg-site-pages.php" ]; then
   if [ -n "$PHP_BIN" ]; then
-    "$PHP_BIN" -l apps/bizrise-ddg-site-pages/bizrise-ddg-site-pages.php >/dev/null || fail "PHP lint failed: site pages"
+    while IFS= read -r -d '' file; do
+      "$PHP_BIN" -l "$file" >/dev/null || fail "PHP lint failed: $file"
+    done < <(find apps/bizrise-ddg-site-pages -maxdepth 1 -type f -name '*.php' -print0)
   fi
-  log "Deploying DDG corporate and brand pages"
-  cp -a apps/bizrise-ddg-site-pages/bizrise-ddg-site-pages.php "$HOTFIX_TARGET/bizrise-ddg-site-pages.php"
+  log "Deploying DDG corporate, brand and navigation pages"
+  cp -a apps/bizrise-ddg-site-pages/*.php "$HOTFIX_TARGET/"
 fi
 
 if [ -f "apps/bizrise-ddg-media-hotfix/bizrise-ddg-media-hotfix.php" ]; then
@@ -116,13 +118,13 @@ else
   log "Bizrise Core payload not complete yet; skipping Core without blocking theme release"
 fi
 
-# Bootstrap WordPress: Product Sync at init 95, Media Hotfix at init 99, page creation at init 120.
+# Bootstrap WordPress: Product Sync at init 95, Media Hotfix at init 99, Site Pages at 120, Navigation at 140.
 WP_BIN="$(command -v wp || true)"
 if [ -n "$WP_BIN" ] && [ -f "$WP_ROOT/wp-load.php" ]; then
   log "Running DDG product/data, media and site-page bootstrap through WP-CLI"
   for attempt in 1 2 3 4 5 6; do
     if ! WP_CLI_PHP_ARGS='-d max_execution_time=0 -d memory_limit=512M' \
-      "$WP_BIN" --path="$WP_ROOT" eval 'if (class_exists("Bizrise_DDG_Product_Sync")) { Bizrise_DDG_Product_Sync::maybe_sync(); } if (class_exists("Bizrise_DDG_Media_Hotfix")) { Bizrise_DDG_Media_Hotfix::maybe_repair(); } if (class_exists("Bizrise_DDG_Site_Pages")) { Bizrise_DDG_Site_Pages::ensure_pages(); }' >/dev/null 2>&1; then
+      "$WP_BIN" --path="$WP_ROOT" eval 'if (class_exists("Bizrise_DDG_Product_Sync")) { Bizrise_DDG_Product_Sync::maybe_sync(); } if (class_exists("Bizrise_DDG_Media_Hotfix")) { Bizrise_DDG_Media_Hotfix::maybe_repair(); } if (class_exists("Bizrise_DDG_Site_Pages")) { Bizrise_DDG_Site_Pages::ensure_pages(); } if (class_exists("Bizrise_DDG_Navigation")) { Bizrise_DDG_Navigation::normalize_brand_urls(); }' >/dev/null 2>&1; then
       log "WordPress bootstrap $attempt failed; MU plugins will retry on a normal WordPress request"
       break
     fi
@@ -156,5 +158,6 @@ log "Release deployed successfully"
 log "Theme target: $THEME_TARGET"
 log "Product sync: $HOTFIX_TARGET/bizrise-ddg-product-sync.php"
 log "Site pages: $HOTFIX_TARGET/bizrise-ddg-site-pages.php"
+log "Navigation: $HOTFIX_TARGET/bizrise-ddg-navigation.php"
 log "Media hotfix: $HOTFIX_TARGET/bizrise-ddg-media-hotfix.php"
 log "Backup: $BACKUP_ROOT/$STAMP"
