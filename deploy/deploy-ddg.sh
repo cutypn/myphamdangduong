@@ -1,22 +1,31 @@
 #!/bin/bash
-set -euo pipefail
+set -Eeuo pipefail
 
+REPO_ROOT="/home/dangduon6a72/repositories/myphamdangduong"
 WP_ROOT="/home/dangduon6a72/public_html"
 THEME_TARGET="$WP_ROOT/wp-content/themes/ddg-beauty-premium"
 IMPORTER_TARGET="$WP_ROOT/wp-content/plugins/bizrise-ddg-media-importer"
 HOTFIX_TARGET="$WP_ROOT/wp-content/mu-plugins"
 CORE_TARGET="$WP_ROOT/wp-content/plugins/bizrise-core"
 BACKUP_ROOT="/home/dangduon6a72/ddg-deploy-backups"
+DEPLOY_MARKER="/home/dangduon6a72/.ddg-last-deployed-sha"
+DEPLOY_LOG="/home/dangduon6a72/ddg-release.log"
 STAGE="$(mktemp -d /tmp/ddg-release.XXXXXX)"
 STAMP="$(date +%Y%m%d-%H%M%S)"
 
+cd "$REPO_ROOT"
+
 cleanup() { rm -rf "$STAGE"; }
 trap cleanup EXIT
+trap 'printf "[DDG DEPLOY][ERROR] line=%s command=%s\n" "$LINENO" "$BASH_COMMAND" >&2' ERR
 
-log() { printf '[DDG DEPLOY] %s\n' "$*"; }
-fail() { printf '[DDG DEPLOY][ERROR] %s\n' "$*" >&2; exit 1; }
+log() {
+  printf '[DDG DEPLOY] %s %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*"
+  printf '[DDG DEPLOY] %s %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*" >> "$DEPLOY_LOG" 2>/dev/null || true
+}
+fail() { log "ERROR: $*"; exit 1; }
 
-mkdir -p "$BACKUP_ROOT" "$THEME_TARGET" "$IMPORTER_TARGET" "$HOTFIX_TARGET"
+mkdir -p "$BACKUP_ROOT" "$THEME_TARGET" "$IMPORTER_TARGET" "$HOTFIX_TARGET" "$HOTFIX_TARGET/data"
 
 if [ -d "$THEME_TARGET" ] && [ "$(find "$THEME_TARGET" -mindepth 1 -maxdepth 1 -print -quit 2>/dev/null)" ]; then
   log "Backing up current theme"
@@ -24,23 +33,26 @@ if [ -d "$THEME_TARGET" ] && [ "$(find "$THEME_TARGET" -mindepth 1 -maxdepth 1 -
   cp -a "$THEME_TARGET" "$BACKUP_ROOT/$STAMP/ddg-beauty-premium"
 fi
 
-THEME_PARTS=(deploy/payloads/ddg-theme-v0.9.1.part-*.b64)
-if [ "${#THEME_PARTS[@]}" -ne 4 ] || [ ! -f "${THEME_PARTS[0]}" ]; then
-  fail "DDG theme v0.9.1 payload is incomplete; expected 4 parts."
-fi
-
-log "Rebuilding DDG theme v0.9.1 payload"
-cat "${THEME_PARTS[@]}" | tr -d '\r\n' | base64 -d > "$STAGE/ddg-theme-v0.9.1.tar.gz"
-tar -tzf "$STAGE/ddg-theme-v0.9.1.tar.gz" >/dev/null || fail "Theme payload is not a valid tar.gz archive."
-mkdir -p "$STAGE/theme"
-tar -xzf "$STAGE/ddg-theme-v0.9.1.tar.gz" -C "$STAGE/theme"
-
-THEME_STYLE="$(find "$STAGE/theme" -maxdepth 4 -type f -name style.css -print -quit)"
-[ -n "$THEME_STYLE" ] || fail "Cannot locate style.css inside DDG theme payload."
-THEME_SRC="$(dirname "$THEME_STYLE")"
-[ -f "$THEME_SRC/functions.php" ] || fail "Theme payload is missing functions.php."
-
 PHP_BIN="$(command -v php || true)"
+WP_BIN="$(command -v wp || true)"
+GIT_BIN="$(command -v git || true)"
+
+# --- Theme release ---------------------------------------------------------
+shopt -s nullglob
+THEME_PARTS=(deploy/payloads/ddg-theme-v0.9.1.part-*.b64)
+shopt -u nullglob
+[ "${#THEME_PARTS[@]}" -gt 0 ] || fail "DDG theme payload is missing"
+
+log "Rebuilding DDG theme payload (${#THEME_PARTS[@]} parts)"
+cat "${THEME_PARTS[@]}" | tr -d '\r\n' | base64 -d > "$STAGE/ddg-theme.tar.gz"
+tar -tzf "$STAGE/ddg-theme.tar.gz" >/dev/null || fail "DDG theme payload is not a valid tar.gz archive"
+mkdir -p "$STAGE/theme"
+tar -xzf "$STAGE/ddg-theme.tar.gz" -C "$STAGE/theme"
+THEME_STYLE="$(find "$STAGE/theme" -maxdepth 5 -type f -name style.css -print -quit)"
+[ -n "$THEME_STYLE" ] || fail "Cannot locate style.css inside DDG theme payload"
+THEME_SRC="$(dirname "$THEME_STYLE")"
+[ -f "$THEME_SRC/functions.php" ] || fail "Theme payload is missing functions.php"
+
 if [ -n "$PHP_BIN" ]; then
   log "PHP lint: theme"
   while IFS= read -r -d '' file; do
@@ -51,113 +63,123 @@ fi
 log "Deploying DDG Beauty Premium theme"
 cp -a "$THEME_SRC/." "$THEME_TARGET/"
 
-if [ -f "apps/bizrise-ddg-media-importer/bizrise-ddg-media-importer.php" ]; then
+# --- Critical application components -------------------------------------
+if [ -f apps/bizrise-ddg-media-importer/bizrise-ddg-media-importer.php ]; then
   if [ -n "$PHP_BIN" ]; then
     "$PHP_BIN" -l apps/bizrise-ddg-media-importer/bizrise-ddg-media-importer.php >/dev/null || fail "PHP lint failed: media importer"
   fi
-  log "Deploying Bizrise DDG Media Importer"
+  log "Deploying media importer"
   cp -a apps/bizrise-ddg-media-importer/. "$IMPORTER_TARGET/"
 fi
 
-# Product Master sync runs before media repair so the importer sees the complete catalogue.
-if [ -f "apps/bizrise-ddg-product-sync/bizrise-ddg-product-sync.php" ] && [ -f "apps/bizrise-ddg-product-sync/data/products-master-2026.psv" ]; then
+if [ -f apps/bizrise-ddg-product-sync/bizrise-ddg-product-sync.php ] && [ -f apps/bizrise-ddg-product-sync/data/products-master-2026.psv ]; then
   if [ -n "$PHP_BIN" ]; then
     "$PHP_BIN" -l apps/bizrise-ddg-product-sync/bizrise-ddg-product-sync.php >/dev/null || fail "PHP lint failed: product sync"
   fi
-  log "Deploying DDG Product Master sync"
-  mkdir -p "$HOTFIX_TARGET/data"
+  log "Deploying Product Master sync"
   cp -a apps/bizrise-ddg-product-sync/bizrise-ddg-product-sync.php "$HOTFIX_TARGET/bizrise-ddg-product-sync.php"
   cp -a apps/bizrise-ddg-product-sync/data/products-master-2026.psv "$HOTFIX_TARGET/data/products-master-2026.psv"
 fi
 
-# Structured corporate + brand page layer. Every PHP file in this app is an MU plugin component.
-if [ -f "apps/bizrise-ddg-site-pages/bizrise-ddg-site-pages.php" ]; then
+# Verified Product Truth overlay is deployed here (not directly from .cpanel.yml),
+# so it is linted and cannot stop the release before diagnostics are available.
+if [ -f apps/bizrise-ddg-product-sync/bizrise-ddg-product-truth-overlay.php ] && [ -f apps/bizrise-ddg-product-sync/data/product-truth-2026-08-18.psv ]; then
   if [ -n "$PHP_BIN" ]; then
-    while IFS= read -r -d '' file; do
-      "$PHP_BIN" -l "$file" >/dev/null || fail "PHP lint failed: $file"
-    done < <(find apps/bizrise-ddg-site-pages -maxdepth 1 -type f -name '*.php' -print0)
+    "$PHP_BIN" -l apps/bizrise-ddg-product-sync/bizrise-ddg-product-truth-overlay.php >/dev/null || fail "PHP lint failed: Product Truth overlay"
   fi
-  log "Deploying DDG corporate, brand and navigation pages"
-  cp -a apps/bizrise-ddg-site-pages/*.php "$HOTFIX_TARGET/"
+  log "Deploying verified Product Truth overlay"
+  cp -a apps/bizrise-ddg-product-sync/bizrise-ddg-product-truth-overlay.php "$HOTFIX_TARGET/bizrise-ddg-product-truth-overlay.php"
+  cp -a apps/bizrise-ddg-product-sync/data/product-truth-2026-08-18.psv "$HOTFIX_TARGET/data/product-truth-2026-08-18.psv"
 fi
 
-if [ -f "apps/bizrise-ddg-media-hotfix/bizrise-ddg-media-hotfix.php" ]; then
+if [ -f apps/bizrise-ddg-media-hotfix/bizrise-ddg-media-hotfix.php ]; then
   if [ -n "$PHP_BIN" ]; then
     "$PHP_BIN" -l apps/bizrise-ddg-media-hotfix/bizrise-ddg-media-hotfix.php >/dev/null || fail "PHP lint failed: media hotfix"
   fi
-  log "Deploying DDG media featured-image hotfix"
+  log "Deploying media Featured Image repair"
   cp -a apps/bizrise-ddg-media-hotfix/bizrise-ddg-media-hotfix.php "$HOTFIX_TARGET/bizrise-ddg-media-hotfix.php"
 fi
 
+# Page/experience components are independent. One bad optional page file must not
+# prevent critical product/media/data fixes from going live.
+if [ -d apps/bizrise-ddg-site-pages ]; then
+  log "Deploying corporate/brand/experience page components"
+  shopt -s nullglob
+  PAGE_FILES=(apps/bizrise-ddg-site-pages/*.php)
+  shopt -u nullglob
+  for file in "${PAGE_FILES[@]}"; do
+    base="$(basename "$file")"
+    if [ -n "$PHP_BIN" ] && ! "$PHP_BIN" -l "$file" >/dev/null 2>&1; then
+      log "SKIP invalid optional page component: $base"
+      continue
+    fi
+    cp -a "$file" "$HOTFIX_TARGET/$base"
+  done
+fi
+
+# --- Optional Bizrise Core -------------------------------------------------
+shopt -s nullglob
 CORE_PARTS=(deploy/payloads/bizrise-core-v0.8.1.part-*.b64)
-if [ "${#CORE_PARTS[@]}" -eq 9 ] && [ -f "${CORE_PARTS[0]}" ]; then
-  log "Rebuilding Bizrise Core v0.8.1 payload"
-  cat "${CORE_PARTS[@]}" | tr -d '\r\n' | base64 -d > "$STAGE/bizrise-core-v0.8.1.tar.gz"
-  if tar -tzf "$STAGE/bizrise-core-v0.8.1.tar.gz" >/dev/null 2>&1; then
+shopt -u nullglob
+if [ "${#CORE_PARTS[@]}" -gt 0 ]; then
+  log "Trying Bizrise Core payload (${#CORE_PARTS[@]} parts)"
+  if cat "${CORE_PARTS[@]}" | tr -d '\r\n' | base64 -d > "$STAGE/bizrise-core.tar.gz" 2>/dev/null \
+     && tar -tzf "$STAGE/bizrise-core.tar.gz" >/dev/null 2>&1; then
     mkdir -p "$STAGE/core"
-    tar -xzf "$STAGE/bizrise-core-v0.8.1.tar.gz" -C "$STAGE/core"
+    tar -xzf "$STAGE/bizrise-core.tar.gz" -C "$STAGE/core"
     CORE_MAIN="$(find "$STAGE/core" -maxdepth 5 -type f -name 'bizrise-core.php' -print -quit)"
     if [ -n "$CORE_MAIN" ]; then
       CORE_SRC="$(dirname "$CORE_MAIN")"
+      CORE_VALID=1
       if [ -n "$PHP_BIN" ]; then
-        log "PHP lint: Bizrise Core"
         while IFS= read -r -d '' file; do
-          "$PHP_BIN" -l "$file" >/dev/null || fail "PHP lint failed: $file"
+          if ! "$PHP_BIN" -l "$file" >/dev/null 2>&1; then CORE_VALID=0; log "Bizrise Core lint failed: $file"; break; fi
         done < <(find "$CORE_SRC" -type f -name '*.php' -print0)
       fi
-      mkdir -p "$CORE_TARGET"
-      cp -a "$CORE_SRC/." "$CORE_TARGET/"
-      log "Bizrise Core v0.8.1 deployed"
-    else
-      log "Bizrise Core archive has no bizrise-core.php; skipping Core without blocking theme release"
+      if [ "$CORE_VALID" -eq 1 ]; then
+        mkdir -p "$CORE_TARGET"
+        cp -a "$CORE_SRC/." "$CORE_TARGET/"
+        log "Bizrise Core deployed"
+      else
+        log "Skipping invalid optional Bizrise Core payload"
+      fi
     fi
   else
-    log "Bizrise Core payload is not yet a valid complete archive; skipping Core without blocking theme release"
+    log "Skipping incomplete optional Bizrise Core payload"
   fi
-else
-  log "Bizrise Core payload not complete yet; skipping Core without blocking theme release"
 fi
 
-# Bootstrap WordPress: Product Sync at init 95, Media Hotfix at init 99, Site Pages at 120, Navigation at 140.
-WP_BIN="$(command -v wp || true)"
+# --- WordPress bootstrap ---------------------------------------------------
 if [ -n "$WP_BIN" ] && [ -f "$WP_ROOT/wp-load.php" ]; then
-  log "Running DDG product/data, media and site-page bootstrap through WP-CLI"
+  log "Running WordPress data/media/page bootstrap"
   for attempt in 1 2 3 4 5 6; do
     if ! WP_CLI_PHP_ARGS='-d max_execution_time=0 -d memory_limit=512M' \
-      "$WP_BIN" --path="$WP_ROOT" eval 'if (class_exists("Bizrise_DDG_Product_Sync")) { Bizrise_DDG_Product_Sync::maybe_sync(); } if (class_exists("Bizrise_DDG_Media_Hotfix")) { Bizrise_DDG_Media_Hotfix::maybe_repair(); } if (class_exists("Bizrise_DDG_Site_Pages")) { Bizrise_DDG_Site_Pages::ensure_pages(); } if (class_exists("Bizrise_DDG_Navigation")) { Bizrise_DDG_Navigation::normalize_brand_urls(); }' >/dev/null 2>&1; then
-      log "WordPress bootstrap $attempt failed; MU plugins will retry on a normal WordPress request"
+      "$WP_BIN" --path="$WP_ROOT" eval '
+        if (class_exists("Bizrise_DDG_Product_Sync")) { Bizrise_DDG_Product_Sync::maybe_sync(); }
+        if (class_exists("Bizrise_DDG_Product_Truth_Overlay_20260818")) { Bizrise_DDG_Product_Truth_Overlay_20260818::maybe_sync(); }
+        if (class_exists("Bizrise_DDG_Media_Hotfix")) { Bizrise_DDG_Media_Hotfix::maybe_repair(); }
+        if (class_exists("Bizrise_DDG_Site_Pages")) { Bizrise_DDG_Site_Pages::ensure_pages(); }
+        if (class_exists("Bizrise_DDG_Navigation")) { Bizrise_DDG_Navigation::normalize_brand_urls(); }
+      ' >/dev/null 2>&1; then
+      log "WordPress bootstrap attempt $attempt failed; MU plugins can retry on normal requests"
       break
     fi
   done
   "$WP_BIN" --path="$WP_ROOT" cache flush >/dev/null 2>&1 || true
 else
-  log "WP-CLI bootstrap unavailable; Product Sync, Media Hotfix and Site Pages will run on the first normal WordPress request"
+  log "WP-CLI unavailable; MU plugins will bootstrap on the first WordPress request"
 fi
 
-REPO_ROOT="/home/dangduon6a72/repositories/myphamdangduong"
-UAPI_BIN="$(command -v uapi || true)"
-if [ -x /usr/local/cpanel/bin/uapi ]; then UAPI_BIN="/usr/local/cpanel/bin/uapi"; fi
-CRONTAB_BIN="$(command -v crontab || true)"
-if [ -n "$UAPI_BIN" ] && [ -n "$CRONTAB_BIN" ] && [ -d "$REPO_ROOT/.git" ]; then
-  CRON_MARKER="Bizrise-DDG-auto-deploy"
-  CRON_LINE="*/5 * * * * $UAPI_BIN VersionControlDeployment create repository_root=$REPO_ROOT >/dev/null 2>&1 # $CRON_MARKER"
-  {
-    "$CRONTAB_BIN" -l 2>/dev/null | grep -Fv "$CRON_MARKER" || true
-    printf '%s\n' "$CRON_LINE"
-  } > "$STAGE/ddg-crontab"
-  if "$CRONTAB_BIN" "$STAGE/ddg-crontab"; then
-    log "Installed scheduled cPanel pull-deployment for future GitHub commits"
-  else
-    log "Could not install deployment cron; current release remains valid"
+# Mark only a fully completed release. The auto-deploy runner compares against this.
+if [ -n "$GIT_BIN" ]; then
+  DEPLOYED_SHA="$($GIT_BIN -C "$REPO_ROOT" rev-parse HEAD 2>/dev/null || true)"
+  if [ -n "$DEPLOYED_SHA" ]; then
+    printf '%s\n' "$DEPLOYED_SHA" > "$DEPLOY_MARKER"
+    log "Marked deployed SHA: $DEPLOYED_SHA"
   fi
-else
-  log "cPanel UAPI/crontab unavailable; scheduled pull-deployment was not installed"
 fi
 
 log "Release deployed successfully"
-log "Theme target: $THEME_TARGET"
-log "Product sync: $HOTFIX_TARGET/bizrise-ddg-product-sync.php"
-log "Site pages: $HOTFIX_TARGET/bizrise-ddg-site-pages.php"
-log "Navigation: $HOTFIX_TARGET/bizrise-ddg-navigation.php"
-log "Media hotfix: $HOTFIX_TARGET/bizrise-ddg-media-hotfix.php"
+log "Theme: $THEME_TARGET"
+log "MU plugins: $HOTFIX_TARGET"
 log "Backup: $BACKUP_ROOT/$STAMP"
