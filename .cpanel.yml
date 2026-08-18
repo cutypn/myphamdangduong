@@ -1,5 +1,8 @@
 ---
 deployment:
   tasks:
+    - /bin/mkdir -p /home/dangduon6a72/public_html/wp-content/mu-plugins/data
+    - /bin/cp -a apps/bizrise-ddg-product-sync/bizrise-ddg-product-truth-overlay.php /home/dangduon6a72/public_html/wp-content/mu-plugins/bizrise-ddg-product-truth-overlay.php
+    - /bin/cp -a apps/bizrise-ddg-product-sync/data/product-truth-2026-08-18.psv /home/dangduon6a72/public_html/wp-content/mu-plugins/data/product-truth-2026-08-18.psv
     - /bin/bash deploy/deploy-ddg.sh
     - /bin/bash deploy/install-autopull.sh
