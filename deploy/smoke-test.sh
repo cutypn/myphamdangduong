@@ -27,14 +27,28 @@ done < <(find \
   "$WP_ROOT/wp-content/plugins/bizrise-ddg-migrator" \
   -type f -name '*.php' -print0)
 
-if command -v wp >/dev/null 2>&1 && [[ -f "$WP_ROOT/wp-config.php" ]]; then
-  wp theme is-installed bizrise-ddg --path="$WP_ROOT" --quiet
-  wp plugin is-installed bizrise-core --path="$WP_ROOT" --quiet
-  wp plugin is-installed bizrise-ddg-migrator --path="$WP_ROOT" --quiet
+# WP-CLI is deliberately opt-in. A normal cPanel source deployment must not
+# bootstrap the currently active legacy WordPress runtime, because legacy
+# plugins/MU-plugins can perform slow or blocking work during CLI bootstrap.
+if [[ "${DDG_SMOKE_WPCLI:-0}" == "1" ]]; then
+  if ! command -v wp >/dev/null 2>&1; then
+    echo "[smoke] WP-CLI requested but wp binary was not found" >&2
+    exit 1
+  fi
+  if [[ ! -f "$WP_ROOT/wp-config.php" ]]; then
+    echo "[smoke] WP-CLI requested but wp-config.php was not found" >&2
+    exit 1
+  fi
+
+  WP_TIMEOUT="${DDG_SMOKE_WPCLI_TIMEOUT:-20}"
+  timeout "$WP_TIMEOUT" wp theme is-installed bizrise-ddg --path="$WP_ROOT" --quiet --skip-plugins --skip-themes
+  timeout "$WP_TIMEOUT" wp plugin is-installed bizrise-core --path="$WP_ROOT" --quiet --skip-plugins --skip-themes
+  timeout "$WP_TIMEOUT" wp plugin is-installed bizrise-ddg-migrator --path="$WP_ROOT" --quiet --skip-plugins --skip-themes
 fi
 
 if [[ "${DDG_SMOKE_ACTIVE:-0}" == "1" ]]; then
   BASE_URL="${DDG_SMOKE_BASE_URL:?DDG_SMOKE_BASE_URL is required when DDG_SMOKE_ACTIVE=1}"
+  CURL_TIMEOUT="${DDG_SMOKE_HTTP_TIMEOUT:-15}"
   urls=(
     "/"
     "/gioi-thieu/"
@@ -47,7 +61,7 @@ if [[ "${DDG_SMOKE_ACTIVE:-0}" == "1" ]]; then
     "/lien-he/"
   )
   for path in "${urls[@]}"; do
-    code="$(curl -L -sS -o /dev/null -w '%{http_code}' "${BASE_URL%/}${path}")"
+    code="$(curl --connect-timeout 5 --max-time "$CURL_TIMEOUT" -L -sS -o /dev/null -w '%{http_code}' "${BASE_URL%/}${path}")"
     if [[ "$code" != "200" ]]; then
       echo "[smoke] HTTP $code: $path" >&2
       exit 1
