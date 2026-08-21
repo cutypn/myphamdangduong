@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "profile": "dang-duong",
+  "production_assets": [],
+  "verification_sources": {
+    "seed": "apps/bizrise-ddg-migrator/data/product-truth-seed.json",
+    "count": 26,
+    "usage": "identity-and-pack-verification-only"
+  },
+  "rules": {
+    "featured_image_requires_web_ready_asset": true,
+    "notification_images_must_not_be_used_as_featured_images": true,
+    "mobile_art_direction": "9:16",
+    "desktop_roles": ["16:9", "1:1", "3:4"],
+    "mapping_priority": ["stable_product_id_or_sku", "product_master_id", "exact_source_filename", "exact_normalized_official_title", "brand_plus_title", "slug", "guarded_fuzzy"],
+    "manual_assets_are_never_overwritten": true
+  }
+}

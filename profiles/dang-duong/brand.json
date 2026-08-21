@@ -1,0 +1,19 @@
+{
+  "profile": "dang-duong",
+  "brands": [
+    {
+      "slug": "cream-x2",
+      "name": "Cream X2",
+      "packaging_labels": ["CREAM X2"],
+      "status": "migration-candidate"
+    },
+    {
+      "slug": "hatagold",
+      "name": "Hatagold",
+      "packaging_labels": ["HAVIGOLD"],
+      "collections": ["Bạch Ngọc Lang"],
+      "status": "migration-candidate",
+      "rule": "Preserve HAVIGOLD as the packaging label; do not rewrite packaging identity to Hatagold solely to match taxonomy."
+    }
+  ]
+}
