@@ -1,0 +1,82 @@
+{
+  "version": "2026-08-21",
+  "policy": "Legacy knowledge-bank entries are topic/SEO candidates only. No automatic publish in V2.",
+  "source": "legacy apps/bizrise-ddg-site-pages/bizrise-ddg-knowledge-bank-v2-1.php",
+  "articles": [
+    {
+      "slug": "oem-my-pham-la-gi",
+      "title": "OEM mỹ phẩm là gì? Cách hiểu mô hình trước khi bắt đầu thương hiệu riêng",
+      "primary_keyword": "OEM mỹ phẩm",
+      "status": "editorial_review",
+      "source_file": "data/content/articles/oem-my-pham-la-gi.md",
+      "priority": "P0",
+      "notes": "Full rewrite completed with current regulatory/ASEAN source set; reviewer assignment pending."
+    },
+    {
+      "slug": "odm-my-pham-la-gi",
+      "title": "ODM mỹ phẩm là gì? Khi nào mô hình phát triển sản phẩm phù hợp hơn",
+      "primary_keyword": "ODM mỹ phẩm",
+      "status": "outline_needs_rewrite",
+      "priority": "P0"
+    },
+    {
+      "slug": "oem-va-odm-my-pham-khac-nhau-the-nao",
+      "title": "OEM và ODM mỹ phẩm khác nhau thế nào? Cách chọn theo năng lực thương hiệu",
+      "primary_keyword": "OEM và ODM mỹ phẩm khác nhau thế nào",
+      "status": "outline_needs_rewrite",
+      "priority": "P0"
+    },
+    {
+      "slug": "quy-trinh-gia-cong-my-pham",
+      "title": "Quy trình gia công mỹ phẩm: từ brief đến sản phẩm sẵn sàng ra thị trường",
+      "primary_keyword": "quy trình gia công mỹ phẩm",
+      "status": "outline_needs_rewrite",
+      "priority": "P0"
+    },
+    {
+      "slug": "cach-lua-chon-nha-may-gia-cong-my-pham",
+      "title": "Cách lựa chọn nhà máy gia công mỹ phẩm: checklist dành cho thương hiệu",
+      "primary_keyword": "cách lựa chọn nhà máy gia công mỹ phẩm",
+      "status": "outline_needs_rewrite",
+      "priority": "P0",
+      "notes": "Must not imply DDG factory/certification/capacity until corporate evidence is verified."
+    },
+    {
+      "slug": "cac-buoc-phat-trien-my-pham-thuong-hieu-rieng",
+      "title": "Các bước phát triển mỹ phẩm thương hiệu riêng từ ý tưởng đến launch",
+      "primary_keyword": "phát triển mỹ phẩm thương hiệu riêng",
+      "status": "outline_needs_rewrite",
+      "priority": "P1"
+    },
+    {
+      "slug": "rd-my-pham-la-gi",
+      "title": "R&D mỹ phẩm là gì? Vai trò trong quá trình phát triển sản phẩm",
+      "primary_keyword": "R&D mỹ phẩm là gì",
+      "status": "outline_needs_rewrite",
+      "priority": "P1",
+      "notes": "Keep R&D educational; do not convert into unverified DDG capability claims."
+    },
+    {
+      "slug": "nghien-cuu-cong-thuc-my-pham",
+      "title": "Nghiên cứu công thức mỹ phẩm: từ nhu cầu người dùng đến tiêu chí phát triển",
+      "primary_keyword": "nghiên cứu công thức mỹ phẩm",
+      "status": "outline_needs_rewrite",
+      "priority": "P1"
+    },
+    {
+      "slug": "lam-mau-my-pham-can-luu-y-gi",
+      "title": "Làm mẫu mỹ phẩm cần lưu ý gì? Cách feedback để giảm vòng chỉnh sửa",
+      "primary_keyword": "làm mẫu mỹ phẩm cần lưu ý gì",
+      "status": "outline_needs_rewrite",
+      "priority": "P1"
+    },
+    {
+      "slug": "thiet-ke-bao-bi-my-pham",
+      "title": "Thiết kế bao bì mỹ phẩm: 7 quyết định cần chốt trước khi sản xuất",
+      "primary_keyword": "thiết kế bao bì mỹ phẩm",
+      "status": "outline_needs_rewrite",
+      "priority": "P1",
+      "notes": "Requires current labeling/regulatory source review before publish-ready status."
+    }
+  ]
+}
