@@ -16,22 +16,28 @@
       "slug": "odm-my-pham-la-gi",
       "title": "ODM mỹ phẩm là gì? Khi nào mô hình phát triển sản phẩm phù hợp hơn",
       "primary_keyword": "ODM mỹ phẩm",
-      "status": "outline_needs_rewrite",
-      "priority": "P0"
+      "status": "editorial_review",
+      "source_file": "data/content/articles/odm-my-pham-la-gi.md",
+      "priority": "P0",
+      "notes": "Full rewrite completed; ODM explicitly framed as business terminology, not legal classification; reviewer pending."
     },
     {
       "slug": "oem-va-odm-my-pham-khac-nhau-the-nao",
       "title": "OEM và ODM mỹ phẩm khác nhau thế nào? Cách chọn theo năng lực thương hiệu",
       "primary_keyword": "OEM và ODM mỹ phẩm khác nhau thế nào",
-      "status": "outline_needs_rewrite",
-      "priority": "P0"
+      "status": "editorial_review",
+      "source_file": "data/content/articles/oem-va-odm-my-pham-khac-nhau-the-nao.md",
+      "priority": "P0",
+      "notes": "Full comparison rewrite completed with scope/ownership decision framework; reviewer pending."
     },
     {
       "slug": "quy-trinh-gia-cong-my-pham",
       "title": "Quy trình gia công mỹ phẩm: từ brief đến sản phẩm sẵn sàng ra thị trường",
       "primary_keyword": "quy trình gia công mỹ phẩm",
-      "status": "outline_needs_rewrite",
-      "priority": "P0"
+      "status": "editorial_review",
+      "source_file": "data/content/articles/quy-trinh-gia-cong-my-pham.md",
+      "priority": "P0",
+      "notes": "Full 8-checkpoint process guide completed; project-management guidance distinguished from legal requirements; reviewer pending."
     },
     {
       "slug": "cach-lua-chon-nha-may-gia-cong-my-pham",
