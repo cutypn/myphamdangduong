@@ -1,20 +1,46 @@
-# Mỹ phẩm Đăng Dương — Bizrise Framework
+# Bizrise / Đăng Dương Group V2
 
-Repository mã nguồn cho website Đăng Dương Group.
+Clean rebuild workspace for the Đăng Dương Group implementation of the Bizrise Framework.
 
-## Cấu trúc
+## Non-negotiable rules
 
-- `apps/ddg-beauty-premium/` — WordPress theme Beauty Premium, hiện tại v0.3.1 hotfix.
-- `apps/bizrise-core/` — Bizrise Core: Product CPT, taxonomy, metadata và DDG starter importer.
-- `docs/` — hướng dẫn cài đặt/import.
+- Legacy code is reference/migration material only; V2 does not extend the Base64/tar + MU-plugin hotfix architecture.
+- Readable Git source is the source of truth.
+- WordPress, PHP 8.2+, Gutenberg-first, Multisite-ready.
+- No mandatory WooCommerce or Elementor dependency.
+- Product/business data belongs to `bizrise-core`, not the theme.
+- Product publication is gated by verification and regulatory state.
+- Media mapping is deterministic, brand-guarded and idempotent.
+- Product Truth is never inferred from missing fields.
+- Theme presentation must keep one H1 per indexable URL and use Be Vietnam Pro.
+- Production legacy remains untouched until V2 staging passes.
 
-## Nguyên tắc hiện tại
+## Target layout
 
-- WordPress Multisite ready.
-- Be Vietnam Pro toàn site.
-- Mỗi URL indexable chỉ 01 H1.
-- Product dùng CPT `bizrise_product`, chưa phụ thuộc WooCommerce.
-- Mobile media ưu tiên 9:16; desktop 16:9 / 1:1 / 3:4.
-- Claim, chứng nhận và dữ liệu doanh nghiệp chỉ publish khi đã xác minh.
+```text
+apps/
+  bizrise-core/
+  bizrise-ddg-theme/
+  bizrise-ddg-migrator/
+profiles/dang-duong/
+data/product-master/
+data/product-truth/
+data/migration/
+docs/
+deploy/
+tests/
+```
 
-> Lưu ý: binary assets (PNG/screenshot/ZIP) được giữ ngoài source commit khi connector GitHub chỉ hỗ trợ file UTF-8. Logo production nên cấu hình bằng WordPress Custom Logo / Media Library.
+## Current branch
+
+V2 development: `codex/rebuild-v2`
+
+Legacy reference: `agent/ddg-media-importer`
+
+## First delivery sequence
+
+1. Workspace + architecture/migration contracts.
+2. Bizrise Core product/brand data model and publication gate.
+3. Product Truth seed + deterministic migrator/media manifest.
+4. Theme shell/design system.
+5. Product/brand templates, IA, homepage, SEO and staging QA.
