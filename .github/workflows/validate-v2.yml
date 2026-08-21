@@ -1,0 +1,32 @@
+name: Validate Bizrise DDG V2
+
+on:
+  push:
+    branches:
+      - codex/rebuild-v2
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP 8.2
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+
+      - name: PHP syntax
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          find apps/bizrise-core apps/bizrise-ddg-migrator -type f -name '*.php' -print0 \
+            | xargs -0 -n1 php -l
+
+      - name: Validate Product Truth seed
+        run: python3 tests/smoke/validate_product_seed.py
