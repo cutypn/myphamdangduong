@@ -43,9 +43,10 @@
       "slug": "cach-lua-chon-nha-may-gia-cong-my-pham",
       "title": "Cách lựa chọn nhà máy gia công mỹ phẩm: checklist dành cho thương hiệu",
       "primary_keyword": "cách lựa chọn nhà máy gia công mỹ phẩm",
-      "status": "outline_needs_rewrite",
+      "status": "editorial_review",
+      "source_file": "data/content/articles/cach-lua-chon-nha-may-gia-cong-my-pham.md",
       "priority": "P0",
-      "notes": "Must not imply DDG factory/certification/capacity until corporate evidence is verified."
+      "notes": "Generic buyer-side selection guide completed; intentionally contains no unverified DDG factory/certification/capacity claims; reviewer pending."
     },
     {
       "slug": "cac-buoc-phat-trien-my-pham-thuong-hieu-rieng",
