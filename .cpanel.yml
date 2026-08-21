@@ -1,0 +1,4 @@
+---
+deployment:
+  tasks:
+    - export DDG_WP_ROOT="$HOME/public_html"; /bin/bash deploy/deploy.sh
