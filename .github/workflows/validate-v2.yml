@@ -25,8 +25,24 @@ jobs:
         shell: bash
         run: |
           set -Eeuo pipefail
-          find apps/bizrise-core apps/bizrise-ddg-migrator -type f -name '*.php' -print0 \
+          find apps/bizrise-core apps/bizrise-ddg-theme apps/bizrise-ddg-migrator -type f -name '*.php' -print0 \
             | xargs -0 -n1 php -l
+
+      - name: Deployment shell syntax
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          bash -n deploy/deploy.sh
+          bash -n deploy/smoke-test.sh
 
       - name: Validate Product Truth seed
         run: python3 tests/smoke/validate_product_seed.py
+
+      - name: Validate JSON data
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 -m json.tool apps/bizrise-ddg-migrator/data/product-truth-seed.json >/dev/null
+          python3 -m json.tool profiles/dang-duong/brand.json >/dev/null
+          python3 -m json.tool profiles/dang-duong/media-manifest.json >/dev/null
+          python3 -m json.tool data/content/article-registry.json >/dev/null
