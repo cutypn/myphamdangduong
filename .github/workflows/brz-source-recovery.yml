@@ -1,3 +1,4 @@
+# One-shot BRZ-10 source recovery; removed automatically after a successful run.
 name: BRZ Source Recovery
 
 on:
