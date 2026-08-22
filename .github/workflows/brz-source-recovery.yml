@@ -1,0 +1,110 @@
+name: BRZ Source Recovery
+
+on:
+  push:
+    branches:
+      - agent/brz-10-dev
+    paths:
+      - .github/workflows/brz-source-recovery.yml
+
+permissions:
+  contents: write
+
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout worker branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/brz-10-dev
+          fetch-depth: 0
+
+      - name: Recover theme and Bizrise Core from production payloads
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          command -v rsync >/dev/null || { sudo apt-get update && sudo apt-get install -y rsync; }
+          command -v php >/dev/null || { sudo apt-get update && sudo apt-get install -y php-cli; }
+
+          git config user.name "BRZ-10 Source Recovery"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          mkdir -p /tmp/brz-theme /tmp/brz-core
+
+          cat deploy/payloads/ddg-theme-v0.9.1.part-*.b64 | base64 --decode > /tmp/ddg-theme-v0.9.1.tar.gz
+          tar -xzf /tmp/ddg-theme-v0.9.1.tar.gz -C /tmp/brz-theme
+          THEME_STYLE="$(find /tmp/brz-theme -type f -name style.css | head -n 1)"
+          test -n "$THEME_STYLE"
+          THEME_SRC="$(dirname "$THEME_STYLE")"
+
+          echo "Theme payload source: $THEME_SRC"
+          find "$THEME_SRC" -maxdepth 3 -type f | sort
+
+          mkdir -p apps/ddg-beauty-premium/assets/css apps/ddg-beauty-premium/assets/js
+          rsync -a --delete \
+            --exclude='header.php' \
+            --exclude='assets/css/navigation.css' \
+            --exclude='assets/js/theme.js' \
+            "$THEME_SRC"/ apps/ddg-beauty-premium/
+
+          test -f apps/ddg-beauty-premium/header.php
+          test -f apps/ddg-beauty-premium/assets/css/navigation.css
+          test -f apps/ddg-beauty-premium/assets/js/theme.js
+
+          for dep in setup.php assets.php customizer.php media.php media-placements.php seo.php; do
+            test -f "apps/ddg-beauty-premium/inc/$dep" || { echo "Missing theme dependency: inc/$dep"; exit 1; }
+          done
+
+          find apps/ddg-beauty-premium -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+
+          if grep -R -nE '/home/dangduon6a72|/public_html' apps/ddg-beauty-premium --include='*.php'; then
+            echo "Hard-coded hosting path detected in recovered theme." >&2
+            exit 1
+          fi
+
+          git rm .github/workflows/brz-source-recovery.yml
+          git add apps/ddg-beauty-premium
+          if ! git diff --cached --quiet; then
+            git commit -m "chore(theme): restore production theme source"
+          fi
+
+          cat deploy/payloads/bizrise-core-v0.8.1.part-*.b64 | base64 --decode > /tmp/bizrise-core-v0.8.1.tar.gz
+          tar -xzf /tmp/bizrise-core-v0.8.1.tar.gz -C /tmp/brz-core
+          CORE_MAIN="$(find /tmp/brz-core -type f -name 'bizrise-core.php' | head -n 1)"
+          test -n "$CORE_MAIN"
+          CORE_SRC="$(dirname "$CORE_MAIN")"
+
+          echo "Bizrise Core payload source: $CORE_SRC"
+          find "$CORE_SRC" -maxdepth 4 -type f | sort
+
+          mkdir -p apps/bizrise-core
+          rsync -a --delete "$CORE_SRC"/ apps/bizrise-core/
+
+          find apps/bizrise-core -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+
+          if grep -R -nE '/home/dangduon6a72|/public_html' apps/bizrise-core --include='*.php'; then
+            echo "Hard-coded hosting path detected in recovered Bizrise Core." >&2
+            exit 1
+          fi
+
+          git add apps/bizrise-core
+          if ! git diff --cached --quiet; then
+            git commit -m "chore(core): restore bizrise core source"
+          fi
+
+          git push origin HEAD:agent/brz-10-dev
+
+      - name: Recovery summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo '## BRZ-10 Source Recovery'
+            echo
+            echo '- Theme payload: ddg-theme-v0.9.1.part-*.b64'
+            echo '- Core payload: bizrise-core-v0.8.1.part-*.b64'
+            echo '- Preserved: header.php, assets/css/navigation.css, assets/js/theme.js'
+            echo '- Validation: all recovered PHP files linted before push'
+          } >> "$GITHUB_STEP_SUMMARY"
