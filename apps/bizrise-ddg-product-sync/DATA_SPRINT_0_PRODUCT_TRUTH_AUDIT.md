@@ -2,70 +2,91 @@
 
 Date: 2026-08-22  
 Branch: `agent/brz-30-data`  
-Scope: `apps/bizrise-ddg-product-sync/` + repository-local media mapping evidence.
+Scope: `apps/bizrise-ddg-product-sync/` only. No theme, content marketing, or media implementation changes.
+
+## Source of truth used for this rebuild
+
+- Product Master: `data/products-master-2026.psv` — 93 legacy/master rows (IDs 1–93).
+- Product Truth overlay: `data/product-truth-2026-08-18.psv` — 35 verified rows in the current snapshot.
+- Per-product audit output: `data/product-truth-audit-2026-08-22.psv`.
+
+The audit is reconciled from the current overlay snapshot, not from a hard-coded previous publish list. Current Product Truth includes IDs `100`, `101`, `102`, `103`, and `104`.
 
 ## Publish gate
 
-A product is a publish candidate only when all three conditions are true:
+A product is a publish/index candidate only when all three conditions are true:
 
 1. `regulatory_status = active`
-2. `verification_status` is a verified status (`VERIFIED_*`)
+2. `verification_status = VERIFIED_*`
 3. `content_gate = PUBLISH_ALLOWED`
 
-Legacy names and legacy copy are identity/research inputs only. They are not approved marketing claims.
+`unknown`, `hold`, `recalled`, and `retired` are not publishable. Legacy names/copy are identity-research inputs only and are not approved marketing claims.
 
-## Summary
+## Recomputed snapshot metrics
 
 | Metric | Count |
 |---|---:|
-| Total unique product IDs | 99 |
+| Total unique product IDs | 104 |
 | Product Master rows | 93 |
-| Product Truth verified rows | 30 |
-| PUBLISH_ALLOWED | 30 |
-| Regulatory hold | 0 |
+| Product Truth verified rows | 35 |
+| Regulatory active | 35 |
 | Regulatory unknown | 69 |
-| Missing canonical identity | 69 |
-| Missing verification source | 69 |
-| Exact duplicate IDs | 0 |
-| Exact canonical-name duplicates | 0 |
-| Exact generated-slug duplicates | 0 |
-| Duplicate/identity candidate groups | 3 groups / 7 rows |
-| Missing SKU field | 99 |
-| PUBLISH_ALLOWED with deterministic repo media mapping | 5 |
-| PUBLISH_ALLOWED requiring runtime Media Library check | 25 |
+| PUBLISH_ALLOWED | 35 |
+| LEGAL_HOLD | 69 |
+| Duplicate candidate groups | 3 groups / 7 rows |
+| Missing dedicated SKU | 104 |
 
-## Duplicate / identity candidates
+Reconciliation: 93 master IDs + 11 verified overlay-only IDs (94–104) = 104 unique IDs. Of the 93 master IDs, 24 are superseded/verified by Product Truth and 69 remain `unknown + NEED_VERIFY + LEGAL_HOLD`.
 
-- `DUP-CAND-01`: IDs `76`, `85` — Hatagold anti-aging name family. ID 76 is verified; ID 85 remains legacy/unknown. The media manifest targets both titles to the same product asset family.
-- `DUP-CAND-02`: IDs `77`, `86` — Hatagold sunscreen 10g name family. ID 77 is verified; ID 86 remains legacy/unknown. The media manifest targets both titles to the same 10g product asset.
-- `DUP-CAND-03`: IDs `79`, `80`, `90` — Hatagold dark-spots name family. ID 79 is verified; IDs 80/90 remain legacy/unknown. The media manifest targets these legacy titles to the same product asset family.
+## Duplicate / identity candidates — unchanged, no auto-merge
 
-No rows are auto-merged in Sprint 0. These remain review candidates until identity evidence is approved.
+- `DUP-CAND-01`: IDs `76 / 85` — Hatagold anti-aging identity family.
+- `DUP-CAND-02`: IDs `77 / 86` — Hatagold sunscreen 10g identity family.
+- `DUP-CAND-03`: IDs `79 / 80 / 90` — Hatagold dark-spots identity family.
 
-## Critical findings
+No duplicate candidate is merged automatically. Verified identities remain separate until identity evidence is approved.
 
-1. Base Product Sync v1.1.0 used only `regulatory_status = active` for frontend gating. That is weaker than the Production V1 rule.
-2. Base sync v1.1.0 overwrote truth metadata (`regulatory`, `verification`, `content_gate`) back to `unknown / NEED_VERIFY / LEGAL_HOLD` on a versioned re-sync. Because the truth overlay has its own independent version flag, it may not re-run afterward. This can regress previously verified records.
-3. Base sync report counters did not reflect actual active/publish-allowed state.
-4. Product Master has no SKU field. All 99 combined identities therefore lack a dedicated SKU value; master ID (`ddg-2026-NNN`) is only an internal identity key, not a verified SKU.
-5. Legacy source URLs exist for 93 master rows, but they are not verification sources under Product Truth rules.
-6. ID 82 `Nước Tẩy Trang` is categorized as `Tẩy tế bào chết` in legacy master data. It remains unknown/LEGAL_HOLD and requires category verification before canonicalization.
-7. Repository media mapping deterministically covers five publish-allowed Hatagold identities (76, 77, 79, 83, 89). The remaining 25 publish-allowed rows require BRZ-40 runtime Media Library audit before they can be declared missing or complete.
+## Media ownership / handoff
 
-## Importer acceptance rules
+DATA does not assert media completeness or canonical media mapping.
 
-- Re-running base sync must not downgrade existing verified Product Truth metadata.
-- Frontend/indexability gate must require `active + VERIFIED_* + PUBLISH_ALLOWED`.
-- Existing manual title/content/featured image are not overwritten by base sync.
-- Canonical title changes remain owned by verified Product Truth overlay.
-- Existing slugs remain stable; new posts get a slug only at creation.
-- Source metadata is retained.
-- Dry-run remains available through WP-CLI (omit `--apply`).
+- IDs `76`, `77`, `79`, `83`, `89`: `CANDIDATE_MAPPING_REVIEW` only; BRZ-40 must confirm canonical mapping.
+- Other `PUBLISH_ALLOWED` rows: `BRZ40_REVIEW_REQUIRED`.
+- Non-publishable rows: `NOT_EVALUATED_BY_DATA`.
+- `MAPPED_DETERMINISTIC` is intentionally not used in this audit.
 
-## Verification / publish set
+## Importer v1.2.0 audit
 
-Verified + publish-allowed IDs from the project Product Truth overlay:
+Static code review of the current branch confirms the intended runtime direction remains valid; commits `cd09bc82...` and `346ef541...` are not changed by this QA-fix batch.
 
-`4, 5, 6, 8, 9, 11, 12, 13, 14, 15, 16, 17, 19, 20, 21, 75, 76, 77, 78, 79, 83, 89, 92, 93, 94, 95, 96, 97, 98, 99`
+- **PASS — no Product Truth downgrade:** base sync writes safe truth defaults only when truth fields are empty and preserves verified truth/identity overlay values.
+- **PASS — publish/index gate:** frontend/indexability requires `active + VERIFIED_* + PUBLISH_ALLOWED`.
+- **PASS — blocked regulatory states:** `unknown`, `hold`, `recalled`, and `retired` do not satisfy the publish gate; base sync demotes non-allowed master posts that are already published to draft.
+- **PASS — rerun duplicate protection:** lookup first uses `_bizrise_ddg_master_key`, then exact normalized title + brand; verified overlay also uses persistent master keys/identity matching. Runtime rerun still requires QA execution in WordPress to prove database-level idempotency.
+- **PASS — verified canonical identity protection:** base sync does not overwrite brand/group identity fields once verified truth + `PUBLISH_ALLOWED` is present; canonical title changes remain owned by Product Truth overlay.
+- **PASS — dry-run non-mutation by code path:** `sync(false)` returns before create/update/demotion branches. QA should still execute WP-CLI dry-run before apply and compare database state.
+- **PASS — slug stability direction:** base sync only supplies `post_name` when creating a new post; it does not rewrite existing slugs on rerun.
+- **PASS — source retention:** base sync retains `_bizrise_ddg_source_url`; overlay retains evidence/source metadata.
 
-All other Product Master IDs in `1..93` are `regulatory_status=unknown`, `verification_status=NEED_VERIFY`, and `content_gate=LEGAL_HOLD` unless a later verified overlay supersedes them.
+No runtime regression was found that requires modifying importer v1.2.0 in this batch.
+
+## Current PUBLISH_ALLOWED IDs
+
+The current overlay contains 35 rows satisfying the gate. They are derived from `product-truth-2026-08-18.psv`, including the new IDs `100–104`; this document deliberately does not maintain a manually curated hard-coded ID list as the source of truth.
+
+## QA re-audit instructions
+
+1. Confirm the current overlay has 35 rows and IDs `100–104` are present.
+2. Confirm the audit PSV has 104 unique IDs, 35 verified/active/PUBLISH_ALLOWED, 69 unknown/LEGAL_HOLD, and 104 missing dedicated SKU values.
+3. Confirm duplicate candidates remain exactly `76/85`, `77/86`, `79/80/90` and no auto-merge occurred.
+4. Confirm no row uses `MAPPED_DETERMINISTIC`; the five Hatagold candidate IDs use `CANDIDATE_MAPPING_REVIEW` only.
+5. Run `wp bizrise ddg-products` without `--apply`; verify DB state does not change.
+6. Run `wp bizrise ddg-products --apply`, then run it again; verify no duplicate posts and no verified Product Truth downgrade.
+7. Run `wp bizrise ddg-product-truth-20260818` without `--apply`, then `--apply`, then re-run; verify overlay idempotency and 35 current truth rows remain publish candidates.
+8. Inspect unknown/hold/recalled/retired posts: they must not be publish/index candidates.
+9. Confirm existing verified canonical titles/identity fields and existing slugs remain stable after reruns.
+
+## Files
+
+- Summary audit: `DATA_SPRINT_0_PRODUCT_TRUTH_AUDIT.md`
+- Per-product audit: `data/product-truth-audit-2026-08-22.psv`
