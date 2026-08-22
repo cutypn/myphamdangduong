@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Bizrise DDG Public Content 2026
  * Description: Renders cleaned public-facing DDG website copy from the public content master.
- * Version: 1.0.0
+ * Version: 1.0.1
  */
 if (!defined('ABSPATH')) exit;
 
@@ -64,7 +64,7 @@ final class Bizrise_DDG_Public_Content_2026 {
 
     private static function field(string $section, string $name): string {
         $name = preg_quote($name, '/');
-        if (preg_match('/^-\s+\*\*' . $name . ':\*\*\s*(.+)$/miu', $section, $m)) return trim($m[1]);
+        if (preg_match('/^(?:-\s*)?\*\*' . $name . ':\*\*\s*(.+)$/miu', $section, $m)) return trim($m[1]);
         return '';
     }
 
@@ -72,7 +72,7 @@ final class Bizrise_DDG_Public_Content_2026 {
         $lines = preg_split('/\r?\n/u', $section);
         $start = -1; $level = 0;
         foreach ($lines as $i => $line) {
-            if (preg_match('/^(#{2,5})\s+(.+)$/u', trim($line), $m) && mb_strtolower(trim($m[2])) === mb_strtolower($name)) {
+            if (preg_match('/^(#{2,5})\s+(.+)$/u', trim($line), $m) && strtolower(trim($m[2])) === strtolower($name)) {
                 $start = $i; $level = strlen($m[1]); break;
             }
         }
@@ -104,13 +104,17 @@ final class Bizrise_DDG_Public_Content_2026 {
                 $level = strlen($m[1]);
                 $title = trim($m[2]);
                 if ($skip && $level <= $skip_level) $skip = false;
-                if (in_array(mb_strtolower($title), ['direct answer', 'hero'], true)) {
+                if (in_array(strtolower($title), ['direct answer', 'hero'], true)) {
                     $skip = true; $skip_level = $level; continue;
                 }
             }
             if (!$skip) $out[] = $line;
         }
         return trim(implode("\n", $out));
+    }
+
+    private static function heading(string $text): string {
+        return trim((string) preg_replace('/^H[2-6]\s*[—-]\s*/u', '', $text));
     }
 
     private static function md(string $markdown): string {
@@ -122,8 +126,8 @@ final class Bizrise_DDG_Public_Content_2026 {
         foreach ($lines as $line) {
             $t = trim($line);
             if ($t === '') { $flush(); continue; }
-            if (preg_match('/^##\s+(.+)$/u', $t, $m)) { $flush(); $html .= '<h2>' . esc_html($m[1]) . '</h2>'; continue; }
-            if (preg_match('/^###\s+(.+)$/u', $t, $m)) { $flush(); $html .= '<h3>' . esc_html($m[1]) . '</h3>'; continue; }
+            if (preg_match('/^##\s+(.+)$/u', $t, $m)) { $flush(); $html .= '<h2>' . esc_html(self::heading($m[1])) . '</h2>'; continue; }
+            if (preg_match('/^###\s+(.+)$/u', $t, $m)) { $flush(); $html .= '<h3>' . esc_html(self::heading($m[1])) . '</h3>'; continue; }
             if (preg_match('/^\d+\.\s+(.+)$/u', $t, $m)) {
                 if ($list !== 'ol') { $flush(); $list = 'ol'; $html .= '<ol>'; }
                 $html .= '<li>' . esc_html($m[1]) . '</li>'; continue;
