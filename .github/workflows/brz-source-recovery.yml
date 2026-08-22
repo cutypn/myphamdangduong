@@ -19,131 +19,41 @@ jobs:
           ref: agent/brz-10-dev
           fetch-depth: 0
 
-      - name: Rebuild and salvage Core archive
+      - name: Recover available Core modules and inspect history
         shell: bash
         run: |
           set -euo pipefail
+          git fetch --all --tags --prune
           rm -rf /tmp/brz-core && mkdir -p /tmp/brz-core/extract
 
+          echo '=== ALL GIT OBJECT PATHS MATCHING BIZRISE CORE ==='
+          git rev-list --objects --all | grep -Ei 'bizrise[-_/]?core|production-content|content-model|media-mapper' | sort -u || true
+
           cat deploy/payloads/bizrise-core-v0.8.1.part-*.b64 | tr -d '\r\n' | base64 -d > /tmp/brz-core/core.tar.gz
-          echo "gzip_bytes=$(wc -c < /tmp/brz-core/core.tar.gz)"
+          set +e
+          gzip -dc /tmp/brz-core/core.tar.gz > /tmp/brz-core/core.tar
+          GZIP_RC=$?
+          set -e
+          echo "gzip_rc=$GZIP_RC tar_bytes=$(wc -c < /tmp/brz-core/core.tar)"
 
           set +e
-          gzip -t /tmp/brz-core/core.tar.gz
-          GZIP_TEST_RC=$?
-          gzip -dc /tmp/brz-core/core.tar.gz > /tmp/brz-core/core.tar
-          GZIP_DC_RC=$?
+          tar --ignore-zeros -xf /tmp/brz-core/core.tar -C /tmp/brz-core/extract 2>/tmp/brz-core/tar.err
+          TAR_RC=$?
           set -e
-          echo "gzip_test_rc=$GZIP_TEST_RC gzip_dc_rc=$GZIP_DC_RC tar_bytes=$(wc -c < /tmp/brz-core/core.tar)"
+          echo "tar_rc=$TAR_RC"
+          cat /tmp/brz-core/tar.err || true
 
-          python3 - <<'PY'
-          import base64, pathlib, struct, zlib
-          gz = pathlib.Path('/tmp/brz-core/core.tar.gz').read_bytes()
-          print('gzip_magic', gz[:3].hex(), 'gzip_size', len(gz))
-          if len(gz) >= 18:
-              print('stored_crc32', hex(struct.unpack('<I', gz[-8:-4])[0]), 'stored_isize', struct.unpack('<I', gz[-4:])[0])
-          for wb, name in [(31,'gzip-wrapper'),(-15,'raw-deflate')]:
-              try:
-                  data = zlib.decompress(gz if wb == 31 else gz[10:-8], wb)
-                  print(name, 'FULL_OK', len(data), hex(zlib.crc32(data)&0xffffffff))
-                  pathlib.Path('/tmp/brz-core/zlib-full.tar').write_bytes(data)
-              except Exception as e:
-                  print(name, 'FAIL', repr(e))
+          echo '=== RECOVERED FILES ==='
+          find /tmp/brz-core/extract -type f -printf '%P %s bytes\n' | sort
 
-          body = gz[10:-8]
-          d = zlib.decompressobj(-15)
-          out = bytearray()
-          fail_at = None
-          for i in range(0, len(body), 256):
-              chunk = body[i:i+256]
-              try:
-                  out.extend(d.decompress(chunk))
-              except Exception as e:
-                  fail_at = i
-                  print('incremental_raw_fail_at', i, 'out_bytes', len(out), repr(e))
-                  break
-          pathlib.Path('/tmp/brz-core/incremental.tar').write_bytes(out)
-          print('incremental_tar_bytes', len(out), 'fail_at', fail_at)
-          PY
+          echo '=== PHP LINT ==='
+          find /tmp/brz-core/extract -type f -name '*.php' -print0 | xargs -0 -n1 php -l
 
-          for candidate in /tmp/brz-core/zlib-full.tar /tmp/brz-core/core.tar /tmp/brz-core/incremental.tar; do
-            [ -s "$candidate" ] || continue
-            echo "=== TAR CANDIDATE $candidate ($(wc -c < "$candidate") bytes) ==="
-            set +e
-            tar -tvf "$candidate" > "$candidate.list" 2> "$candidate.err"
-            RC=$?
-            set -e
-            echo "tar_list_rc=$RC entries=$(wc -l < "$candidate.list")"
-            head -100 "$candidate.list" || true
-            cat "$candidate.err" || true
-          done
+          echo '=== DEPENDENCIES HOOKS CPT TAXONOMY CLASSES ==='
+          grep -R -nE 'require(_once)?|include(_once)?|add_action|add_filter|register_post_type|register_taxonomy|register_activation_hook|^class |^final class |^function |bizrise_product' /tmp/brz-core/extract --include='*.php' | head -2000 || true
 
-          BEST=''
-          for candidate in /tmp/brz-core/zlib-full.tar /tmp/brz-core/core.tar /tmp/brz-core/incremental.tar; do
-            [ -s "$candidate" ] || continue
-            rm -rf /tmp/brz-core/extract && mkdir -p /tmp/brz-core/extract
-            set +e
-            tar --ignore-zeros -xf "$candidate" -C /tmp/brz-core/extract 2>/tmp/brz-core/extract.err
-            RC=$?
-            set -e
-            echo "extract $candidate rc=$RC"
-            cat /tmp/brz-core/extract.err || true
-            CORE_MAIN="$(find /tmp/brz-core/extract -type f -name 'bizrise-core.php' | head -n 1)"
-            if [ -n "$CORE_MAIN" ]; then
-              BEST="$candidate"
-              echo "FOUND_CORE_MAIN=$CORE_MAIN from $candidate"
-              break
-            fi
-          done
-
-          test -n "$BEST" || { echo 'No recoverable bizrise-core.php in salvaged tar stream.' >&2; exit 1; }
-          echo "$BEST" > /tmp/brz-core/best.txt
-
-      - name: Restore audit and commit Core
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name "BRZ-10 Source Recovery"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          CORE_MAIN="$(find /tmp/brz-core/extract -type f -name 'bizrise-core.php' | head -n 1)"
-          CORE_SRC="$(dirname "$CORE_MAIN")"
-          echo "CORE_SRC=$CORE_SRC"
-          find "$CORE_SRC" -maxdepth 5 -type f | sort
-
-          rm -rf apps/bizrise-core
-          mkdir -p apps/bizrise-core
-          cp -a "$CORE_SRC"/. apps/bizrise-core/
-
-          test -f apps/bizrise-core/bizrise-core.php
-          find apps/bizrise-core -type f -name '*.php' -print0 | xargs -0 -n1 php -l
-
-          python3 - <<'PY'
-          import pathlib, re, sys
-          root = pathlib.Path('apps/bizrise-core')
-          missing=[]
-          for f in root.rglob('*.php'):
-              text=f.read_text(errors='ignore')
-              for m in re.finditer(r"(?:require|require_once|include|include_once)\s*\(?\s*(?:BIZRISE_CORE_DIR\s*\.\s*)?['\"]([^'\"]+)['\"]", text):
-                  rel=m.group(1).lstrip('/')
-                  if not (root/rel).exists() and not (f.parent/rel).exists():
-                      missing.append((str(f),rel))
-          print('static_missing_dependencies', missing)
-          if missing:
-              sys.exit(1)
-          PY
-
-          if grep -R -nE '/home/dangduon6a72|/public_html' apps/bizrise-core --include='*.php'; then
-            echo 'Hard-coded hosting path detected.' >&2
-            exit 1
-          fi
-
-          echo '--- Core identity ---'
-          grep -R -nE 'Plugin Name:|Version:|BIZRISE_CORE_VERSION|bizrise_product|register_post_type|register_taxonomy' apps/bizrise-core | head -300 || true
-          echo '--- Core hooks ---'
-          grep -R -nE 'add_action|add_filter|register_activation_hook|register_deactivation_hook' apps/bizrise-core | head -300 || true
-
-          git add apps/bizrise-core
-          git rm .github/workflows/brz-source-recovery.yml
-          git commit -m 'chore(core): restore bizrise core source'
-          git push origin HEAD:agent/brz-10-dev
+          echo '=== FILE HEADERS ==='
+          while IFS= read -r f; do
+            echo "----- ${f#/tmp/brz-core/extract/} -----"
+            sed -n '1,45p' "$f"
+          done < <(find /tmp/brz-core/extract -type f -name '*.php' | sort)
