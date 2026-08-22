@@ -6,21 +6,26 @@ WP_ROOT="/home/dangduon6a72/public_html"
 MU_ROOT="$WP_ROOT/wp-content/mu-plugins"
 DATA_ROOT="$MU_ROOT/data/ddg-content"
 SOURCE_PLUGIN="$REPO_ROOT/apps/bizrise-ddg-site-pages/bizrise-ddg-content-final.php"
+SOURCE_TAKEOVER="$REPO_ROOT/apps/bizrise-ddg-site-pages/bizrise-ddg-content-final-takeover.php"
 TARGET_PLUGIN="$MU_ROOT/bizrise-ddg-content-final.php"
+TARGET_TAKEOVER="$MU_ROOT/bizrise-ddg-content-final-takeover.php"
 
 log(){ printf '[DDG CONTENT FINAL] %s\n' "$*"; }
 fail(){ log "ERROR: $*"; exit 1; }
 
 [ -f "$SOURCE_PLUGIN" ] || fail "Missing Content Final plugin: $SOURCE_PLUGIN"
+[ -f "$SOURCE_TAKEOVER" ] || fail "Missing Content Final takeover: $SOURCE_TAKEOVER"
 mkdir -p "$MU_ROOT" "$DATA_ROOT"
 
 PHP_BIN="$(command -v php || true)"
 if [ -n "$PHP_BIN" ]; then
   "$PHP_BIN" -l "$SOURCE_PLUGIN" >/dev/null || fail "PHP lint failed for Content Final plugin"
+  "$PHP_BIN" -l "$SOURCE_TAKEOVER" >/dev/null || fail "PHP lint failed for Content Final takeover"
 fi
 
-log "Deploying Content Final MU plugin"
+log "Deploying Content Final MU plugins"
 cp -f "$SOURCE_PLUGIN" "$TARGET_PLUGIN"
+cp -f "$SOURCE_TAKEOVER" "$TARGET_TAKEOVER"
 
 FILES=(
   HOMEPAGE_CORPORATE_EXCELLENCE_P0.md
@@ -38,7 +43,6 @@ for name in "${FILES[@]}"; do
   cp -f "$src" "$DATA_ROOT/$name"
 done
 
-# Ensure WordPress re-runs page normalization if the plugin was previously loaded incompletely.
 WP_BIN="$(command -v wp || true)"
 if [ -n "$WP_BIN" ] && [ -f "$WP_ROOT/wp-load.php" ]; then
   "$WP_BIN" --path="$WP_ROOT" option delete ddg_content_final_2026_v >/dev/null 2>&1 || true
@@ -48,4 +52,5 @@ if [ -n "$WP_BIN" ] && [ -f "$WP_ROOT/wp-load.php" ]; then
 fi
 
 log "Content Final deployed: $TARGET_PLUGIN"
+log "Content Final takeover deployed: $TARGET_TAKEOVER"
 log "Content decks deployed: $DATA_ROOT"
