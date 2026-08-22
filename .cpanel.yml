@@ -2,5 +2,6 @@
 deployment:
   tasks:
     - /bin/bash deploy/deploy-ddg.sh
+    - /bin/bash deploy/deploy-content-final.sh
     - /bin/bash deploy/verify-knowledge.sh
     - /bin/bash deploy/disable-autopull.sh
