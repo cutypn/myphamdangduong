@@ -1,4 +1,4 @@
-name: BRZ Core Source Recovery
+name: BRZ-10 Source Recovery Validation
 
 on:
   pull_request:
@@ -7,10 +7,10 @@ on:
     types: [opened, synchronize, reopened]
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  recover-core:
+  validate:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout worker
@@ -19,41 +19,98 @@ jobs:
           ref: agent/brz-10-dev
           fetch-depth: 0
 
-      - name: Recover available Core modules and inspect history
+      - name: Validate PHP source and dependencies
         shell: bash
         run: |
           set -euo pipefail
-          git fetch --all --tags --prune
-          rm -rf /tmp/brz-core && mkdir -p /tmp/brz-core/extract
 
-          echo '=== ALL GIT OBJECT PATHS MATCHING BIZRISE CORE ==='
-          git rev-list --objects --all | grep -Ei 'bizrise[-_/]?core|production-content|content-model|media-mapper' | sort -u || true
+          THEME=apps/ddg-beauty-premium
+          CORE=apps/bizrise-core
+          test -d "$THEME"
+          test -d "$CORE"
 
-          cat deploy/payloads/bizrise-core-v0.8.1.part-*.b64 | tr -d '\r\n' | base64 -d > /tmp/brz-core/core.tar.gz
-          set +e
-          gzip -dc /tmp/brz-core/core.tar.gz > /tmp/brz-core/core.tar
-          GZIP_RC=$?
-          set -e
-          echo "gzip_rc=$GZIP_RC tar_bytes=$(wc -c < /tmp/brz-core/core.tar)"
+          echo '=== PHP LINT: THEME ==='
+          find "$THEME" -type f -name '*.php' -print0 | sort -z | xargs -0 -n1 php -l
+          echo '=== PHP LINT: CORE ==='
+          find "$CORE" -type f -name '*.php' -print0 | sort -z | xargs -0 -n1 php -l
 
-          set +e
-          tar --ignore-zeros -xf /tmp/brz-core/core.tar -C /tmp/brz-core/extract 2>/tmp/brz-core/tar.err
-          TAR_RC=$?
-          set -e
-          echo "tar_rc=$TAR_RC"
-          cat /tmp/brz-core/tar.err || true
+          echo '=== THEME FUNCTIONS REQUIRE TARGETS ==='
+          python3 - <<'PY'
+          import pathlib,re,sys
+          root=pathlib.Path('apps/ddg-beauty-premium')
+          text=(root/'functions.php').read_text()
+          required=re.findall(r"get_template_directory\(\)\s*\.\s*['\"]([^'\"]+)['\"]",text)
+          missing=[]
+          for rel in required:
+              path=root/rel.lstrip('/')
+              print(rel, 'OK' if path.is_file() else 'MISSING')
+              if not path.is_file(): missing.append(rel)
+          if missing:
+              print('Missing theme requires:',missing,file=sys.stderr); sys.exit(1)
+          PY
 
-          echo '=== RECOVERED FILES ==='
-          find /tmp/brz-core/extract -type f -printf '%P %s bytes\n' | sort
+          echo '=== CORE REQUIRE TARGETS ==='
+          python3 - <<'PY'
+          import pathlib,re,sys
+          root=pathlib.Path('apps/bizrise-core')
+          text=(root/'bizrise-core.php').read_text()
+          required=re.findall(r"BIZRISE_CORE_PATH\s*\.\s*['\"]([^'\"]+)['\"]",text)
+          missing=[]
+          for rel in required:
+              path=root/rel
+              print(rel, 'OK' if path.is_file() else 'MISSING')
+              if not path.is_file(): missing.append(rel)
+          if missing:
+              print('Missing Core requires:',missing,file=sys.stderr); sys.exit(1)
+          PY
 
-          echo '=== PHP LINT ==='
-          find /tmp/brz-core/extract -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+          echo '=== THEME ENQUEUE TARGETS ==='
+          test -f "$THEME/assets/css/theme.css"
+          test -f "$THEME/assets/css/navigation.css"
+          test -f "$THEME/assets/js/theme.js"
+          grep -nE 'wp_enqueue_(style|script)' "$THEME/inc/assets.php"
 
-          echo '=== DEPENDENCIES HOOKS CPT TAXONOMY CLASSES ==='
-          grep -R -nE 'require(_once)?|include(_once)?|add_action|add_filter|register_post_type|register_taxonomy|register_activation_hook|^class |^final class |^function |bizrise_product' /tmp/brz-core/extract --include='*.php' | head -2000 || true
+          echo '=== WORDPRESS FOUNDATION ==='
+          grep -q 'wp_head' "$THEME/header.php"
+          grep -q 'wp_body_open' "$THEME/header.php"
+          grep -q 'wp_footer' "$THEME/footer.php"
+          grep -q 'get_header' "$THEME/front-page.php"
+          grep -q 'get_footer' "$THEME/front-page.php"
+          grep -q 'get_header' "$THEME/page.php"
+          grep -q 'get_footer' "$THEME/page.php"
+          grep -q 'get_header' "$THEME/single.php"
+          grep -q 'get_footer' "$THEME/single.php"
+          grep -q 'get_header' "$THEME/archive.php"
+          grep -q 'get_footer' "$THEME/archive.php"
 
-          echo '=== FILE HEADERS ==='
-          while IFS= read -r f; do
-            echo "----- ${f#/tmp/brz-core/extract/} -----"
-            sed -n '1,45p' "$f"
-          done < <(find /tmp/brz-core/extract -type f -name '*.php' | sort)
+          echo '=== CORE MODEL ==='
+          grep -q "POST_TYPE = 'bizrise_product'" "$CORE/src/ContentTypes/Product.php"
+          grep -q "register_post_type" "$CORE/src/ContentTypes/Product.php"
+          grep -q "bizrise_brand" "$CORE/src/Taxonomies/ProductTaxonomies.php"
+          grep -q "bizrise_product_category" "$CORE/src/Taxonomies/ProductTaxonomies.php"
+          grep -q "bizrise_collection" "$CORE/src/Taxonomies/ProductTaxonomies.php"
+          grep -q "bizrise_concern" "$CORE/src/Taxonomies/ProductTaxonomies.php"
+          grep -q "bizrise_routine_type" "$CORE/src/Taxonomies/ProductTaxonomies.php"
+          grep -q "META_REGULATORY_STATUS" "$CORE/src/Fields/ProductTruth.php"
+          grep -q "META_VERIFICATION_STATUS" "$CORE/src/Fields/ProductTruth.php"
+          grep -q "regulatory_status_not_active" "$CORE/src/Support/PublicationGate.php"
+          grep -q "verification_not_verified" "$CORE/src/Support/PublicationGate.php"
+          grep -q "legal_hold" "$CORE/src/Support/PublicationGate.php"
+
+          echo '=== HOSTING PATH / PRODUCTION DOMAIN SCAN ==='
+          if grep -R -nE '/home/dangduon6a72|/public_html' "$THEME" "$CORE" --include='*.php' --include='*.css' --include='*.js'; then
+            echo 'Hard-coded hosting path detected in app source.' >&2
+            exit 1
+          fi
+          if grep -R -nE 'https?://(www\.)?dangduonggroup\.com' "$THEME" "$CORE" --include='*.php' --include='*.css' --include='*.js'; then
+            echo 'Hard-coded production domain detected in app source.' >&2
+            exit 1
+          fi
+
+          echo '=== NO BASE64 SOURCE DEPENDENCY ==='
+          if grep -R -nE 'deploy/payloads|\.b64' "$THEME" "$CORE" --include='*.php'; then
+            echo 'App runtime still depends on payloads.' >&2
+            exit 1
+          fi
+
+          echo 'VALIDATION PASS'
