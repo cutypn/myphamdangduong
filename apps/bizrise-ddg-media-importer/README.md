@@ -1,37 +1,58 @@
 # Bizrise DDG Media Importer
 
-Plugin 1-click để import và gắn **các ảnh DDG đã có sẵn** vào content còn thiếu ảnh đại diện/banner.
+Plugin repair media theo nguyên tắc deterministic cho Đăng Dương Group. Plugin ưu tiên reuse attachment đã có trong Media Library, chỉ gắn vào chỗ trống và không ghi đè featured image do người dùng gán thủ công.
 
-## Nguyên tắc
+## Nguyên tắc production
 
-- Không ghi đè featured image đã có.
-- Không re-encode/recompress ảnh nguồn; file JPG trong package là bản có sẵn từ thư viện dự án.
-- Import các asset đã xác định chắc chắn: nhà máy, One Today, Hatagold B5.
-- Gắn banner/thumbnail theo slug/tên sản phẩm.
-- Sau đó thử ghép ảnh đã có trong Media Library bằng title/ALT với ngưỡng tương đồng cao.
-- Hỗ trợ CPT `bizrise_product`, `ddg_product`, `bizrise_brand`, `ddg_brand` và `product` nếu WooCommerce tồn tại.
+- Không fuzzy-map sản phẩm khác nhau.
+- Product mapping dùng exact title/canonical identity + brand guard.
+- Không ghi đè featured image thủ công đã hợp lệ.
+- Attachment do importer quản lý được đánh dấu bằng meta để lần chạy sau reuse, tránh duplicate.
+- ALT chỉ được điền khi attachment đang thiếu ALT và manifest có ALT đã duyệt.
+- Báo cáo runtime có `missing_products`, `missing_assets` và `ambiguous_matches`; không được coi sản phẩm chưa resolve là đã có media.
+- Product Truth là nguồn identity/gate. Media importer không được tự thay tên, brand, SKU hay Product Truth.
+
+## Trạng thái asset bundle trên branch hiện tại
+
+Branch `agent/brz-40-media` hiện không chứa `apps/bizrise-ddg-media-importer/assets/media/`. Vì vậy nhánh `import_asset()` chỉ hoạt động nếu bundle này được bổ sung ở một release sau; snapshot hiện tại chủ yếu reuse attachment first-party đã tồn tại trong Media Library qua `source_fragments`.
+
+Không được mô tả asset mới là `web-ready` nếu chưa qua workflow dự án:
+
+`Photoshop → Export for Web → web asset → CMS`.
 
 ## Cách chạy
 
-1. Upload ZIP qua **Plugins → Add Plugin → Upload Plugin**.
-2. Activate.
-3. Vào **Tools → DDG Media Importer**.
-4. Bấm **Import & gắn ảnh còn thiếu**.
+Admin:
 
-Hoặc WP-CLI:
+`Tools → DDG Media Repair → Repair / Import missing media`
+
+WP-CLI dry-run:
+
+```bash
+wp bizrise ddg-media
+```
+
+WP-CLI apply:
 
 ```bash
 wp bizrise ddg-media --apply
 ```
 
-## Mapping chính
+## Mapping manifest hiện tại
 
 - Factory aerial → `nha-may-san-xuat-my-pham`, `nha-may`, `nang-luc-san-xuat`, `manufacturing`, `factory`.
-- Factory front → `nang-luc`, `ve-dang-duong`, `gioi-thieu` nếu thiếu ảnh.
-- One Today banner → brand/page `one-today`.
-- Hatagold B5 banner → brand/page `hatagold`.
-- Các ảnh Hatagold B5 square → SKU tương ứng theo Product Master.
+- Factory front → `nang-luc`, `ve-dang-duong`, `gioi-thieu`.
+- One Today brand banner → `one-today` / `onetoday`.
+- Hatagold brand banner → `hatagold` / `hata-gold`.
+- Một số product asset Hatagold B5 đang có candidate mapping theo legacy title; phải đối chiếu canonical Product Truth trước khi coi là deterministic mapping production.
+
+## Sprint 0 audit
+
+Xem:
+
+- `docs/MEDIA_SPRINT0_AUDIT_2026-08-22.md`
+- `apps/bizrise-ddg-media-importer/data/publish-allowed-media-audit-2026-08-22.psv`
 
 ## Safety
 
-Plugin chỉ điền chỗ trống. Nếu post/page đã có thumbnail, plugin giữ nguyên ảnh hiện tại.
+Importer chỉ điền chỗ trống. Nếu post/page đã có featured image hợp lệ, importer giữ nguyên. Không dùng fuzzy matching để suy đoán product identity.
