@@ -1,11 +1,10 @@
 name: BRZ Core Source Recovery
 
 on:
-  push:
+  pull_request:
     branches:
       - agent/brz-10-dev
-    paths:
-      - .github/workflows/brz-source-recovery.yml
+    types: [opened, synchronize, reopened]
 
 permissions:
   contents: write
@@ -14,7 +13,7 @@ jobs:
   recover-core:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout full worker history
+      - name: Checkout worker with full history
         uses: actions/checkout@v4
         with:
           ref: agent/brz-10-dev
@@ -28,13 +27,7 @@ jobs:
           mkdir -p /tmp/brz-core-search /tmp/brz-core-extract
 
           python3 - <<'PY'
-          import base64
-          import gzip
-          import io
-          import itertools
-          import os
-          import subprocess
-          import tarfile
+          import base64, gzip, io, itertools, subprocess, tarfile
 
           paths = [
               'deploy/payloads/bizrise-core-v0.8.1.part-00.b64',
@@ -53,13 +46,9 @@ jobs:
           candidates = []
           for path in paths:
               commits = run('git', 'log', '--all', '--format=%H', '--', path).splitlines()
-              blobs = []
-              seen = set()
+              blobs, seen = [], set()
               for commit in commits:
-                  try:
-                      row = run('git', 'ls-tree', '-r', commit, '--', path)
-                  except subprocess.CalledProcessError:
-                      continue
+                  row = run('git', 'ls-tree', '-r', commit, '--', path)
                   if not row:
                       continue
                   blob = row.split()[2]
@@ -67,49 +56,46 @@ jobs:
                       seen.add(blob)
                       blobs.append(blob)
               if not blobs:
-                  raise SystemExit(f'No historical blob candidates for {path}')
+                  raise SystemExit(f'No historical candidates for {path}')
               candidates.append(blobs)
-              print(path, 'candidates:', ','.join(blobs))
+              print(path, len(blobs), 'candidate(s)', blobs)
 
-          attempts = 0
           found = None
+          attempts = 0
           for combo in itertools.product(*candidates):
               attempts += 1
-              chunks = []
               try:
-                  for blob in combo:
-                      text = subprocess.check_output(['git', 'cat-file', 'blob', blob])
-                      chunks.append(b''.join(text.split()))
-                  payload = b''.join(chunks)
+                  payload = b''.join(
+                      b''.join(subprocess.check_output(['git','cat-file','blob',blob]).split())
+                      for blob in combo
+                  )
                   raw = base64.b64decode(payload, validate=True)
                   data = gzip.decompress(raw)
                   with tarfile.open(fileobj=io.BytesIO(data), mode='r:') as tf:
                       names = tf.getnames()
-                      if not any(name.endswith('/bizrise-core.php') or name == 'bizrise-core.php' for name in names):
+                      if not any(n.endswith('/bizrise-core.php') or n == 'bizrise-core.php' for n in names):
                           continue
-                  found = (combo, raw, names)
+                  found = combo, raw, names
                   break
               except Exception:
-                  continue
+                  pass
 
-          if not found:
-              raise SystemExit(f'No valid Core archive found after {attempts} combinations')
+          if found is None:
+              raise SystemExit(f'No valid Core archive after {attempts} combinations')
 
           combo, raw, names = found
-          out = '/tmp/brz-core-search/bizrise-core-v0.8.1.tar.gz'
-          with open(out, 'wb') as f:
+          with open('/tmp/brz-core-search/bizrise-core-v0.8.1.tar.gz','wb') as f:
               f.write(raw)
-          print('VALID_CORE_PAYLOAD_SET')
+          print('VALID_CORE_PAYLOAD_SET after', attempts, 'attempts')
           for path, blob in zip(paths, combo):
-              print(f'{path} {blob}')
-          print('archive_members:', len(names))
-          print('\n'.join(names[:100]))
+              print(path, blob)
+          print('archive members', len(names))
           PY
 
-          tar -tzf /tmp/brz-core-search/bizrise-core-v0.8.1.tar.gz >/tmp/brz-core-search/members.txt
+          tar -tzf /tmp/brz-core-search/bizrise-core-v0.8.1.tar.gz > /tmp/brz-core-search/members.txt
           tar -xzf /tmp/brz-core-search/bizrise-core-v0.8.1.tar.gz -C /tmp/brz-core-extract
 
-      - name: Restore and validate Core source
+      - name: Restore, audit and commit Core source
         shell: bash
         run: |
           set -euo pipefail
@@ -125,36 +111,25 @@ jobs:
           rm -rf apps/bizrise-core
           mkdir -p apps/bizrise-core
           cp -a "$CORE_SRC"/. apps/bizrise-core/
-
           test -f apps/bizrise-core/bizrise-core.php
+
           find apps/bizrise-core -type f -name '*.php' -print0 | xargs -0 -n1 php -l
 
           if grep -R -nE '/home/dangduon6a72|/public_html' apps/bizrise-core --include='*.php'; then
-            echo "Hard-coded hosting path detected in recovered Bizrise Core." >&2
+            echo 'Hard-coded hosting path detected.' >&2
             exit 1
           fi
-
           if grep -R -nE 'https?://(www\.)?dangduonggroup\.com' apps/bizrise-core --include='*.php'; then
-            echo "Hard-coded production domain detected in recovered Bizrise Core." >&2
+            echo 'Hard-coded production domain detected.' >&2
             exit 1
           fi
 
-          grep -R -n "bizrise_product" apps/bizrise-core || true
-          grep -R -nE "register_taxonomy|add_action|add_filter|require_once|include_once" apps/bizrise-core || true
+          echo '--- bizrise_product references ---'
+          grep -R -n 'bizrise_product' apps/bizrise-core || true
+          echo '--- taxonomy/hooks/dependencies ---'
+          grep -R -nE 'register_taxonomy|add_action|add_filter|require_once|include_once' apps/bizrise-core || true
 
           git add apps/bizrise-core
           git rm .github/workflows/brz-source-recovery.yml
-          git commit -m "chore(core): restore bizrise core source"
+          git commit -m 'chore(core): restore bizrise core source'
           git push origin HEAD:agent/brz-10-dev
-
-      - name: Recovery summary
-        if: always()
-        shell: bash
-        run: |
-          {
-            echo '## BRZ-10 Core Source Recovery'
-            echo
-            echo '- Source: validated historical combinations of bizrise-core-v0.8.1 payload chunks'
-            echo '- Validation: base64, gzip, tar, PHP lint, hosting-path/domain scan'
-            echo '- Production branch was not modified'
-          } >> "$GITHUB_STEP_SUMMARY"
