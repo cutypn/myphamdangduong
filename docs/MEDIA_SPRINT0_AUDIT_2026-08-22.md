@@ -1,187 +1,209 @@
-# MEDIA SPRINT 0 — PRODUCTION MEDIA AUDIT
+# MEDIA SPRINT 0 — RE-AUDIT AFTER DATA PASS
 
+Date: 2026-08-22  
 Branch: `agent/brz-40-media`  
-Baseline HEAD: `5d83b8723e7db609a24aefe6c7f7820ff0d6d210`  
-Audit date: 2026-08-22  
-Owner: BRZ-40 Media
+Production base reviewed: `agent/ddg-media-importer` @ `5d83b8723e7db609a24aefe6c7f7820ff0d6d210`  
+Data source: `agent/brz-30-data` commit `08fd7b7383ff45abba2aedfcef2ff72184fa8d33`  
+Scope: media audit / handoff only. No theme change. No Product Truth change. No canonical identity change.
 
-## Scope
+## 1. Data reconciliation
 
-Audit repository-side media behavior only. No theme layout changes, no Product Truth edits, no product identity changes.
+BRZ-30 PASS snapshot is authoritative for this media re-audit:
 
-Audited:
+- Total unique IDs: **104**
+- PUBLISH_ALLOWED: **35**
+- Regulatory active: **35**
+- `unknown + LEGAL_HOLD`: **69**
+- PUBLISH_ALLOWED brands: **One Today 25 / Hatagold 9 / She One 1**
+- IDs `100`, `101`, `102`, `103`, `104` are included.
+- IDs `76`, `77`, `79`, `83`, `89` remain `CANDIDATE_MAPPING_REVIEW` by Data ownership and are not promoted by this audit.
 
-- `apps/bizrise-ddg-media-importer/`
-- `apps/bizrise-ddg-media-hotfix/` because it can change Featured Images after the importer
-- `apps/bizrise-ddg-product-sync/data/product-truth-2026-08-18.psv`
-- `apps/bizrise-ddg-product-sync/bizrise-ddg-product-truth-overlay.php`
+The product-level registry is:
+`apps/bizrise-ddg-media-importer/data/publish-allowed-media-audit-2026-08-22.psv`.
 
-## Data dependency
+## 2. Featured Image gate — 35/35 classified
 
-`agent/brz-30-data` is still identical to the production baseline at the time of this audit. There is no newer Data Sprint output to consume.
+Strict statuses only:
 
-Status: **WAITING_DATA**.
+| Status | Count |
+|---|---:|
+| `FEATURED_OK` | 0 |
+| `MISSING_ASSET` | 30 |
+| `CANDIDATE_MAPPING_REVIEW` | 5 |
+| **Total** | **35** |
 
-For this audit only, the current Product Truth snapshot dated 2026-08-18 is used. It contains **35** rows with:
+`FEATURED_OK = 0` is intentional: repository/static evidence cannot prove the current live WordPress attachment, dimensions, rights, Export for Web history, or manual Featured Image state.
 
-- regulatory status = `active`
-- verification status = `VERIFIED_NOTIFICATION_IMAGE`
-- content gate = `PUBLISH_ALLOWED`
+### Candidate IDs retained
 
-Re-run this audit when BRZ-30 publishes a newer Product Truth / Publish Gate commit.
+- **76** — `hatagold_anti_aging`: candidate filename exists in manifest vocabulary, but canonical title differs from legacy target and Data records DUP-CAND-01 with legacy ID 85.
+- **77** — `hatagold_sunscreen_10g`: filename suggests 10g, but runtime attachment/source and canonical isolation from legacy ID 86 are not proven.
+- **79** — `hatagold_dark_spots`: manifest legacy identity contains wording not identical to canonical title; Data records DUP-CAND-03 with legacy IDs 80/90.
+- **83** — `hatagold_serum`: candidate target `Serum Nám Trắng Da` is materially shorter than canonical Product Truth identity.
+- **89** — `hatagold_sunscreen`: candidate filename does not prove the canonical 50g pack and can overlap a sunscreen product family.
 
-## Importer behavior audit
+No candidate is promoted to deterministic without proving canonical title, brand, pack/size, exact attachment/source, and non-overlap with legacy identities.
 
-### PASS
+### New overlay-only IDs
 
-- Idempotent attachment reuse via `_bizrise_ddg_asset_key`.
-- Reuses existing Media Library attachment before importing.
-- Does not overwrite a valid manual Featured Image.
-- Product binding uses exact title/canonical identity + brand guard; no fuzzy product mapping.
-- Tracks missing products, missing assets and ambiguous matches in runtime report data.
-- ALT is only filled when attachment ALT is empty and manifest provides an ALT value.
+IDs **100–104** are fully present in the registry and currently classified:
 
-### GAPS
+- 100 — `MISSING_ASSET`
+- 101 — `MISSING_ASSET`
+- 102 — `MISSING_ASSET`
+- 103 — `MISSING_ASSET`
+- 104 — `MISSING_ASSET`
 
-1. The branch does not contain `apps/bizrise-ddg-media-importer/assets/media/`. Therefore bundled-file import cannot resolve any new local file in this snapshot; importer is effectively dependent on already-existing Media Library attachments for manifest assets.
-2. Admin report renders missing products but does not visibly render `missing_assets` or `ambiguous_matches`, although both are tracked internally.
-3. Current manifest has no explicit aspect-ratio metadata and no desktop/mobile variant metadata.
-4. Five PUBLISH_ALLOWED Hatagold product candidates are present in manifest, but their target titles are legacy titles while Product Truth canonical titles now contain `B5` and/or different canonical wording. They cannot be counted as deterministic exact-title mappings without runtime verification or a canonical-safe mapping update.
-5. No PUBLISH_ALLOWED One Today product has a deterministic product asset in the importer manifest.
-6. She One PUBLISH_ALLOWED product ID 93 has no deterministic product asset in the importer manifest.
+ID 104 must **not** be mapped to `hatagold_lotus_melasma`; equivalence is not proven.
 
-## Media hotfix audit
+## 3. Importer static audit
 
-`apps/bizrise-ddg-media-hotfix/` runs after the importer and can sideload product images from `myphamanhduong.vn` using normalized exact catalog text.
+`apps/bizrise-ddg-media-importer/` remains deterministic in intent:
 
-Findings:
+- no fuzzy product matching;
+- exact title/canonical identity fallback + brand guard;
+- existing valid Featured Image is preserved;
+- importer-managed attachments use metadata for reuse;
+- report includes missing products/assets and ambiguous matches.
 
-- It preserves an existing Featured Image.
-- It does not fuzzy-match product titles.
-- Dynamic source categories cover One Today, One Today Gold, Ever Today, Cream X2 and She One; Hatagold is not in its external source category list.
-- The dynamically sideloaded assets are not controlled by the importer manifest and are not evidence that the project Photoshop `Export for Web` workflow was completed.
-- Therefore external-hotfix output is **not accepted as web-ready proof in this Sprint audit** until source/rights and Export-for-Web compliance are reviewed.
+Static limitation: the branch does not contain `apps/bizrise-ddg-media-importer/assets/media/`, so bundled `import_asset()` cannot resolve a new binary file on this branch. Current behavior depends primarily on first-party attachments already present in the WordPress Media Library.
 
-## PUBLISH_ALLOWED product audit
+The importer CLI `products_total` / `audit_products()` covers all recognized product post types, not only PUBLISH_ALLOWED records. Therefore Product Truth reconciliation must remain a separate gate around the 35 IDs.
 
-Detailed per-product registry:
+No importer code is changed in this batch because no runtime bug was proven.
 
-`apps/bizrise-ddg-media-importer/data/publish-allowed-media-audit-2026-08-22.psv`
+## 4. External media hotfix audit
 
-Repository-side summary:
+`apps/bizrise-ddg-media-hotfix/` can discover/sideload external catalogue images for configured categories including One Today and She One. It does not currently configure Hatagold as an external category.
 
-- PUBLISH_ALLOWED products audited: **35**
-- Deterministic canonical-safe Featured Image mappings proven from repo: **0**
-- Candidate Hatagold manifest assets requiring mapping/runtime review: **5**
-- Products with no deterministic importer asset: **30**
-- Live CMS Featured Image state: **UNKNOWN** — requires WP-CLI/admin runtime report after Data finalizes
-- Gallery mappings in importer manifest: **0**
+A successful download is **not** production approval.
 
-The audit deliberately does not treat Product Truth evidence/notification images as product packshots.
+Any external hotfix attachment remains not approved until all are verified:
 
-## Hero / banner audit
+1. source page and source image;
+2. usage rights;
+3. exact canonical product identity;
+4. brand;
+5. pack/size where identity depends on it;
+6. dimensions/aspect ratio;
+7. Photoshop `Export for Web` compliance;
+8. canonical ALT.
 
-| Slot | Desktop | Mobile | Repository status | Notes |
-|---|---|---|---|---|
-| Homepage | MISSING | MISSING | NOT_CONFIGURED | No homepage hero asset in importer manifest |
-| Năng lực | `factory_front` candidate | MISSING | PARTIAL | Actual dimensions/ratio not verifiable from repo |
-| Factory | `factory_aerial` candidate | MISSING | PARTIAL | Actual dimensions/ratio not verifiable from repo |
-| R&D | MISSING | MISSING | NOT_CONFIGURED | No R&D banner asset in importer manifest |
-| OEM/ODM | MISSING | MISSING | NOT_CONFIGURED | No OEM/ODM banner asset in importer manifest |
-| Brand hub | MISSING | MISSING | NOT_CONFIGURED | No brand-hub banner asset in importer manifest |
-| One Today | `onetoday_brand_banner` candidate | MISSING | PARTIAL | Desktop/mobile art direction not separated |
-| Hatagold | `hatagold_brand_banner` candidate | MISSING | PARTIAL | Desktop/mobile art direction not separated |
-| She One | MISSING | MISSING | NOT_CONFIGURED | Active in current PUBLISH_ALLOWED snapshot |
-| Other active brands | WAITING_DATA | WAITING_DATA | WAITING_DATA | Re-audit after BRZ-30 final output |
+Until those gates pass, the product remains `MISSING_ASSET` or `CANDIDATE_MAPPING_REVIEW`.
 
-## Ratio compliance
+## 5. Runtime WordPress / Media Library
 
-Required production rules:
-
-- Mobile hero/story: `9:16`
-- Desktop hero/corporate: `16:9`
-- Product: `1:1` or `3:4`
-
-Current importer manifest does not store dimensions or ratio, and source image files are not committed in this branch. Ratio compliance therefore cannot be proven from repository state.
-
-Status for all existing candidate hero/banner/product assets: **RATIO_NOT_VERIFIED**.
-
-No desktop asset may be declared a valid mobile 9:16 asset by crop alone.
-
-## ALT audit
-
-All current hard-coded manifest entries include a non-empty ALT string.
-
-However:
-
-- Product candidates without manifest assets have no controlled ALT in the media manifest.
-- Media Hotfix generates ALT from the product title; this is a fallback, not a reviewed per-image ALT.
-- Decorative assets are not represented as a separate class in the importer manifest, so `alt=""` compliance must be checked in theme/runtime QA.
-
-## SEO headline in images
-
-No evidence in the importer code intentionally embeds the page H1/SEO headline into generated imagery. New creative must keep primary headlines as HTML text where possible.
-
-## Photoshop Export for Web gate
-
-No new binary asset was created in this Sprint.
-
-Any future replacement/new hero, banner, product packshot or video poster must be marked `NEEDS_PHOTOSHOP_EXPORT_FOR_WEB` until the project workflow is completed:
-
-`Photoshop → Export for Web → web asset → CMS`.
-
-Do not call a newly created master/PSD/TIFF/raw asset web-ready before this gate.
-
-## Required next actions
-
-### BRZ-30 Data
-
-- Publish final PUBLISH_ALLOWED list and canonical IDs/names.
-- Notify BRZ-40 of identity changes before media mapping is updated.
-
-### BRZ-40 Media
-
-- Replace legacy-title product mappings with Product-ID/canonical-safe mappings only after Data finalizes.
-- Acquire/approve product packshots for all rows currently `MISSING_ASSET`.
-- Produce dedicated mobile 9:16 assets for P0 hero/story slots; do not crop desktop 16:9 mechanically.
-- Produce/approve desktop 16:9 Homepage, R&D, OEM/ODM, Brand hub and She One banners.
-- Record source, usage rights, ratio, desktop/mobile variant and ALT in the production manifest.
-- Run Photoshop Export for Web before marking newly produced assets web-ready.
-
-### Runtime QA after Data finalizes
-
-Run dry-run first:
+Runtime commands requested:
 
 ```bash
 wp bizrise ddg-media
-```
-
-Then apply only after reviewing unmatched/ambiguous output:
-
-```bash
 wp bizrise ddg-media --apply
+wp bizrise ddg-media
 ```
 
-QA must capture:
+**Result in this re-audit: `NOT_RUN_NO_WP_RUNTIME`.**
 
-- PUBLISH_ALLOWED total
-- Featured Image count
-- Missing Featured Image list
-- ambiguous matches
-- missing manifest assets
-- manual images skipped
-- desktop/mobile hero slots
-- image dimensions/ratios
-- ALT values
+The available project connection exposes GitHub repository operations but no connected cPanel/SSH/WordPress runtime. No fake WP-CLI result is recorded.
 
-## Release conclusion
+Required runtime report once executed in the actual WordPress environment:
 
-**MEDIA SPRINT 0 AUDIT COMPLETE — NOT RELEASE READY.**
+| Metric | Result |
+|---|---|
+| PUBLISH_ALLOWED total | expected 35 from Product Truth; runtime reconciliation required |
+| matched products | NOT_RUN |
+| missing products | NOT_RUN |
+| missing assets | NOT_RUN |
+| ambiguous matches | NOT_RUN |
+| manual featured images skipped | NOT_RUN |
+| attachments reused | NOT_RUN |
+| attachments imported | NOT_RUN |
+| second-run duplicate attachments | NOT_RUN |
+| manual image overwrite | NOT_RUN |
+| Product Truth mutation | NOT_RUN |
 
-Blocking reasons:
+Acceptance after apply:
 
-1. Data Sprint final output is pending.
-2. 30/35 current PUBLISH_ALLOWED products have no deterministic importer asset.
-3. 5/35 have only legacy-title candidate mappings and require canonical-safe verification.
-4. P0 hero/banner coverage is incomplete and dedicated mobile assets are missing.
-5. Ratio compliance cannot be proven from current repository assets.
+- second run imports **0 duplicate attachments**;
+- no valid manual Featured Image is overwritten;
+- Product Truth fields/titles are unchanged;
+- no product crosses identity/brand/pack boundaries;
+- runtime state is written back into this audit before production handoff.
+
+## 6. P0 hero/banner audit
+
+Strict web-ready coverage requires verified ratio + controlled source/rights + project Export for Web history.
+
+| Surface | Desktop 16:9 | Mobile 9:16 | Static evidence | Web-ready |
+|---|---|---|---|---|
+| Homepage | MISSING | MISSING | no dedicated manifest asset | NO |
+| Năng lực | CANDIDATE / ratio unverified | MISSING | `factory_front` targets `nang-luc` | NO |
+| Factory | CANDIDATE / ratio unverified | MISSING | `factory_aerial` targets factory slugs | NO |
+| R&D | MISSING | MISSING | no dedicated manifest asset | NO |
+| OEM/ODM | MISSING | MISSING | no dedicated manifest asset | NO |
+| Brand hub | MISSING | MISSING | no dedicated manifest asset | NO |
+| One Today | CANDIDATE / ratio unverified | MISSING | `onetoday_brand_banner` | NO |
+| Hatagold | CANDIDATE / ratio unverified | MISSING | `hatagold_brand_banner` | NO |
+| She One | MISSING | MISSING | no dedicated manifest asset | NO |
+
+PUBLISH_ALLOWED Product Truth contains only One Today, Hatagold and She One as product-bearing active brands in this snapshot. No additional active brand is inferred.
+
+Coverage:
+
+- Desktop **WEB_READY**: **0/9**
+- Desktop static candidate: **4/9**
+- Mobile **WEB_READY 9:16**: **0/9**
+
+A desktop candidate is never counted as a mobile asset.
+
+## 7. Product media ratio / gallery
+
+For all 35 PUBLISH_ALLOWED products:
+
+- Gallery: no controlled gallery manifest is present → `MISSING_ASSET`.
+- Product desktop/main asset must be verified **1:1 or 3:4**.
+- Candidate files for IDs 76/77/79/83/89 have **unverified ratio**, so none are `WEB_READY`.
+- Dedicated mobile storytelling asset is absent for all 35 in the current importer audit.
+- No desktop crop is accepted as a mobile 9:16 deliverable.
+
+## 8. ALT audit
+
+Rules applied:
+
+- product image ALT must reflect the **canonical Product Truth product**, not a legacy identity;
+- meaningful content media needs descriptive ALT;
+- decorative media uses `alt=""`;
+- no keyword stuffing.
+
+Because no product asset is production-approved in static evidence, the registry stores the required canonical ALT target as `REQUIRES_CANONICAL_ALT:<Canonical Product>`. Existing legacy/generic manifest ALT is not treated as final approval for candidate products.
+
+## 9. Photoshop Export for Web gate
+
+No new binary media was created in this batch.
+
+Current strict status:
+
+- Product assets WEB_READY: **0/35 proven**
+- P0 hero/banner WEB_READY desktop: **0/9 proven**
+- P0 hero/banner WEB_READY mobile: **0/9 proven**
+
+Any new/replacement image must follow:
+
+`Photoshop → Export for Web → web asset → CMS`
+
+Do not mark `WEB_READY` when only PSD/TIFF/master/raw exists, ratio is unverified, source/rights is unverified, or Export for Web cannot be evidenced.
+
+## 10. Production media handoff status
+
+Static re-audit is complete against Data PASS `08fd7b7…`.
+
+Current blockers before BRZ-40 can claim production media completeness:
+
+1. WordPress Media Library dry-run/runtime audit has not been executed.
+2. 30 products have no controlled deterministic asset in repo audit.
+3. 5 Hatagold products remain candidate-only.
+4. No controlled product gallery coverage.
+5. P0 hero desktop strict WEB_READY coverage is 0/9.
+6. P0 hero mobile 9:16 coverage is 0/9.
+7. Export for Web / ratio / rights evidence is not established for static candidates.
+
+This batch is ready for **BRZ-80 re-audit of the media audit artifact**, but it is not a declaration that production media is complete.
