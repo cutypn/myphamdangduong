@@ -165,28 +165,39 @@ final class Bizrise_DDG_Product_Sync {
                 $created = true;
             }
 
+            $existing_verification = trim((string)get_post_meta($post_id, self::VERIFY_STATUS, true));
+            $existing_gate = strtoupper(trim((string)get_post_meta($post_id, self::CONTENT_GATE, true)));
+            $has_verified_truth = self::verification_is_approved($existing_verification) && $existing_gate === 'PUBLISH_ALLOWED';
+
             $managed_meta = [
                 self::MASTER_KEY=>$master_key,
                 '_bizrise_ddg_master_id'=>$id,
-                '_bizrise_ddg_master_version'=>'2026',
-                'brand'=>$brand,
-                '_brand'=>$brand,
-                'brand_name'=>$brand,
-                '_brand_name'=>$brand,
-                'product_brand'=>$brand,
-                '_product_brand'=>$brand,
-                'ddg_brand'=>$brand,
-                '_ddg_brand'=>$brand,
-                'ddg_brand_slug'=>sanitize_title($brand),
-                '_ddg_brand_slug'=>sanitize_title($brand),
-                'product_group'=>$group,
-                '_product_group'=>$group,
                 '_bizrise_ddg_source_url'=>$source,
             ];
+            if (!$has_verified_truth) {
+                $managed_meta += [
+                    'brand'=>$brand,
+                    '_brand'=>$brand,
+                    'brand_name'=>$brand,
+                    '_brand_name'=>$brand,
+                    'product_brand'=>$brand,
+                    '_product_brand'=>$brand,
+                    'ddg_brand'=>$brand,
+                    '_ddg_brand'=>$brand,
+                    'ddg_brand_slug'=>sanitize_title($brand),
+                    '_ddg_brand_slug'=>sanitize_title($brand),
+                    'product_group'=>$group,
+                    '_product_group'=>$group,
+                ];
+            }
             $changed = false;
             foreach ($managed_meta as $key=>$value) {
                 if ((string)get_post_meta($post_id, $key, true) === (string)$value) { continue; }
                 update_post_meta($post_id, $key, $value);
+                $changed = true;
+            }
+            if ((string)get_post_meta($post_id, '_bizrise_ddg_master_version', true) === '') {
+                update_post_meta($post_id, '_bizrise_ddg_master_version', '2026');
                 $changed = true;
             }
 
