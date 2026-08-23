@@ -3,7 +3,7 @@ Theme Name: Bizrise DDG
 Theme URI: https://dangduonggroup.com/
 Author: Bizrise Framework
 Description: Clean V2 presentation theme for Đăng Dương Group. Business data belongs to Bizrise Core.
-Version: 0.2.0
+Version: 0.2.1
 Requires at least: 6.6
 Requires PHP: 8.2
 Text Domain: bizrise-ddg
@@ -30,10 +30,17 @@ a { color: inherit; }
 img { max-width: 100%; height: auto; }
 .ddg-container { width: min(var(--ddg-container), calc(100% - 40px)); margin-inline: auto; }
 .ddg-site-header { position: sticky; top: 0; z-index: 20; background: rgba(255,255,255,.96); border-bottom: 1px solid var(--ddg-line); backdrop-filter: blur(12px); }
-.ddg-header-inner { min-height: 76px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
-.ddg-brand { color: var(--ddg-red); font-weight: 800; letter-spacing: .03em; text-decoration: none; }
-.ddg-nav ul { display: flex; flex-wrap: wrap; gap: 22px; padding: 0; margin: 0; list-style: none; }
-.ddg-nav a { text-decoration: none; font-size: .92rem; font-weight: 600; }
+.ddg-header-inner { min-height: 78px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.ddg-brand-wrap { flex: 0 0 auto; }
+.ddg-brand { color: var(--ddg-red); font-weight: 800; letter-spacing: .03em; text-decoration: none; white-space: nowrap; }
+.ddg-brand-wrap .custom-logo-link { display: inline-flex; align-items: center; }
+.ddg-brand-wrap .custom-logo { width: auto; max-width: 210px; max-height: 52px; object-fit: contain; }
+.ddg-nav { flex: 1 1 auto; display: flex; justify-content: center; }
+.ddg-nav ul { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 18px; padding: 0; margin: 0; list-style: none; }
+.ddg-nav a { text-decoration: none; font-size: .88rem; font-weight: 650; white-space: nowrap; }
+.ddg-header-actions { flex: 0 0 auto; display: flex; align-items: center; gap: 14px; }
+.ddg-header-link { color: var(--ddg-red); text-decoration: none; font-size: .82rem; font-weight: 800; white-space: nowrap; }
+.ddg-header-cta { display: inline-flex; align-items: center; justify-content: center; min-height: 42px; padding: 0 18px; border-radius: 999px; background: var(--ddg-red); color: #fff; text-decoration: none; font-size: .82rem; font-weight: 800; white-space: nowrap; }
 .ddg-main { min-height: 60vh; }
 .ddg-eyebrow { margin: 0 0 16px; color: var(--ddg-red); font-size: .75rem; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; }
 .ddg-home h1,.ddg-home h2,.ddg-home h3 { margin-top: 0; letter-spacing: -.035em; }
@@ -85,6 +92,11 @@ img { max-width: 100%; height: auto; }
 .ddg-site-footer { padding: 48px 0; color: #f7f3ed; background: var(--ddg-charcoal); }
 .ddg-footer-inner { display: flex; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
 
+@media (max-width: 1100px) {
+  .ddg-header-inner { flex-wrap: wrap; padding-block: 12px; }
+  .ddg-nav { order: 3; flex-basis: 100%; justify-content: flex-start; }
+  .ddg-nav ul { justify-content: flex-start; }
+}
 @media (max-width: 900px) {
   .ddg-home-hero { min-height: 76svh; }
   .ddg-home-hero__inner { padding: 130px 0 64px; }
@@ -92,12 +104,17 @@ img { max-width: 100%; height: auto; }
   .ddg-home-cardgrid { grid-template-columns: 1fr 1fr; }
 }
 @media (max-width: 820px) {
-  .ddg-header-inner { min-height: 68px; align-items: flex-start; padding-block: 16px; flex-direction: column; }
+  .ddg-header-actions { width: 100%; justify-content: flex-start; }
   .ddg-nav ul { gap: 12px 18px; }
   .ddg-grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 620px) {
   .ddg-container { width: min(var(--ddg-container), calc(100% - 28px)); }
+  .ddg-brand-wrap .custom-logo { max-width: 180px; max-height: 46px; }
+  .ddg-header-actions { gap: 10px; }
+  .ddg-header-cta { padding-inline: 14px; }
+  .ddg-nav { overflow-x: auto; width: 100%; }
+  .ddg-nav ul { flex-wrap: nowrap; width: max-content; padding-bottom: 4px; }
   .ddg-home-hero { min-height: 82svh; background-position: center top !important; }
   .ddg-home-hero__inner { padding: 112px 0 48px; }
   .ddg-home-hero h1 { font-size: clamp(2.9rem, 14vw, 4.4rem); }
