@@ -2,37 +2,20 @@
   "$schema": "https://schemas.wp.org/trunk/theme.json",
   "version": 3,
   "settings": {
-    "appearanceTools": true,
-    "layout": {
-      "contentSize": "820px",
-      "wideSize": "1180px"
-    },
-    "typography": {
-      "fontFamilies": [
-        {
-          "fontFamily": "\"Be Vietnam Pro\", sans-serif",
-          "name": "Be Vietnam Pro",
-          "slug": "be-vietnam-pro"
-        }
-      ]
-    },
+    "layout": {"contentSize": "880px", "wideSize": "1240px"},
+    "typography": {"fluid": true},
     "color": {
       "palette": [
-        {"slug":"ddg-red","name":"DDG Burgundy","color":"#8B1E24"},
-        {"slug":"ddg-ivory","name":"DDG Ivory","color":"#F7F3ED"},
-        {"slug":"ddg-champagne","name":"DDG Champagne","color":"#D8B36A"},
-        {"slug":"ddg-charcoal","name":"DDG Charcoal","color":"#2A2A2A"},
-        {"slug":"white","name":"White","color":"#FFFFFF"}
+        {"slug":"wine","name":"Wine","color":"#7f111d"},
+        {"slug":"gold","name":"Gold","color":"#ba8540"},
+        {"slug":"ivory","name":"Ivory","color":"#fbf7f0"},
+        {"slug":"ink","name":"Ink","color":"#251f1d"},
+        {"slug":"white","name":"White","color":"#ffffff"}
       ]
     }
   },
   "styles": {
-    "typography": {
-      "fontFamily": "var(--wp--preset--font-family--be-vietnam-pro)"
-    },
-    "color": {
-      "text": "#2A2A2A",
-      "background": "#FFFFFF"
-    }
+    "typography": {"fontFamily": "\"Be Vietnam Pro\", sans-serif", "lineHeight": "1.7"},
+    "color": {"text": "#251f1d", "background": "#ffffff"}
   }
 }
