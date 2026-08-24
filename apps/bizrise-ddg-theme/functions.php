@@ -16,6 +16,9 @@ add_action('after_setup_theme', static function (): void {
     add_theme_support('post-thumbnails');
     add_theme_support('responsive-embeds');
     add_theme_support('editor-styles');
+    add_theme_support('woocommerce');
+    add_theme_support('wc-product-gallery-lightbox');
+    add_theme_support('wc-product-gallery-slider');
     add_theme_support('custom-logo', [
         'height'      => 80,
         'width'       => 260,
@@ -45,6 +48,15 @@ add_action('wp_enqueue_scripts', static function (): void {
         ['bizrise-ddg'],
         $version
     );
+
+    if (class_exists('WooCommerce') && (is_woocommerce() || is_cart() || is_checkout() || is_account_page())) {
+        wp_enqueue_style(
+            'bizrise-ddg-woocommerce',
+            get_template_directory_uri() . '/assets/css/woocommerce.css',
+            ['bizrise-ddg'],
+            $version
+        );
+    }
 });
 
 add_filter('document_title_separator', static fn (): string => '—');
