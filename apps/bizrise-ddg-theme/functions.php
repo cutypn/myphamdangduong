@@ -31,13 +31,20 @@ add_action('after_setup_theme', static function (): void {
 });
 
 add_action('wp_enqueue_scripts', static function (): void {
+    $version = wp_get_theme()->get('Version');
     wp_enqueue_style(
         'bizrise-ddg-font',
         'https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap',
         [],
         null
     );
-    wp_enqueue_style('bizrise-ddg', get_stylesheet_uri(), ['bizrise-ddg-font'], wp_get_theme()->get('Version'));
+    wp_enqueue_style('bizrise-ddg', get_stylesheet_uri(), ['bizrise-ddg-font'], $version);
+    wp_enqueue_style(
+        'bizrise-ddg-singular',
+        get_template_directory_uri() . '/assets/css/singular.css',
+        ['bizrise-ddg'],
+        $version
+    );
 });
 
 add_filter('document_title_separator', static fn (): string => '—');
