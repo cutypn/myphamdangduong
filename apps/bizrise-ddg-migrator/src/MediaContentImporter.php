@@ -11,7 +11,6 @@ final class MediaContentImporter {
     private const OPTION_REPORT = 'bizrise_ddg_media_content_report';
     private const ARTICLE_KEY = '_bizrise_ddg_article_key';
     private const ARTICLE_BACKUP = '_bizrise_ddg_article_backup';
-    private const HERO_SOURCE = '_bizrise_ddg_hero_source_filename';
     private const PAGE_KEY = '_bizrise_ddg_site_importer_key';
 
     public static function register_hooks(): void {
@@ -36,7 +35,13 @@ final class MediaContentImporter {
     }
 
     public static function register_admin_page(): void {
-        add_management_page( 'DDG Media & Articles', 'DDG Media & Articles', 'manage_options', 'bizrise-ddg-media-content', array( self::class, 'render_admin_page' ) );
+        add_management_page(
+            'DDG Media & Articles',
+            'DDG Media & Articles',
+            'manage_options',
+            'bizrise-ddg-media-content',
+            array( self::class, 'render_admin_page' )
+        );
     }
 
     public static function render_admin_page(): void {
@@ -45,7 +50,7 @@ final class MediaContentImporter {
         ?>
         <div class="wrap">
             <h1>DDG Media &amp; Articles</h1>
-            <p>Tìm ảnh đã có trong Media Library theo filename, tạo hero crop 16:9, gán Featured Image và upsert bài viết. Chạy lại không tạo bản trùng.</p>
+            <p>Gán trực tiếp ảnh đã có trong Media Library làm Featured/Hero. Hero 16:9 được xử lý bằng CSS của theme, không resize/crop bằng Imagick trong lúc import.</p>
             <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
                 <input type="hidden" name="action" value="bizrise_ddg_media_content_import">
                 <?php wp_nonce_field( 'bizrise_ddg_media_content_import' ); ?>
@@ -71,6 +76,7 @@ final class MediaContentImporter {
         $seed = self::load_seed();
         $report = array(
             'version' => BIZRISE_DDG_MIGRATOR_VERSION,
+            'hero_mode' => 'original_attachment_css_crop',
             'articles_created' => 0,
             'articles_updated' => 0,
             'hero_created' => 0,
@@ -109,6 +115,7 @@ final class MediaContentImporter {
         }
 
         self::sync_knowledge_index( $article_ids, $seed['articles'] ?? array() );
+        $report['missing_media'] = array_values( array_unique( $report['missing_media'] ) );
         flush_rewrite_rules( false );
         return $report;
     }
@@ -117,7 +124,11 @@ final class MediaContentImporter {
         try {
             $report = self::run();
         } catch ( \Throwable $error ) {
-            $report = array( 'version' => BIZRISE_DDG_MIGRATOR_VERSION, 'errors' => array( array( 'message' => $error->getMessage() ) ) );
+            $report = array(
+                'version' => BIZRISE_DDG_MIGRATOR_VERSION,
+                'hero_mode' => 'original_attachment_css_crop',
+                'errors' => array( array( 'message' => $error->getMessage() ) ),
+            );
         }
         update_option( self::OPTION_REPORT, $report, false );
         if ( empty( $report['errors'] ) && empty( $report['missing_media'] ) ) {
@@ -145,7 +156,12 @@ final class MediaContentImporter {
         if ( $post_id && ! get_post_meta( $post_id, self::ARTICLE_BACKUP, true ) ) {
             $old = get_post( $post_id );
             if ( $old instanceof \WP_Post ) {
-                update_post_meta( $post_id, self::ARTICLE_BACKUP, array( 'title' => $old->post_title, 'content' => $old->post_content, 'excerpt' => $old->post_excerpt, 'status' => $old->post_status ) );
+                update_post_meta( $post_id, self::ARTICLE_BACKUP, array(
+                    'title' => $old->post_title,
+                    'content' => $old->post_content,
+                    'excerpt' => $old->post_excerpt,
+                    'status' => $old->post_status,
+                ) );
             }
         }
         $postarr = array(
@@ -175,13 +191,26 @@ final class MediaContentImporter {
     }
 
     private static function find_article( string $key ): int {
-        $ids = get_posts( array( 'post_type' => 'post', 'post_status' => 'any', 'posts_per_page' => 1, 'fields' => 'ids', 'meta_key' => self::ARTICLE_KEY, 'meta_value' => sanitize_key( $key ), 'no_found_rows' => true ) );
+        $ids = get_posts( array(
+            'post_type' => 'post', 'post_status' => 'any', 'posts_per_page' => 1, 'fields' => 'ids',
+            'meta_key' => self::ARTICLE_KEY, 'meta_value' => sanitize_key( $key ), 'no_found_rows' => true,
+        ) );
         return $ids ? (int) $ids[0] : 0;
     }
 
     private static function find_page_by_key( string $key ): int {
-        $ids = get_posts( array( 'post_type' => 'page', 'post_status' => 'any', 'posts_per_page' => 1, 'fields' => 'ids', 'meta_key' => self::PAGE_KEY, 'meta_value' => sanitize_key( $key ), 'no_found_rows' => true ) );
-        return $ids ? (int) $ids[0] : 0;
+        $ids = get_posts( array(
+            'post_type' => 'page', 'post_status' => 'any', 'posts_per_page' => 1, 'fields' => 'ids',
+            'meta_key' => self::PAGE_KEY, 'meta_value' => sanitize_key( $key ), 'no_found_rows' => true,
+        ) );
+        if ( $ids ) { return (int) $ids[0]; }
+        $fallback_slugs = array(
+            'home' => 'trang-chu', 'about' => 've-dang-duong', 'capability' => 'nang-luc',
+            'brands' => 'thuong-hieu', 'products' => 'san-pham', 'knowledge' => 'kien-thuc', 'partners' => 'doi-tac',
+        );
+        if ( empty( $fallback_slugs[ $key ] ) ) { return 0; }
+        $page = get_page_by_path( $fallback_slugs[ $key ], OBJECT, 'page' );
+        return $page instanceof \WP_Post ? (int) $page->ID : 0;
     }
 
     private static function process_hero_target( array $target, array $article_ids, array &$report ): void {
@@ -190,75 +219,53 @@ final class MediaContentImporter {
         $post_id = 0;
         if ( 'page' === ( $target['target_type'] ?? '' ) ) { $post_id = self::find_page_by_key( (string) ( $target['target_key'] ?? '' ) ); }
         elseif ( 'article' === ( $target['target_type'] ?? '' ) ) { $post_id = (int) ( $article_ids[ $target['target_key'] ?? '' ] ?? 0 ); }
-        if ( ! $post_id ) { $report['errors'][] = array( 'hero_target' => $target['target_key'] ?? 'unknown', 'message' => 'Target post was not found.' ); return; }
+        if ( ! $post_id ) {
+            $report['errors'][] = array( 'hero_target' => $target['target_key'] ?? 'unknown', 'message' => 'Target post was not found.' );
+            return;
+        }
         $source_id = self::find_attachment_by_filename( $filename );
         if ( ! $source_id ) { $report['missing_media'][] = $filename; return; }
-        try {
-            $hero = self::ensure_hero_derivative( $source_id, $filename, (string) ( $target['alt'] ?? '' ) );
-            ++$report[ 'created' === $hero['result'] ? 'hero_created' : 'hero_reused' ];
-            set_post_thumbnail( $post_id, (int) $hero['id'] );
-            ++$report['hero_assigned'];
-        } catch ( \Throwable $error ) {
-            $report['errors'][] = array( 'hero' => $filename, 'message' => $error->getMessage() );
-        }
+        $alt = sanitize_text_field( (string) ( $target['alt'] ?? '' ) );
+        if ( $alt ) { update_post_meta( $source_id, '_wp_attachment_image_alt', $alt ); }
+        set_post_thumbnail( $post_id, $source_id );
+        ++$report['hero_reused'];
+        ++$report['hero_assigned'];
     }
 
     private static function find_attachment_by_filename( string $filename ): int {
         global $wpdb;
         $like = '%' . $wpdb->esc_like( $filename );
-        $id = (int) $wpdb->get_var( $wpdb->prepare( "SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = '_wp_attached_file' AND meta_value LIKE %s ORDER BY post_id DESC LIMIT 1", $like ) );
+        $id = (int) $wpdb->get_var( $wpdb->prepare(
+            "SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = '_wp_attached_file' AND meta_value LIKE %s ORDER BY post_id DESC LIMIT 1",
+            $like
+        ) );
         if ( $id ) { return $id; }
-        return (int) $wpdb->get_var( $wpdb->prepare( "SELECT ID FROM {$wpdb->posts} WHERE post_type = 'attachment' AND guid LIKE %s ORDER BY ID DESC LIMIT 1", $like ) );
-    }
-
-    private static function ensure_hero_derivative( int $source_id, string $source_filename, string $alt ): array {
-        $existing = get_posts( array( 'post_type' => 'attachment', 'post_status' => 'inherit', 'posts_per_page' => 1, 'fields' => 'ids', 'meta_key' => self::HERO_SOURCE, 'meta_value' => $source_filename, 'no_found_rows' => true ) );
-        if ( $existing ) {
-            $id = (int) $existing[0];
-            if ( $alt ) { update_post_meta( $id, '_wp_attachment_image_alt', sanitize_text_field( $alt ) ); }
-            return array( 'id' => $id, 'result' => 'reused' );
-        }
-        $source_path = get_attached_file( $source_id );
-        if ( ! $source_path || ! is_readable( $source_path ) ) { throw new RuntimeException( 'Source media file is not readable.' ); }
-        require_once ABSPATH . 'wp-admin/includes/image.php';
-        $editor = wp_get_image_editor( $source_path );
-        if ( is_wp_error( $editor ) ) { throw new RuntimeException( $editor->get_error_message() ); }
-        $size = $editor->get_size();
-        $width = max( 1, (int) ( $size['width'] ?? 1 ) );
-        $height = max( 1, (int) ( $size['height'] ?? 1 ) );
-        $target_width = min( 1600, $width );
-        $target_height = (int) round( $target_width * 9 / 16 );
-        if ( $target_height > $height ) { $target_height = min( 900, $height ); $target_width = (int) round( $target_height * 16 / 9 ); }
-        if ( $target_width < 320 || $target_height < 180 ) { throw new RuntimeException( 'Source media is too small for hero crop.' ); }
-        $resized = $editor->resize( $target_width, $target_height, true );
-        if ( is_wp_error( $resized ) ) { throw new RuntimeException( $resized->get_error_message() ); }
-        $editor->set_quality( 82 );
-        $target_filename = 'ddg-hero-' . sanitize_title( pathinfo( $source_filename, PATHINFO_FILENAME ) ) . '.jpg';
-        $target_path = trailingslashit( dirname( $source_path ) ) . $target_filename;
-        $saved = $editor->save( $target_path, 'image/jpeg' );
-        if ( is_wp_error( $saved ) ) { throw new RuntimeException( $saved->get_error_message() ); }
-        $attachment_id = wp_insert_attachment( array( 'post_mime_type' => 'image/jpeg', 'post_title' => sanitize_text_field( $alt ?: pathinfo( $source_filename, PATHINFO_FILENAME ) ), 'post_status' => 'inherit' ), $target_path );
-        if ( is_wp_error( $attachment_id ) ) { throw new RuntimeException( $attachment_id->get_error_message() ); }
-        $attachment_id = (int) $attachment_id;
-        wp_update_attachment_metadata( $attachment_id, wp_generate_attachment_metadata( $attachment_id, $target_path ) );
-        update_post_meta( $attachment_id, self::HERO_SOURCE, $source_filename );
-        update_post_meta( $attachment_id, '_wp_attachment_image_alt', sanitize_text_field( $alt ) );
-        return array( 'id' => $attachment_id, 'result' => 'created' );
+        return (int) $wpdb->get_var( $wpdb->prepare(
+            "SELECT ID FROM {$wpdb->posts} WHERE post_type = 'attachment' AND guid LIKE %s ORDER BY ID DESC LIMIT 1",
+            $like
+        ) );
     }
 
     private static function sync_knowledge_index( array $article_ids, array $articles ): void {
         $page_id = self::find_page_by_key( 'knowledge' );
         $post = $page_id ? get_post( $page_id ) : null;
         if ( ! $post instanceof \WP_Post ) { return; }
-        $content = preg_replace( '/<!-- ddg-managed-article-index:start -->.*?<!-- ddg-managed-article-index:end -->/s', '', (string) $post->post_content );
-        $items = '';
-        foreach ( $article_ids as $key => $id ) {
-            if ( empty( $articles[ $key ] ) ) { continue; }
-            $items .= '<li><a href="' . esc_url( get_permalink( $id ) ) . '">' . esc_html( $articles[ $key ]['title'] ) . '</a></li>';
+        $items = array();
+        foreach ( $articles as $key => $article ) {
+            $article_id = (int) ( $article_ids[ $key ] ?? 0 );
+            if ( ! $article_id ) { continue; }
+            $items[] = sprintf( '<li><a href="%s">%s</a></li>', esc_url( get_permalink( $article_id ) ), esc_html( get_the_title( $article_id ) ) );
         }
-        if ( $items ) {
-            $block = '<!-- ddg-managed-article-index:start --><h2>Bài viết mới</h2><ul class="ddg-article-index">' . $items . '</ul><!-- ddg-managed-article-index:end -->';
-            wp_update_post( array( 'ID' => $page_id, 'post_content' => trim( $content ) . $block ) );
-        }
+        if ( ! $items ) { return; }
+        $managed = '<!-- ddg-managed-article-index:start -->'
+            . '<section class="ddg-managed-article-index"><h2>Bài viết mới</h2><ul class="ddg-article-index">'
+            . implode( '', $items )
+            . '</ul></section>'
+            . '<!-- ddg-managed-article-index:end -->';
+        $content = (string) $post->post_content;
+        $pattern = '/<!-- ddg-managed-article-index:start -->.*?<!-- ddg-managed-article-index:end -->/s';
+        if ( preg_match( $pattern, $content ) ) { $content = (string) preg_replace( $pattern, $managed, $content ); }
+        else { $content = rtrim( $content ) . "\n\n" . $managed; }
+        wp_update_post( array( 'ID' => $page_id, 'post_content' => wp_kses_post( $content ) ) );
     }
 }
