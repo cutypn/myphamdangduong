@@ -3,7 +3,7 @@ Theme Name: Bizrise DDG Theme 2
 Theme URI: https://dangduonggroup.com/
 Author: Bizrise Framework
 Description: Corporate beauty design system for Đăng Dương Group — Theme 2 master.
-Version: 2.0.0
+Version: 2.1.2
 Requires at least: 6.6
 Requires PHP: 8.2
 Text Domain: bizrise-ddg
@@ -25,7 +25,7 @@ Text Domain: bizrise-ddg
   --t2-radius:28px;
   --t2-container:1240px;
   --t2-sans:"Be Vietnam Pro",sans-serif;
-  --t2-serif:"Cormorant Garamond",serif;
+  --t2-serif:"Be Vietnam Pro",sans-serif;
 }
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
