@@ -9,7 +9,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('BIZRISE_DDG_THEME_VERSION', '2.0.0');
+define('BIZRISE_DDG_THEME_VERSION', '2.1.2');
 
 add_action('after_setup_theme', static function (): void {
     add_theme_support('title-tag');
@@ -21,8 +21,8 @@ add_action('after_setup_theme', static function (): void {
     add_theme_support('wc-product-gallery-lightbox');
     add_theme_support('wc-product-gallery-slider');
     add_theme_support('custom-logo', [
-        'height'      => 96,
-        'width'       => 300,
+        'height'      => 110,
+        'width'       => 360,
         'flex-height' => true,
         'flex-width'  => true,
     ]);
@@ -34,12 +34,17 @@ add_action('after_setup_theme', static function (): void {
         'primary' => __('Điều hướng chính', 'bizrise-ddg'),
         'footer'  => __('Điều hướng chân trang', 'bizrise-ddg'),
     ]);
+
+    add_image_size('ddg-theme2-product', 900, 1600, false);
+    add_image_size('ddg-theme2-editorial', 1280, 820, true);
 });
+
+add_filter('woocommerce_enqueue_styles', '__return_empty_array');
 
 add_action('wp_enqueue_scripts', static function (): void {
     wp_enqueue_style(
         'bizrise-ddg-fonts',
-        'https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Cormorant+Garamond:wght@500;600;700&display=swap',
+        'https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap',
         [],
         null
     );
@@ -57,7 +62,30 @@ add_action('wp_enqueue_scripts', static function (): void {
         BIZRISE_DDG_THEME_VERSION,
         true
     );
-});
+}, 30);
+
+add_action('wp_enqueue_scripts', static function (): void {
+    foreach (['ddg-product-ui', 'ddg-frontend-override'] as $handle) {
+        wp_dequeue_style($handle);
+        wp_deregister_style($handle);
+    }
+}, 10000);
+
+add_filter('template_include', static function (string $template): string {
+    if (is_front_page()) {
+        $front = get_theme_file_path('/front-page.php');
+        return is_readable($front) ? $front : $template;
+    }
+    if (function_exists('is_product') && is_product()) {
+        $single = get_theme_file_path('/woocommerce/single-product.php');
+        return is_readable($single) ? $single : $template;
+    }
+    if (function_exists('is_shop') && (is_shop() || is_post_type_archive('product') || is_tax(['product_cat', 'product_tag']))) {
+        $archive = get_theme_file_path('/woocommerce/archive-product.php');
+        return is_readable($archive) ? $archive : $template;
+    }
+    return $template;
+}, 20000);
 
 add_filter('document_title_separator', static fn (): string => '—');
 
@@ -134,24 +162,107 @@ function ddg_theme2_notification_id(int $product_id): int {
     return (int)get_post_meta($product_id, '_bizrise_ddg_notification_attachment_id', true);
 }
 
+function ddg_theme2_product_brand_url(int $product_id): string {
+    $taxonomy = ddg_theme2_brand_taxonomy();
+    if ($taxonomy !== '') {
+        $terms = wp_get_post_terms($product_id, $taxonomy, ['number' => 1]);
+        if (!is_wp_error($terms) && $terms) {
+            $url = get_term_link($terms[0]);
+            if (!is_wp_error($url)) {
+                return (string)$url;
+            }
+        }
+    }
+    return ddg_theme2_url('thuong-hieu');
+}
+
+function ddg_theme2_product_status_label(int $product_id): string {
+    if ((string)get_post_meta($product_id, '_bizrise_legal_hold', true) === '1') {
+        return 'HOLD — không công khai';
+    }
+    if (get_post_status($product_id) === 'draft') {
+        return 'Bản nháp xem trước';
+    }
+    return '';
+}
+
+function ddg_theme2_visible_product_statuses(): array {
+    if (is_user_logged_in() && current_user_can('edit_products')) {
+        return ['publish', 'draft'];
+    }
+    return ['publish'];
+}
+
+function ddg_theme2_company_contact(): array {
+    $data = [
+        'name'    => get_bloginfo('name') ?: 'Đăng Dương Group',
+        'website' => home_url('/'),
+        'email'   => '',
+        'phone'   => '',
+        'address' => '',
+    ];
+
+    $contact_page = get_page_by_path('lien-he');
+    if ($contact_page instanceof WP_Post) {
+        $raw = (string)get_post_field('post_content', $contact_page->ID);
+        $plain = html_entity_decode(wp_strip_all_tags($raw), ENT_QUOTES, 'UTF-8');
+        if (preg_match('/mailto:([^"\'\s<>]+)/iu', $raw, $m)) {
+            $data['email'] = sanitize_email(rawurldecode($m[1]));
+        } elseif (preg_match('/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}/iu', $plain, $m)) {
+            $data['email'] = sanitize_email($m[0]);
+        }
+        if (preg_match('/tel:([^"\'\s<>]+)/iu', $raw, $m)) {
+            $data['phone'] = trim(rawurldecode($m[1]));
+        } elseif (preg_match('/(?:\+?84|0)[0-9 .()\-]{8,18}/u', $plain, $m)) {
+            $data['phone'] = trim($m[0]);
+        }
+    }
+
+    if ($data['email'] === '') {
+        $woo_email = sanitize_email((string)get_option('woocommerce_email_from_address', ''));
+        if ($woo_email !== '') {
+            $data['email'] = $woo_email;
+        }
+    }
+
+    $address_parts = array_filter([
+        trim((string)get_option('woocommerce_store_address', '')),
+        trim((string)get_option('woocommerce_store_address_2', '')),
+        trim((string)get_option('woocommerce_store_city', '')),
+        trim((string)get_option('woocommerce_store_postcode', '')),
+    ]);
+    if ($address_parts) {
+        $data['address'] = implode(', ', array_values(array_unique($address_parts)));
+    }
+    return $data;
+}
+
 function ddg_theme2_card_product(int $product_id): void {
     $title = get_the_title($product_id);
     $url   = get_permalink($product_id);
     $brand = ddg_theme2_product_brand($product_id);
     $pack  = ddg_theme2_product_pack($product_id);
+    $status_label = ddg_theme2_product_status_label($product_id);
     ?>
     <article class="t2-product-card">
-        <a class="t2-product-card__media" href="<?php echo esc_url($url); ?>">
-            <?php if (has_post_thumbnail($product_id)) : ?>
-                <?php echo get_the_post_thumbnail($product_id, 'large', ['loading' => 'lazy', 'decoding' => 'async']); ?>
-            <?php else : ?>
-                <span class="t2-product-card__placeholder">ĐĂNG DƯƠNG</span>
-            <?php endif; ?>
+        <a class="t2-product-card__media" href="<?php echo esc_url($url); ?>" aria-label="<?php echo esc_attr($title); ?>">
+            <span class="t2-product-card__media-brand"><?php echo esc_html($brand); ?></span>
+            <span class="t2-product-card__image-stage">
+                <?php if (has_post_thumbnail($product_id)) : ?>
+                    <?php echo get_the_post_thumbnail($product_id, 'full', ['loading' => 'lazy', 'decoding' => 'async']); ?>
+                <?php else : ?>
+                    <span class="t2-product-card__placeholder">ĐĂNG DƯƠNG</span>
+                <?php endif; ?>
+            </span>
+            <span class="t2-product-card__media-meta">
+                <strong><?php echo esc_html($title); ?></strong>
+                <?php if ($pack !== '') : ?><small><?php echo esc_html($pack); ?></small><?php endif; ?>
+            </span>
+            <?php if ($status_label !== '' && current_user_can('edit_products')) : ?><span class="t2-product-card__status"><?php echo esc_html($status_label); ?></span><?php endif; ?>
         </a>
         <div class="t2-product-card__copy">
             <p class="t2-kicker"><?php echo esc_html($brand); ?></p>
             <h3><a href="<?php echo esc_url($url); ?>"><?php echo esc_html($title); ?></a></h3>
-            <?php if ($pack !== '') : ?><p class="t2-product-card__pack"><?php echo esc_html($pack); ?></p><?php endif; ?>
             <a class="t2-text-link" href="<?php echo esc_url($url); ?>"><?php esc_html_e('Xem sản phẩm', 'bizrise-ddg'); ?> →</a>
         </div>
     </article>
@@ -181,4 +292,4 @@ function ddg_theme2_card_article(int $post_id): void {
 
 add_filter('excerpt_length', static fn (): int => 30, 20);
 add_filter('excerpt_more', static fn (): string => '…');
-add_filter('loop_shop_per_page', static fn (): int => 12, 20);
+add_filter('loop_shop_per_page', static fn (): int => 16, 20);
