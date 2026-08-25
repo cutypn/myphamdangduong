@@ -1,44 +1,47 @@
 <?php
-/** Product archive — Theme 2. @package Bizrise_DDG */
+/**
+ * Product archive — Theme 2.1 final.
+ *
+ * @package Bizrise_DDG
+ */
 defined('ABSPATH') || exit;
 get_header();
+
+$title = is_shop() ? 'Sản phẩm & Routine' : woocommerce_page_title(false);
 ?>
 <main id="primary" class="t2-main t2-product-archive">
   <header class="t2-index-hero t2-index-hero--product">
     <div class="t2-shell t2-index-hero__grid">
       <div>
         <p class="t2-eyebrow">SẢN PHẨM &amp; ROUTINE</p>
-        <h1><?php woocommerce_page_title(); ?></h1>
-        <p>Khám phá sản phẩm theo thương hiệu, nhu cầu chăm sóc và thói quen hằng ngày.</p>
+        <h1><?php echo esc_html($title); ?></h1>
+        <p>Khám phá sản phẩm theo thương hiệu, nhu cầu chăm sóc và thói quen hằng ngày. Mỗi trang sản phẩm ưu tiên hình ảnh nhận diện, quy cách và hồ sơ tương ứng.</p>
       </div>
-      <div class="t2-product-archive__intro"><span>Chọn theo nhu cầu</span><strong>Hiểu sản phẩm trước khi lựa chọn</strong></div>
+      <div class="t2-product-archive__intro"><span>Khám phá theo nhu cầu</span><strong>Hiểu sản phẩm trước khi lựa chọn</strong></div>
     </div>
   </header>
 
   <div class="t2-shell t2-product-archive__body">
     <?php
-    $brand_tax = ddg_theme2_brand_taxonomy();
-    if ($brand_tax !== '') {
-        $brands = get_terms(['taxonomy'=>$brand_tax,'hide_empty'=>true,'number'=>12]);
-        if (!is_wp_error($brands) && $brands) {
-            echo '<nav class="t2-filter-pills" aria-label="Thương hiệu"><a href="' . esc_url(ddg_theme2_url('san-pham')) . '">Tất cả</a>';
-            foreach ($brands as $brand) {
-                $link = get_term_link($brand);
-                if (!is_wp_error($link)) {
-                    echo '<a href="' . esc_url($link) . '">' . esc_html($brand->name) . '</a>';
-                }
-            }
-            echo '</nav>';
-        }
-    }
-    ?>
+    $managed_slugs=['cham-soc-da-mat','duong-sang-deu-mau','da-co-xu-huong-noi-mun','chong-nang','cham-soc-dau-hieu-lao-hoa','cham-soc-co-the','lam-sach','cham-soc-vung-kin'];
+    $cats=[];
+    foreach($managed_slugs as $slug){$term=get_term_by('slug',$slug,'product_cat');if($term instanceof WP_Term&&(int)$term->count>0)$cats[]=$term;}
+    if($cats): ?>
+      <nav class="t2-filter-pills" aria-label="Danh mục sản phẩm">
+        <a href="<?php echo esc_url(ddg_theme2_url('san-pham')); ?>">Tất cả sản phẩm</a>
+        <?php foreach($cats as $cat):$link=get_term_link($cat);if(!is_wp_error($link)): ?><a href="<?php echo esc_url($link); ?>"><?php echo esc_html($cat->name); ?></a><?php endif;endforeach; ?>
+      </nav>
+    <?php endif; ?>
 
-    <?php if (woocommerce_product_loop()) : ?>
-      <div class="t2-product-toolbar"><div><?php woocommerce_result_count(); ?></div><div><?php woocommerce_catalog_ordering(); ?></div></div>
+    <?php if (have_posts()) : ?>
+      <div class="t2-product-toolbar">
+        <div><?php if (function_exists('woocommerce_result_count')) { woocommerce_result_count(); } ?></div>
+        <div><?php if (function_exists('woocommerce_catalog_ordering')) { woocommerce_catalog_ordering(); } ?></div>
+      </div>
       <div class="t2-product-grid">
         <?php while (have_posts()) : the_post(); ddg_theme2_card_product(get_the_ID()); endwhile; ?>
       </div>
-      <div class="t2-pagination"><?php woocommerce_pagination(); ?></div>
+      <div class="t2-pagination"><?php if (function_exists('woocommerce_pagination')) { woocommerce_pagination(); } else { the_posts_pagination(); } ?></div>
     <?php else : ?>
       <p class="t2-empty">Danh mục sản phẩm đang được cập nhật.</p>
     <?php endif; ?>
