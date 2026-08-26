@@ -2,41 +2,35 @@
 
 ## Kết luận nhanh
 
-**Trạng thái tổng thể: FAIL / source đã đóng thêm lỗi P0 Featured Image integrity; production vẫn CHƯA XÁC MINH PASS.**
+**Trạng thái tổng thể: FAIL / source code không có regression mới; production vẫn CHƯA XÁC MINH PASS.**
 
-QA recheck branch `codex/rebuild-v2` tại HEAD `884e7062c8ef3aed9b52234e2c0e0c4e915e61f3` (`docs(fix): record exact Featured Image integrity repair`). Exact HEAD hiện đã được xác minh có cả **Validate Bizrise DDG V2 = SUCCESS** và **Build Bizrise DDG V2 Release = SUCCESS**.
+QA recheck branch `codex/rebuild-v2` tại HEAD `37df95e4caa5e160889a48dd4584441635ae7b61` (`docs(qa): verify exact HEAD CI and media integrity fix`). Commit HEAD hiện tại chỉ là cập nhật tài liệu QA; parent code SHA là `884e7062c8ef3aed9b52234e2c0e0c4e915e61f3`.
 
-Frontend production vẫn không fetch trực tiếp được từ môi trường QA trong vòng này: mở `https://dangduonggroup.com/` trả `Cache miss`; do đó QA không suy diễn trạng thái live và chưa browser-test các URL production.
+Frontend production tiếp tục không fetch trực tiếp được từ môi trường QA trong vòng này:
+
+- `https://dangduonggroup.com/` trả `Cache miss`.
+- Các URL con `/san-pham/`, `/kien-thuc/` và runtime/deploy status không thể mở trực tiếp trong web fetch vì root chưa fetch thành công.
+- Domain-scoped search không trả kết quả production mới để dùng làm đường mở an toàn.
+
+Vì vậy vòng này **không browser-test production** và không suy diễn live state.
 
 ## Delta vòng này
 
-### P0 source fix — Featured Image phải đúng exact poster, không chỉ “có ảnh”
+### Không có code delta sau P0 media-integrity fix
 
-Fix report mới xác nhận `ProductMediaRepair` trước đây có false-clean quan trọng: nếu `_thumbnail_id` trỏ tới bất kỳ image attachment hợp lệ nào thì engine coi `already_valid`, kể cả ảnh legacy/sai SKU.
+HEAD hiện tại là commit docs QA. Không có commit code mới sau parent `884e7062...`, nên source behavior vẫn giữ các fix đã xác minh ở vòng trước:
 
-Source mới đã sửa:
+- Featured Image chỉ được coi hợp lệ khi `_thumbnail_id` đúng exact expected poster attachment;
+- repair thay thumbnail sai SKU/legacy bằng exact poster manifest;
+- runtime report expose `public_missing_featured` và `public_wrong_featured`;
+- exact-clean gate yêu cầu manifest/matched đủ 44/44, không missing/ambiguity/error và không sai Featured Image public;
+- matching product/poster vẫn deterministic, không fuzzy-map.
 
-- resolve product và expected poster trước khi đánh giá thumbnail;
-- `already_valid` chỉ khi `_thumbnail_id === expected poster attachment ID`;
-- nếu thumbnail hiện tại khác expected poster thì repair thay bằng exact poster manifest;
-- sau `set_post_thumbnail()` kiểm lại ID thực tế;
-- post-audit thêm `public_wrong_featured`;
-- source filename chỉ match trên các source-meta key deterministic;
-- brand evidence chỉ dùng known brand meta/taxonomies, không quét category/tag;
-- admin/runtime/status cùng dùng một exact-clean gate qua `ProductMediaRepair::is_clean_report()`.
+### CI
 
-Đây là fix trực tiếp cho triệu chứng người dùng đã báo: nhiều product có ảnh nhưng ảnh cũ/xấu/sai vẫn sống qua repair.
+Parent code SHA `884e7062c8ef3aed9b52234e2c0e0c4e915e61f3` đã được xác minh ở vòng trước có cả Validate V2 và Release V2 = SUCCESS.
 
-### Exact HEAD CI — PASS
-
-HEAD: `884e7062c8ef3aed9b52234e2c0e0c4e915e61f3`.
-
-GitHub Actions xác minh trong vòng QA này:
-
-- `Build Bizrise DDG V2 Release` run `33002839883`: **completed / success** cho exact HEAD.
-- `Validate Bizrise DDG V2` run `33002839887`: **completed / success** cho exact HEAD.
-
-Vì vậy CI gate source hiện PASS cho đúng SHA đang ở đầu branch.
+Với docs-only HEAD `37df95e4...`, GitHub combined status connector hiện trả `statuses=[]`, nên **CI exact docs-only HEAD chưa được xác minh trong vòng này**. Không suy diễn PASS từ parent.
 
 ## Trạng thái theo hạng mục
 
@@ -46,9 +40,10 @@ Vì vậy CI gate source hiện PASS cho đúng SHA đang ở đầu branch.
 | Product có ảnh nhưng sai poster/SKU | exact expected attachment enforcement đã fix | CHƯA XÁC MINH runtime/DB |
 | Repair tự chạy sau deploy | guarded runtime retry | CHƯA XÁC MINH runtime report |
 | Runtime media integrity | expose missing + wrong featured | CHƯA XÁC MINH endpoint live |
-| Exact HEAD CI | PASS Validate + Release | n/a |
+| Parent code SHA CI | PASS Validate + Release | n/a |
+| Exact docs-only HEAD CI | CHƯA XÁC MINH | n/a |
 | Exact deployed SHA | n/a | CHƯA XÁC MINH |
-| Header/logo/version CSS | source fix trước vẫn hiện diện theo fix history | CHƯA XÁC MINH live/cache |
+| Header/logo/version CSS | source fix trước vẫn hiện diện | CHƯA XÁC MINH live/cache |
 | Product image 9:16 | source theme đã có rule | CHƯA XÁC MINH live |
 | Category filter | source render đã fix | CHƯA XÁC MINH taxonomy DB |
 | >=8 single product | BLOCKED production | CHƯA TEST |
@@ -61,15 +56,15 @@ Vì vậy CI gate source hiện PASS cho đúng SHA đang ở đầu branch.
 ### P0-01 — Exact poster integrity chưa có bằng chứng runtime sạch
 
 - **URL:** `/san-pham/`, product category archives, single product.
-- **Bằng chứng:** screenshot production trước đây cho thấy card thiếu ảnh; fix report mới còn xác nhận source cũ có thể giữ ảnh legacy/sai SKU dù report sạch.
-- **Nguyên nhân source đã sửa:** engine cũ chỉ kiểm attachment hiện tại có phải image hay không, không so với expected poster manifest.
+- **Bằng chứng lịch sử:** screenshot production trước đây cho thấy card thiếu ảnh; source cũ từng có thể giữ ảnh legacy/sai SKU dù report sạch.
+- **Source hiện tại:** đã sửa exact poster enforcement.
 - **PASS bắt buộc:** runtime production báo `status=repair_clean`, `manifest_total=44`, `matched_products=44`, `wrong_featured_count=0`, `public_missing_featured=[]`, `public_wrong_featured=[]`, missing/ambiguity/error count = 0.
 
 ### P0-02 — Production deployed SHA chưa xác minh
 
-Source exact HEAD đã PASS cả hai CI workflow, nhưng production endpoint chưa fetch được trong môi trường QA.
+Production endpoint chưa fetch được trong môi trường QA.
 
-**PASS:** `/wp-json/bizrise-ddg/v1/runtime-status` và/hoặc Deploy Bridge status phải cho deployed/release SHA khớp một SHA đã PASS Validate + Release; ưu tiên exact current HEAD nếu auto-deploy hoạt động.
+**PASS:** `/wp-json/bizrise-ddg/v1/runtime-status` và/hoặc `/wp-json/bizrise-deploy/v1/status` phải cho deployed/release SHA khớp SHA đã PASS Validate + Release.
 
 ### P0-03 — Runtime/deploy status endpoints chưa xác minh live
 
@@ -108,13 +103,15 @@ Live-crawl vẫn bắt buộc cho `/`, `/ve-dang-duong/`, `/nang-luc/`, `/thuong
 
 ## Evidence vòng này
 
-- Branch HEAD: `884e7062c8ef3aed9b52234e2c0e0c4e915e61f3`.
-- Fix report code commits: `17f2ed5c3427ec87c022c5c130dd769be13d6e33`, `8a496abcb1b2ce1b6a09884f4f4fd4c3cc634583`, `76f8c55d64c24e6b960010c34ecc1a57011f1260`, `77a2ac00a193f96b26882a1eee7ae92795bfcb8b`.
-- Validate exact HEAD: run `33002839887` = SUCCESS.
-- Release exact HEAD: run `33002839883` = SUCCESS.
+- Branch HEAD: `37df95e4caa5e160889a48dd4584441635ae7b61`.
+- Parent code SHA: `884e7062c8ef3aed9b52234e2c0e0c4e915e61f3`.
+- Parent code SHA CI: Validate + Release = SUCCESS theo audit vòng trước.
+- Exact docs-only HEAD combined status connector: `statuses=[]` → CHƯA XÁC MINH.
+- Production root fetch: `Cache miss`.
+- Domain-scoped search production: không có result mới.
 - Production deployed SHA: **CHƯA XÁC MINH**.
 - Runtime Product Media Repair report: **CHƯA XÁC MINH**.
-- Frontend browser QA: **BLOCKED trong vòng này bởi production fetch `Cache miss`**.
+- Frontend browser QA: **BLOCKED trong vòng này bởi production fetch**.
 
 ## Tiêu chí PASS vòng tiếp theo
 
@@ -130,6 +127,6 @@ Live-crawl vẫn bắt buộc cho `/`, `/ve-dang-duong/`, `/nang-luc/`, `/thuong
 
 ## Kết luận QA
 
-Vòng này có delta thực sự: source đã sửa đúng một nguyên nhân P0 khiến **ảnh sai vẫn được coi là hợp lệ**, và exact HEAD hiện đã được xác minh PASS cả Validate lẫn Release CI. Tuy nhiên production vẫn chưa có bằng chứng runtime/browser để PASS.
+Vòng này không có code regression mới để báo. Source vẫn giữ P0 media-integrity fix của parent code SHA đã PASS CI, nhưng production tiếp tục chưa có bằng chứng runtime/browser để PASS.
 
-**Trạng thái giữ: SOURCE CI PASS + P0 MEDIA INTEGRITY FIXED / PRODUCTION CHƯA XÁC MINH — QA FAIL.**
+**Trạng thái giữ: SOURCE CODE STABLE / PRODUCTION CHƯA XÁC MINH — QA FAIL.**
