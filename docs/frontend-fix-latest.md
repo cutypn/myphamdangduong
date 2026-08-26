@@ -2,38 +2,63 @@
 
 ## Kết luận
 
-Đã xử lý blocker mới P0-02 ở **source**: Product Media Repair không còn phụ thuộc việc admin mở `wp-admin`. Migrator V2 hiện tự chạy repair deterministic ở runtime sau deploy, có lock chống chạy song song, backoff 5 phút khi còn unresolved và chỉ đánh dấu version hoàn tất khi report sạch. Không fuzzy-map, không đổi Product Truth, taxonomy hay publish/HOLD. Commit code `42bc71e38cb8a5d5ac979c3ae9e97bbd0e944060` đã PASS cả Validate và Release CI. **Production vẫn CHƯA XÁC MINH deploy/runtime report**, nên chưa tuyên bố frontend PASS.
+Vòng này xử lý trực tiếp blocker P0-03 trong audit: production trước đây không có endpoint V2 độc lập để QA/PO đọc deployed SHA và Product Media Repair report mà không cần vào wp-admin hoặc phụ thuộc Deploy Bridge. Migrator V2 hiện có endpoint read-only `/wp-json/bizrise-ddg/v1/runtime-status`, trả release marker đã sanitize và trạng thái repair deterministic. Không đổi Product Truth, taxonomy, publish/HOLD hay media mapping.
 
-## P0-02 — Repair phải tự chạy sau deploy
+**Production vẫn CHƯA XÁC MINH deploy.** Endpoint mới chỉ có hiệu lực sau khi SHA chứa fix được deploy lên WordPress.
+
+## P0-03 — Runtime/deploy state phải đọc được
 
 ### Fix mới
 
-File: `apps/bizrise-ddg-migrator/bizrise-ddg-migrator.php`
+Files:
 
-- Migrator version tăng `0.3.3` → `0.3.4`.
-- Thêm guarded `init` hook chạy `ProductMediaRepair::run(true)` khi option repair version chưa đạt `1.0.0`.
-- Không yêu cầu `current_user_can()` và không phụ thuộc `admin_init`, vì vậy request frontend/smoke đầu tiên sau deploy có thể kích hoạt repair.
-- Transient lock 10 phút ngăn hai request chạy repair đồng thời.
-- Nếu report còn `errors`, `public_missing_featured`, `product_ambiguous` hoặc `poster_ambiguous`, không đánh dấu complete và backoff 5 phút trước lần thử tiếp theo.
-- Nếu sạch, lưu version `1.0.0` để các request sau không chạy lại.
-- Report runtime thêm `trigger=runtime_init` và `ran_at` để PO/QA phân biệt repair thật trên WordPress với source-only CI.
-- Exception được ghi vào cùng report option, không làm request production fatal; lần retry sau diễn ra sau backoff.
+- `apps/bizrise-ddg-migrator/src/RuntimeStatus.php`
+- `apps/bizrise-ddg-migrator/bizrise-ddg-migrator.php`
 
-### Vì sao fix này giải quyết audit
+Thay đổi:
 
-Audit trước xác định repair chỉ hook `admin_init` + `manage_options`, nên deploy source không bảo đảm DB ảnh được sửa. Runtime hook mới loại bỏ điều kiện đó và biến source deploy + request WordPress đầu tiên thành đường thực thi tự động. Repair engine gốc vẫn giữ nguyên nguyên tắc chỉ điền Featured Image thiếu/hỏng bằng manifest exact 44 SKU.
+- Migrator version tăng `0.3.4` → `0.3.5`.
+- Đăng ký REST endpoint public read-only: `/wp-json/bizrise-ddg/v1/runtime-status`.
+- Endpoint chỉ expose health metadata cần cho QA/PO, không expose filesystem path, backup path, user data hay arbitrary WordPress options.
+- Đọc release marker `wp-content/.bizrise-ddg-release` và chỉ trả `branch`, `sha`, `deployed_at`, `method`.
+- Đọc Product Media Repair report và trả `status`, `repair_version`, `trigger`, `ran_at`, `processed`, `products_found`, `featured_repaired`, `public_missing_featured`, ambiguity counts và error count.
+- Header `Cache-Control: no-store, max-age=0` để QA không đọc trạng thái cache cũ.
+- Endpoint không có write action và không nhận repo/path/SHA từ request.
 
-Commit:
+Commits:
 
-- `42bc71e38cb8a5d5ac979c3ae9e97bbd0e944060` — `fix(migrator): auto-run product media repair after deploy`
+- `d8a500fef92145ae9d90e298257771c2a69cd34f` — `feat(migrator): expose runtime repair and release status`
+- `aba58fb1eab9f6478555701144235733e86c73a3` — `feat(migrator): register runtime verification endpoint`
+
+## Vì sao fix này giải quyết audit
+
+Audit latest giữ P0-03 vì môi trường QA không đọc được Deploy Bridge/status runtime và không thể chứng minh production đang chạy SHA nào. Endpoint mới nằm ngay trong migrator V2 — component vốn đã thuộc release pipeline — nên sau deploy QA/PO có một nguồn độc lập để đối chiếu:
+
+1. `release.sha` phải chứa fix đã CI PASS.
+2. `status` phải là `repair_clean`.
+3. `repair.public_missing_featured` phải rỗng.
+4. `repair.product_ambiguous_count`, `poster_ambiguous_count`, `error_count` phải bằng 0.
+5. `repair.trigger` phải cho thấy repair runtime/admin/CLI thật đã chạy trên WordPress, không phải source-only test.
+
+## P0-02 — Repair tự chạy sau deploy
+
+Fix trước vẫn giữ nguyên:
+
+- Migrator guarded `init` hook chạy `ProductMediaRepair::run(true)` khi repair version chưa complete.
+- Không phụ thuộc admin mở wp-admin.
+- Lock 10 phút + retry backoff 5 phút.
+- Chỉ complete khi `errors`, `public_missing_featured`, `product_ambiguous`, `poster_ambiguous` đều rỗng.
+- Runtime report lưu `trigger=runtime_init`, `ran_at`.
+
+Commit nền: `42bc71e38cb8a5d5ac979c3ae9e97bbd0e944060`.
 
 ## P0-01 — Product thiếu Featured Image
 
 Repair deterministic trước đó vẫn giữ nguyên:
 
-- `apps/bizrise-ddg-migrator/data/product-media-manifest.csv` — đúng 44 record.
+- `apps/bizrise-ddg-migrator/data/product-media-manifest.csv` — 44 record.
 - `apps/bizrise-ddg-migrator/src/ProductMediaRepair.php` — exact source filename; fallback exact brand + product name + pack size; poster exact manifest key/basename; ambiguity thì không gán.
-- Chỉ sửa Featured Image thiếu/hỏng, không ghi đè manual image hợp lệ.
+- Chỉ sửa Featured Image thiếu/hỏng; không fuzzy-map.
 - HOLD/draft và Product Truth không bị thay đổi.
 
 Các commit nền:
@@ -53,37 +78,40 @@ Các commit nền:
 
 ## Test đã chạy
 
-Local syntax check cho file migrator mới:
+Local syntax check:
 
-- `php -l apps/bizrise-ddg-migrator/bizrise-ddg-migrator.php` — PASS (`No syntax errors detected`).
+- `php -l RuntimeStatus.php` — PASS (`No syntax errors detected`).
+- Wiring trong `bizrise-ddg-migrator.php` chỉ thêm `require_once`, register hook và bump version; exact branch commit cần GitHub CI xác nhận sau push.
 
-GitHub Actions cho exact code commit `42bc71e38cb8a5d5ac979c3ae9e97bbd0e944060`:
-
-- **Validate Bizrise DDG V2** — `success`, run `32960579495`.
-- **Build Bizrise DDG V2 Release** — `success`, run `32960579572`.
-
-CI xác nhận source/build; không thay thế runtime WordPress DB test.
-
-## File thay đổi trong vòng này
-
-- `apps/bizrise-ddg-migrator/bizrise-ddg-migrator.php`
-- `docs/frontend-fix-latest.md`
+GitHub CI cho exact HEAD sau report update: **đang chờ workflow run xuất hiện/hoàn tất tại thời điểm ghi report**. Không coi source là CI PASS cho tới khi Validate và Release của exact HEAD đều `success`.
 
 ## Blocked / production evidence còn thiếu
 
-**CHƯA XÁC MINH production deploy.** Chưa có deployed SHA hoặc runtime repair report từ WordPress production trong vòng này. Do đó chưa thể khẳng định card ảnh live đã hết placeholder.
+**CHƯA XÁC MINH production deploy.** Sau deploy cần đọc:
+
+`/wp-json/bizrise-ddg/v1/runtime-status`
+
+PASS khi:
+
+- `release.present=true`.
+- `release.sha` là SHA chứa các fix V2 đã qua CI.
+- `status=repair_clean`.
+- `repair.public_missing_featured=[]`.
+- `repair.product_ambiguous_count=0`.
+- `repair.poster_ambiguous_count=0`.
+- `repair.error_count=0`.
 
 ## QA recheck bắt buộc
 
-1. Xác minh production deployed SHA chứa hoặc mới hơn `42bc71e38cb8a5d5ac979c3ae9e97bbd0e944060`.
-2. Sau deploy, tạo ít nhất một request WordPress rồi đọc Product Media Repair report: `trigger=runtime_init`, `public_missing_featured=[]`, `errors=[]`, không product/poster ambiguity.
-3. `/san-pham/`: không còn placeholder `ĐĂNG DƯƠNG`; ảnh đúng SKU, không crop và giữ 9:16.
-4. Audit 100% product public: product → `_thumbnail_id` → attachment filename → manifest expected.
-5. Mở toàn bộ category filter; không category rác/legacy.
-6. Kiểm ít nhất 8 single product nhiều brand; title/brand/pack/image đúng, HOLD/draft không xuất hiện.
-7. Desktop ≥1180px và mobile 360/390/430px: header/menu/card/layout PASS.
-8. `/kien-thuc/` + ít nhất 5 article live: không 404, typography/CTA/internal links PASS.
+1. Đọc `/wp-json/bizrise-ddg/v1/runtime-status` và xác minh deployed SHA + repair report.
+2. `/san-pham/`: không placeholder `ĐĂNG DƯƠNG`, ảnh đúng SKU, 9:16, không crop.
+3. Audit 100% product public: product → `_thumbnail_id` → attachment filename → manifest expected.
+4. Category filter: không category rác/legacy và trả đúng SKU.
+5. >=8 single product nhiều brand: title/brand/pack/image đúng, HOLD/draft không xuất hiện.
+6. Desktop ≥1180 và mobile 360/390/430: header/menu/cards/layout PASS.
+7. `/kien-thuc/` + ít nhất 5 article live: không 404, typography/CTA/internal links PASS.
+8. Crawl các page chính: không broken link, duplicate H1 hoặc CTA sai.
 
 ## Deploy
 
-Source đã commit/push lên `codex/rebuild-v2`; exact code commit đã qua cả hai CI gate. **Không gọi là production deployed cho tới khi có log/deploy marker hoặc WordPress production status xác nhận.**
+Source đã commit/push lên `codex/rebuild-v2`. **Không gọi là production deployed cho tới khi runtime endpoint hoặc deploy log xác nhận SHA production.**
