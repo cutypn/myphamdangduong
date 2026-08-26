@@ -39,11 +39,15 @@ final class RuntimeStatus {
             'repair' => array(
                 'trigger' => sanitize_text_field( (string) ( $report['trigger'] ?? '' ) ),
                 'ran_at' => sanitize_text_field( (string) ( $report['ran_at'] ?? '' ) ),
-                'processed' => (int) ( $report['processed'] ?? 0 ),
-                'products_found' => (int) ( $report['products_found'] ?? 0 ),
-                'featured_repaired' => (int) ( $report['featured_repaired'] ?? $report['featured_replaced'] ?? 0 ),
+                'manifest_total' => (int) ( $report['manifest_total'] ?? 0 ),
+                'matched_products' => (int) ( $report['matched_products'] ?? 0 ),
+                'already_valid' => (int) ( $report['already_valid'] ?? 0 ),
+                'featured_repaired' => (int) ( $report['repaired'] ?? 0 ),
+                'public_products' => (int) ( $report['public_products'] ?? 0 ),
                 'public_missing_featured' => self::safe_scalar_list( $report['public_missing_featured'] ?? array() ),
+                'product_not_found_count' => is_array( $report['product_not_found'] ?? null ) ? count( $report['product_not_found'] ) : 0,
                 'product_ambiguous_count' => is_array( $report['product_ambiguous'] ?? null ) ? count( $report['product_ambiguous'] ) : 0,
+                'poster_missing_count' => is_array( $report['poster_missing'] ?? null ) ? count( $report['poster_missing'] ) : 0,
                 'poster_ambiguous_count' => is_array( $report['poster_ambiguous'] ?? null ) ? count( $report['poster_ambiguous'] ) : 0,
                 'error_count' => is_array( $report['errors'] ?? null ) ? count( $report['errors'] ) : 0,
             ),
@@ -62,8 +66,12 @@ final class RuntimeStatus {
         if (
             ! empty( $report['errors'] )
             || ! empty( $report['public_missing_featured'] )
+            || ! empty( $report['product_not_found'] )
             || ! empty( $report['product_ambiguous'] )
+            || ! empty( $report['poster_missing'] )
             || ! empty( $report['poster_ambiguous'] )
+            || 44 !== (int) ( $report['manifest_total'] ?? 0 )
+            || 44 !== (int) ( $report['matched_products'] ?? 0 )
         ) {
             return 'repair_incomplete';
         }
