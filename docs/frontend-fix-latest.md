@@ -2,100 +2,80 @@
 
 ## Kết luận
 
-Đã xử lý các lỗi source có bằng chứng rõ trong QA audit trên branch `codex/rebuild-v2`. Chưa deploy production. Lỗi Featured Image đang thiếu trên một số product production **chưa thể được đánh dấu PASS** vì cần chạy repair/audit trực tiếp trên WordPress DB hoặc deploy package mới rồi recheck frontend.
+Đã xử lý tiếp blocker P0-01 ở **source** bằng một repair deterministic cho 44 Featured Image sản phẩm. Repair mới không fuzzy-map, không đổi Product Truth, không đổi taxonomy và không đổi trạng thái publish/HOLD. GitHub CI đã PASS cho source ở commit `cd157397f2e9c580a956e2f775a9ac1a376a89ef`; release workflow cũng build thành công. **Production chưa được tuyên bố PASS** vì chưa có log deploy và chưa có DB/frontend recheck sau deploy.
 
-## Lỗi đã sửa
+## P0-01 — Product production thiếu Featured Image
 
-### P0-02 — Dừng nguồn ảnh legacy cạnh tranh Featured Image
+### Fix mới
 
-**Đã sửa.** `apps/bizrise-ddg-media-hotfix/bizrise-ddg-media-hotfix.php` được chuyển từ auto-repair sang diagnostic-only.
+Thêm manifest canonical 44 sản phẩm:
 
-- Không còn fetch catalog `myphamanhduong.vn`.
-- Không sideload ảnh ngoài.
-- Không gọi `set_post_thumbnail()`.
-- Chỉ audit product thiếu Featured Image và cảnh báo admin.
-- Product Truth + curated portrait manifest tiếp tục là source-of-truth cho Featured Image.
+- `apps/bizrise-ddg-migrator/data/product-media-manifest.csv`
+- 44 record, mỗi record có `source_filename`, brand, product name, pack size, exact portrait `poster_filename`, status.
+- HOLD record vẫn chỉ là dữ liệu nhận diện; repair không thay post status hay Product Truth.
 
-Commit: `4d891c4893b9a4c0a54419b5d1966ee5b8eb88e0`
+Thêm repair engine:
 
-### P1-01 / P1-02 — Header và asset version drift
+- `apps/bizrise-ddg-migrator/src/ProductMediaRepair.php`
+- được wire vào `apps/bizrise-ddg-migrator/bizrise-ddg-migrator.php`.
+- tự chạy một lần ở admin khi source mới được deploy, và có thể re-run tại **Tools → DDG Product Media Repair** hoặc WP-CLI `wp bizrise-ddg repair-product-media --apply`.
 
-**Đã sửa source.**
+### Matching rules
 
-- `header.php` không còn hard-code `theme212.css?ver=2.1.2` sau `wp_head()`.
-- Theme header comment đổi về 2.1.3.
-- `BIZRISE_DDG_THEME_VERSION` đổi từ `2.1.2` sang `2.1.3`.
-- `theme212.css` được enqueue bằng WordPress dependency graph sau `theme2.css`, dùng cùng `BIZRISE_DDG_THEME_VERSION` để cache-busting nhất quán.
+Repair chỉ nhận product khi có bằng chứng deterministic:
+
+1. ưu tiên exact `source_filename` đã lưu trong post meta;
+2. nếu không có, dùng exact `brand + product_name + pack_size`;
+3. nếu có hơn một candidate thì đánh dấu ambiguity và **không gán ảnh**;
+4. poster được tìm bằng exact `_ddg_catalog_repair_poster_key`, hoặc exact basename `_wp_attached_file`;
+5. nếu poster trùng/ambiguous thì **không gán**;
+6. chỉ điền khi Featured Image hiện tại đang thiếu/hỏng, không ghi đè manual image hợp lệ.
+
+Report sau chạy sẽ chứa `matched_products`, `already_valid`, `repaired`, `product_not_found`, `product_ambiguous`, `poster_missing`, `poster_ambiguous`, `public_products`, `public_missing_featured`, `errors`.
+
+PASS production bắt buộc: `public_missing_featured = []`, không ambiguity/error và `/san-pham/` không còn placeholder `ĐĂNG DƯƠNG`.
 
 Commits:
 
-- `e0cc9acff22b0f6aa069b898c4bc6ad75ac39480`
-- `a74dd35f6470b90c1219850591f052c03f851d14`
+- `c50fc57200cb5071dd7b77c8423987b13967baf8` — add deterministic 44-product poster manifest
+- `73300d568d3f9e6c2ab8b112c44de0a756973f1f` — add exact product Featured Image repair
+- `cd157397f2e9c580a956e2f775a9ac1a376a89ef` — wire repair into V2 migrator
 
-### P1-03 — Product image stage phụ thuộc cascade không ổn định
+## Các source fix trước vẫn giữ nguyên
 
-**Đã gia cố source.** `theme212.css` hiện là lớp canonical cuối cho portrait card:
+- Legacy media hotfix đã diagnostic-only; không fetch/sideload/ghi Featured Image.
+- Theme/version asset đã đồng bộ 2.1.3.
+- Product card canonical 9:16 + `object-fit: contain`.
+- Category filter không còn whitelist 8 slug tĩnh.
+- Không đổi Product Truth hoặc regulatory hold logic.
+- Không tạo plugin UI override.
 
-- 9:16 giữ nguyên.
-- image stage dùng `object-fit: contain` + `object-position:center`.
-- hover không scale/crop ảnh.
-- card copy dùng flex để CTA ổn định hơn.
-- file banner/version đổi thành 2.1.3.
+## Test đã chạy
 
-Commit: `11be52d9964f72b57d8d6b51550c67e43455c728`
+GitHub Actions trên commit `cd157397f2e9c580a956e2f775a9ac1a376a89ef`:
 
-### P1-04 — Filter category whitelist tĩnh
+- **Validate Bizrise DDG V2** — `success`, run `32950340987`.
+- **Build Bizrise DDG V2 Release** — `success`, run `32950341046`.
 
-**Đã sửa.** `woocommerce/archive-product.php` không còn hard-code 8 slug danh mục. Filter lấy trực tiếp các `product_cat` đang có product, loại default Uncategorized. Việc gán category vẫn thuộc importer/Product Truth, theme không tạo taxonomy song song.
+Validation pipeline bao gồm lint/check source theo workflow V2; release package được build thành công. Runtime Fix Agent không có WordPress production DB để thực thi repair report thật, nên số `repaired/public_missing_featured` production vẫn phải lấy sau deploy.
 
-Commit: `a7d59289cbde4b4f56aebaf4a06bfb3e741ef0e4`
+## File đã thay đổi trong vòng này
 
-## Lỗi còn blocked / cần production repair
-
-### P0-01 — Một số product production vẫn thiếu Featured Image
-
-QA screenshot chứng minh có product card đang render placeholder `ĐĂNG DƯƠNG`, đồng nghĩa WordPress product post đó không có Featured Image hợp lệ tại thời điểm render.
-
-Source fix ở run này đã ngăn media hotfix legacy tự lấp bằng ảnh cũ, nhưng **không tự gán ảnh mới** vì branch hiện không chứa một manifest portrait 44 SKU có thể chạy an toàn trực tiếp trên production DB và Agent Fix không được fuzzy-map.
-
-Cần recheck/repair theo mapping deterministic:
-
-`product ID -> Product Truth/product key -> expected portrait attachment -> _thumbnail_id`
-
-PASS chỉ khi tất cả product public có attachment image hợp lệ và đúng SKU; HOLD/draft không lọt frontend.
-
-## Kiểm tra source đã thực hiện
-
-- Xác nhận branch head sau fix: `11be52d9964f72b57d8d6b51550c67e43455c728`.
-- Code search sau sửa không còn chuỗi `2.1.2` trong index hiện tại.
-- Code search sau sửa không còn đường `myphamanhduong.vn` + `set_post_thumbnail` trong media hotfix hiện tại.
-- Không thay Product Truth.
-- Không thay regulatory hold logic.
-- Không thêm plugin UI override.
-- Không fuzzy-map product.
-
-### Giới hạn test
-
-GitHub connector cho phép source read/write nhưng runtime này không mount repository để chạy `php -l` trực tiếp trên branch; outbound shell GitHub cũng bị DNS block. Vì vậy PHP lint thực thi trên checkout thật chưa được đánh dấu PASS trong run này. Các file PHP thay đổi phải được lint trong CI/checkout/deploy pipeline trước production.
-
-## File đã thay đổi
-
-- `apps/bizrise-ddg-media-hotfix/bizrise-ddg-media-hotfix.php`
-- `apps/bizrise-ddg-theme/header.php`
-- `apps/bizrise-ddg-theme/functions.php`
-- `apps/bizrise-ddg-theme/assets/css/theme212.css`
-- `apps/bizrise-ddg-theme/woocommerce/archive-product.php`
+- `apps/bizrise-ddg-migrator/data/product-media-manifest.csv`
+- `apps/bizrise-ddg-migrator/src/ProductMediaRepair.php`
+- `apps/bizrise-ddg-migrator/bizrise-ddg-migrator.php`
 - `docs/frontend-fix-latest.md`
 
 ## QA recheck bắt buộc sau deploy
 
-1. Desktop ≥1180 px: logo đúng tỉ lệ, nav + CTA hiện đầy đủ, header không crop.
-2. Mobile 360/390/430 px: logo/menu không overflow, product card không vỡ title/CTA.
-3. `/san-pham/`: không còn placeholder `ĐĂNG DƯƠNG`; toàn bộ ảnh nằm gọn trong portrait stage, không crop.
-4. Mở toàn bộ category filter: product đúng taxonomy và không xuất hiện Uncategorized.
-5. Kiểm tra ít nhất 8 single product nhiều brand: image/brand/pack đúng SKU, HOLD/draft không public.
-6. Purge CDN/page cache sau deploy để asset 2.1.3 được tải mới.
+1. Lấy report **DDG Product Media Repair**; yêu cầu `public_missing_featured = []`, `errors = []`, không ambiguity.
+2. `/san-pham/`: không còn placeholder `ĐĂNG DƯƠNG`; ảnh đúng SKU và nằm gọn 9:16.
+3. Mở toàn bộ category filter; không category rác/legacy.
+4. Kiểm ít nhất 8 single product thuộc nhiều brand; title/brand/pack/image đúng mapping.
+5. HOLD/draft không xuất hiện frontend.
+6. Desktop ≥1180px và mobile 360/390/430px recheck header/card/layout.
+7. Purge cache/CDN sau deploy trước khi kết luận live.
 
 ## Deploy
 
-Không deploy production trong run này vì không có đường deploy đã được xác nhận trong task. Source đã commit vào `codex/rebuild-v2`; cần deploy branch/package qua quy trình production hiện hành rồi QA vòng 2.
+**CHƯA XÁC MINH production deploy.** Source đã push vào `codex/rebuild-v2` và release build PASS; không được gọi là deployed cho tới khi có log cPanel/deploy marker hoặc production artifact/HEAD xác nhận.
