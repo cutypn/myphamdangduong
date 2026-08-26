@@ -1,10 +1,12 @@
 <?php
 /** Page template — Theme 2. @package Bizrise_DDG */
 if (!defined('ABSPATH')) { exit; }
+require_once get_template_directory() . '/inc/editorial-content.php';
 get_header();
 ?>
 <main id="primary" class="t2-main">
 <?php while (have_posts()) : the_post(); ?>
+  <?php $editorial_content = ddg_theme2_editorial_page_content((string)get_post_field('post_name', get_the_ID())); ?>
   <article <?php post_class('t2-page'); ?>>
     <header class="t2-page-hero<?php echo has_post_thumbnail() ? ' has-image' : ''; ?>">
       <?php if (has_post_thumbnail()) : ?><div class="t2-page-hero__media"><?php the_post_thumbnail('full', ['loading'=>'eager','fetchpriority'=>'high']); ?></div><div class="t2-page-hero__shade"></div><?php endif; ?>
@@ -15,7 +17,11 @@ get_header();
       </div>
     </header>
     <div class="t2-shell t2-editorial-body">
-      <?php the_content(); ?>
+      <?php if ($editorial_content !== '') : ?>
+        <?php echo wp_kses_post($editorial_content); ?>
+      <?php else : ?>
+        <?php the_content(); ?>
+      <?php endif; ?>
     </div>
 
     <?php if (is_page('kien-thuc')) : ?>
