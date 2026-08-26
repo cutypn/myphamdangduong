@@ -2,14 +2,14 @@
 /**
  * Plugin Name: Bizrise DDG Migrator
  * Description: Controlled, idempotent migration, media and site-import tools for the Đăng Dương Group V2 rebuild.
- * Version: 0.3.3
+ * Version: 0.3.4
  * Requires PHP: 8.2
  * Text Domain: bizrise-ddg-migrator
  */
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'BIZRISE_DDG_MIGRATOR_VERSION', '0.3.3' );
+define( 'BIZRISE_DDG_MIGRATOR_VERSION', '0.3.4' );
 define( 'BIZRISE_DDG_MIGRATOR_PATH', plugin_dir_path( __FILE__ ) );
 
 require_once BIZRISE_DDG_MIGRATOR_PATH . 'src/ProductImporter.php';
@@ -33,4 +33,70 @@ add_action(
         \Bizrise\DDG\Migrator\MediaContentImporter::register_hooks();
         \Bizrise\DDG\Migrator\ProductMediaRepair::register_hooks();
     }
+);
+
+/**
+ * Complete the deterministic media repair automatically after code deployment.
+ *
+ * ProductMediaRepair also exposes an admin/CLI repair surface, but production
+ * delivery must not depend on an administrator opening wp-admin. This guarded
+ * init hook runs only while the repair version is incomplete, serialises work
+ * with a transient lock, and backs off for five minutes if unresolved items
+ * remain. The repair itself only fills missing/broken Featured Images and does
+ * not modify Product Truth, taxonomy or publication state.
+ */
+add_action(
+    'init',
+    static function (): void {
+        $repair_version = '1.0.0';
+        $version_option = 'bizrise_ddg_product_media_repair_version';
+        $report_option  = 'bizrise_ddg_product_media_repair_report';
+        $lock_key       = 'bizrise_ddg_product_media_repair_runtime_lock';
+        $retry_key      = 'bizrise_ddg_product_media_repair_retry_after';
+
+        if ( $repair_version === (string) get_option( $version_option, '' ) ) {
+            return;
+        }
+        if ( get_transient( $lock_key ) || get_transient( $retry_key ) ) {
+            return;
+        }
+
+        set_transient( $lock_key, '1', 10 * MINUTE_IN_SECONDS );
+
+        try {
+            $report = \Bizrise\DDG\Migrator\ProductMediaRepair::run( true );
+            $report['trigger'] = 'runtime_init';
+            $report['ran_at']  = gmdate( 'c' );
+            update_option( $report_option, $report, false );
+
+            $clean = empty( $report['errors'] )
+                && empty( $report['public_missing_featured'] )
+                && empty( $report['product_ambiguous'] )
+                && empty( $report['poster_ambiguous'] );
+
+            if ( $clean ) {
+                update_option( $version_option, $repair_version, false );
+                delete_transient( $retry_key );
+            } else {
+                set_transient( $retry_key, '1', 5 * MINUTE_IN_SECONDS );
+            }
+        } catch ( \Throwable $error ) {
+            update_option(
+                $report_option,
+                array(
+                    'version' => $repair_version,
+                    'trigger' => 'runtime_init',
+                    'ran_at'  => gmdate( 'c' ),
+                    'errors'  => array(
+                        array( 'message' => $error->getMessage() ),
+                    ),
+                ),
+                false
+            );
+            set_transient( $retry_key, '1', 5 * MINUTE_IN_SECONDS );
+        } finally {
+            delete_transient( $lock_key );
+        }
+    },
+    40
 );
