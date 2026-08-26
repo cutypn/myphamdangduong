@@ -7,7 +7,7 @@ use RuntimeException;
 defined( 'ABSPATH' ) || exit;
 
 final class ProductMediaRepair {
-    private const VERSION = '1.0.0';
+    private const VERSION = '1.1.0';
     private const OPTION_VERSION = 'bizrise_ddg_product_media_repair_version';
     private const OPTION_REPORT = 'bizrise_ddg_product_media_repair_report';
     private const PRODUCT_SOURCE_KEYS = array(
@@ -16,6 +16,29 @@ final class ProductMediaRepair {
         '_bizrise_ddg_source_image',
         '_ddg_source_filename',
     );
+    private const BRAND_META_KEYS = array(
+        'brand',
+        '_brand',
+        'brand_name',
+        '_brand_name',
+        'product_brand',
+        '_product_brand',
+        '_bizrise_brand_label',
+        '_bizrise_packaging_label',
+        'ddg_brand',
+        '_ddg_brand',
+    );
+    private const BRAND_TAXONOMIES = array(
+        'product_brand',
+        'pwb-brand',
+        'yith_product_brand',
+        'bizrise_brand',
+        'brand',
+    );
+
+    public static function version(): string {
+        return self::VERSION;
+    }
 
     public static function register_hooks(): void {
         add_action( 'admin_init', array( self::class, 'maybe_auto_repair' ), 40 );
@@ -31,7 +54,12 @@ final class ProductMediaRepair {
         if ( ! current_user_can( 'manage_options' ) ) {
             return;
         }
-        if ( self::VERSION === (string) get_option( self::OPTION_VERSION, '' ) ) {
+        $saved = get_option( self::OPTION_REPORT, array() );
+        if (
+            self::VERSION === (string) get_option( self::OPTION_VERSION, '' )
+            && is_array( $saved )
+            && self::is_clean_report( $saved )
+        ) {
             return;
         }
         self::run_and_store();
@@ -55,7 +83,7 @@ final class ProductMediaRepair {
         ?>
         <div class="wrap">
             <h1>DDG Product Media Repair</h1>
-            <p>Repair chỉ điền Featured Image đang thiếu/hỏng bằng manifest 44 sản phẩm. Matching là exact source filename hoặc exact brand + product name + pack size. Không fuzzy-map và không đổi Product Truth, taxonomy hay trạng thái publish.</p>
+            <p>Repair đối chiếu Featured Image với đúng poster trong manifest 44 sản phẩm. Matching là exact source filename hoặc exact brand + product name + pack size. Không fuzzy-map và không đổi Product Truth, taxonomy hay trạng thái publish.</p>
             <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
                 <input type="hidden" name="action" value="bizrise_ddg_product_media_repair">
                 <?php wp_nonce_field( 'bizrise_ddg_product_media_repair' ); ?>
@@ -84,9 +112,22 @@ final class ProductMediaRepair {
         $apply = isset( $assoc_args['apply'] );
         $report = self::run( $apply );
         \WP_CLI::line( wp_json_encode( $report, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ) );
-        if ( $apply && ( ! empty( $report['errors'] ) || ! empty( $report['public_missing_featured'] ) ) ) {
-            \WP_CLI::warning( 'Product media repair completed with unresolved items.' );
+        if ( $apply && ! self::is_clean_report( $report ) ) {
+            \WP_CLI::warning( 'Product media repair completed with unresolved or mismatched items.' );
         }
+    }
+
+    public static function is_clean_report( array $report ): bool {
+        return 44 === (int) ( $report['manifest_total'] ?? 0 )
+            && 44 === (int) ( $report['matched_products'] ?? 0 )
+            && empty( $report['errors'] )
+            && empty( $report['product_not_found'] )
+            && empty( $report['product_ambiguous'] )
+            && empty( $report['poster_missing'] )
+            && empty( $report['poster_ambiguous'] )
+            && empty( $report['wrong_featured'] )
+            && empty( $report['public_missing_featured'] )
+            && empty( $report['public_wrong_featured'] );
     }
 
     public static function run( bool $apply = true ): array {
@@ -98,12 +139,14 @@ final class ProductMediaRepair {
             'matched_products' => 0,
             'already_valid' => 0,
             'repaired' => 0,
+            'wrong_featured' => array(),
             'product_not_found' => array(),
             'product_ambiguous' => array(),
             'poster_missing' => array(),
             'poster_ambiguous' => array(),
             'public_products' => 0,
             'public_missing_featured' => array(),
+            'public_wrong_featured' => array(),
             'errors' => array(),
         );
 
@@ -118,11 +161,6 @@ final class ProductMediaRepair {
 
                 ++$report['matched_products'];
                 $post_id = (int) $product['id'];
-                $current = (int) get_post_thumbnail_id( $post_id );
-                if ( $current && wp_attachment_is_image( $current ) ) {
-                    ++$report['already_valid'];
-                    continue;
-                }
 
                 $poster = self::resolve_poster( $row );
                 if ( ! $poster['id'] ) {
@@ -131,9 +169,29 @@ final class ProductMediaRepair {
                     continue;
                 }
 
+                $poster_id = (int) $poster['id'];
+                $current = (int) get_post_thumbnail_id( $post_id );
+
+                if ( $current === $poster_id && wp_attachment_is_image( $current ) ) {
+                    ++$report['already_valid'];
+                    continue;
+                }
+
+                if ( $current && wp_attachment_is_image( $current ) ) {
+                    $report['wrong_featured'][] = array(
+                        'product_id' => $post_id,
+                        'product' => self::row_label( $row ),
+                        'current_attachment_id' => $current,
+                        'expected_attachment_id' => $poster_id,
+                    );
+                }
+
                 if ( $apply ) {
-                    if ( ! set_post_thumbnail( $post_id, (int) $poster['id'] ) ) {
+                    if ( ! set_post_thumbnail( $post_id, $poster_id ) ) {
                         throw new RuntimeException( 'set_post_thumbnail failed for product ID ' . $post_id );
+                    }
+                    if ( (int) get_post_thumbnail_id( $post_id ) !== $poster_id ) {
+                        throw new RuntimeException( 'Featured Image verification failed for product ID ' . $post_id );
                     }
                     update_post_meta( $post_id, '_bizrise_ddg_media_repair_manifest_key', sanitize_key( $row['key'] ) );
                     update_post_meta( $post_id, '_bizrise_ddg_media_repair_version', self::VERSION );
@@ -150,6 +208,7 @@ final class ProductMediaRepair {
         $audit = self::audit_public_products();
         $report['public_products'] = $audit['total'];
         $report['public_missing_featured'] = $audit['missing'];
+        $report['public_wrong_featured'] = self::audit_manifest_featured( $rows );
         return $report;
     }
 
@@ -162,9 +221,12 @@ final class ProductMediaRepair {
                 'errors' => array( array( 'message' => $error->getMessage() ) ),
             );
         }
+
         update_option( self::OPTION_REPORT, $report, false );
-        if ( empty( $report['errors'] ) && empty( $report['public_missing_featured'] ) ) {
+        if ( self::is_clean_report( $report ) ) {
             update_option( self::OPTION_VERSION, self::VERSION, false );
+        } else {
+            delete_option( self::OPTION_VERSION );
         }
     }
 
@@ -210,9 +272,17 @@ final class ProductMediaRepair {
 
         $source = sanitize_file_name( (string) $row['source_filename'] );
         if ( '' !== $source ) {
-            $placeholders = implode( ',', array_fill( 0, count( $types ), '%s' ) );
-            $params = array_merge( $types, array( $source ) );
-            $query = "SELECT DISTINCT p.ID FROM {$wpdb->posts} p INNER JOIN {$wpdb->postmeta} pm ON pm.post_id=p.ID WHERE p.post_type IN ($placeholders) AND p.post_status IN ('publish','draft','private','pending') AND pm.meta_value=%s ORDER BY p.ID ASC";
+            $type_placeholders = implode( ',', array_fill( 0, count( $types ), '%s' ) );
+            $meta_placeholders = implode( ',', array_fill( 0, count( self::PRODUCT_SOURCE_KEYS ), '%s' ) );
+            $params = array_merge( $types, self::PRODUCT_SOURCE_KEYS, array( $source ) );
+            $query = "SELECT DISTINCT p.ID
+                FROM {$wpdb->posts} p
+                INNER JOIN {$wpdb->postmeta} pm ON pm.post_id=p.ID
+                WHERE p.post_type IN ($type_placeholders)
+                  AND p.post_status IN ('publish','draft','private','pending')
+                  AND pm.meta_key IN ($meta_placeholders)
+                  AND pm.meta_value=%s
+                ORDER BY p.ID ASC";
             $ids = array_map( 'intval', $wpdb->get_col( $wpdb->prepare( $query, $params ) ) );
             $ids = array_values( array_unique( $ids ) );
             if ( 1 === count( $ids ) ) {
@@ -227,8 +297,7 @@ final class ProductMediaRepair {
             }
         }
 
-        $ids = self::all_product_ids();
-        $exact = self::filter_identity_matches( $ids, $row );
+        $exact = self::filter_identity_matches( self::all_product_ids(), $row );
         if ( 1 === count( $exact ) ) {
             return array( 'id' => $exact[0], 'ambiguous' => false );
         }
@@ -256,6 +325,7 @@ final class ProductMediaRepair {
             }
             $matches[] = $post_id;
         }
+
         return array_values( array_unique( $matches ) );
     }
 
@@ -279,30 +349,34 @@ final class ProductMediaRepair {
         if ( '' === $expected_brand ) {
             return true;
         }
-        $found_evidence = false;
-        foreach ( array( 'brand', '_brand', 'brand_name', '_brand_name', 'product_brand', '_product_brand', '_bizrise_brand_label', '_bizrise_packaging_label', 'ddg_brand', '_ddg_brand' ) as $key ) {
+
+        $brand_evidence = array();
+        foreach ( self::BRAND_META_KEYS as $key ) {
             $value = get_post_meta( $post_id, $key, true );
-            if ( ! is_scalar( $value ) || '' === trim( (string) $value ) ) {
-                continue;
-            }
-            $found_evidence = true;
-            if ( self::identity( (string) $value ) === $expected_brand ) {
-                return true;
+            if ( is_scalar( $value ) && '' !== trim( (string) $value ) ) {
+                $brand_evidence[] = self::identity( (string) $value );
             }
         }
-        foreach ( get_object_taxonomies( get_post_type( $post_id ), 'names' ) as $taxonomy ) {
+
+        foreach ( self::BRAND_TAXONOMIES as $taxonomy ) {
+            if ( ! taxonomy_exists( $taxonomy ) ) {
+                continue;
+            }
             $terms = wp_get_post_terms( $post_id, $taxonomy );
             if ( is_wp_error( $terms ) ) {
                 continue;
             }
             foreach ( $terms as $term ) {
-                $found_evidence = true;
-                if ( self::identity( $term->name ) === $expected_brand || self::identity( $term->slug ) === $expected_brand ) {
-                    return true;
-                }
+                $brand_evidence[] = self::identity( $term->name );
+                $brand_evidence[] = self::identity( $term->slug );
             }
         }
-        return ! $found_evidence;
+
+        $brand_evidence = array_values( array_unique( array_filter( $brand_evidence ) ) );
+        if ( ! $brand_evidence ) {
+            return true;
+        }
+        return in_array( $expected_brand, $brand_evidence, true );
     }
 
     private static function resolve_poster( array $row ): array {
@@ -334,7 +408,10 @@ final class ProductMediaRepair {
             'intval',
             $wpdb->get_col(
                 $wpdb->prepare(
-                    "SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key='_wp_attached_file' AND (meta_value=%s OR meta_value LIKE %s) ORDER BY post_id ASC",
+                    "SELECT post_id FROM {$wpdb->postmeta}
+                     WHERE meta_key='_wp_attached_file'
+                       AND (meta_value=%s OR meta_value LIKE %s)
+                     ORDER BY post_id ASC",
                     $filename,
                     $like
                 )
@@ -347,11 +424,44 @@ final class ProductMediaRepair {
         return array( 'id' => 0, 'ambiguous' => count( $ids ) > 1 );
     }
 
+    private static function audit_manifest_featured( array $rows ): array {
+        $wrong = array();
+
+        foreach ( $rows as $row ) {
+            $product = self::resolve_product( $row );
+            $poster = self::resolve_poster( $row );
+            if ( ! $product['id'] || ! $poster['id'] ) {
+                continue;
+            }
+
+            $post_id = (int) $product['id'];
+            if ( 'publish' !== get_post_status( $post_id ) ) {
+                continue;
+            }
+
+            $current = (int) get_post_thumbnail_id( $post_id );
+            $expected = (int) $poster['id'];
+            if ( $current === $expected && wp_attachment_is_image( $current ) ) {
+                continue;
+            }
+
+            $wrong[] = array(
+                'product_id' => $post_id,
+                'product' => self::row_label( $row ),
+                'current_attachment_id' => $current,
+                'expected_attachment_id' => $expected,
+            );
+        }
+
+        return $wrong;
+    }
+
     private static function audit_public_products(): array {
         $types = self::product_post_types();
         if ( ! $types ) {
             return array( 'total' => 0, 'missing' => array() );
         }
+
         $query = new \WP_Query(
             array(
                 'post_type' => $types,
@@ -361,6 +471,7 @@ final class ProductMediaRepair {
                 'no_found_rows' => true,
             )
         );
+
         $missing = array();
         foreach ( array_map( 'intval', $query->posts ) as $post_id ) {
             $thumb = (int) get_post_thumbnail_id( $post_id );
@@ -373,6 +484,7 @@ final class ProductMediaRepair {
                 'title' => get_the_title( $post_id ),
             );
         }
+
         return array( 'total' => count( $query->posts ), 'missing' => $missing );
     }
 
