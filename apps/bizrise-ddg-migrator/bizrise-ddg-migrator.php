@@ -15,6 +15,7 @@ define( 'BIZRISE_DDG_MIGRATOR_PATH', plugin_dir_path( __FILE__ ) );
 require_once BIZRISE_DDG_MIGRATOR_PATH . 'src/ProductImporter.php';
 require_once BIZRISE_DDG_MIGRATOR_PATH . 'src/SiteContentImporter.php';
 require_once BIZRISE_DDG_MIGRATOR_PATH . 'src/MediaContentImporter.php';
+require_once BIZRISE_DDG_MIGRATOR_PATH . 'src/ProductMediaRepair.php';
 
 register_activation_hook(
     __FILE__,
@@ -30,5 +31,6 @@ add_action(
         \Bizrise\DDG\Migrator\ProductImporter::register_hooks();
         \Bizrise\DDG\Migrator\SiteContentImporter::register_hooks();
         \Bizrise\DDG\Migrator\MediaContentImporter::register_hooks();
+        \Bizrise\DDG\Migrator\ProductMediaRepair::register_hooks();
     }
 );
