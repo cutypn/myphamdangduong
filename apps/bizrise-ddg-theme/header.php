@@ -1,5 +1,5 @@
 <?php
-/** Site header — Theme 2.1.2. @package Bizrise_DDG */
+/** Site header — Theme 2.1.3. @package Bizrise_DDG */
 if (!defined('ABSPATH')) { exit; }
 ?><!doctype html>
 <html <?php language_attributes(); ?>>
@@ -7,7 +7,6 @@ if (!defined('ABSPATH')) { exit; }
 <meta charset="<?php bloginfo('charset'); ?>">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <?php wp_head(); ?>
-<link rel="stylesheet" id="bizrise-ddg-theme212-css" href="<?php echo esc_url(get_template_directory_uri() . '/assets/css/theme212.css?ver=2.1.2'); ?>">
 </head>
 <body <?php body_class('t2-site'); ?>>
 <?php wp_body_open(); ?>
