@@ -9,7 +9,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('BIZRISE_DDG_THEME_VERSION', '2.1.2');
+define('BIZRISE_DDG_THEME_VERSION', '2.1.3');
 
 add_action('after_setup_theme', static function (): void {
     add_theme_support('title-tag');
@@ -53,6 +53,12 @@ add_action('wp_enqueue_scripts', static function (): void {
         'bizrise-ddg-theme2',
         get_template_directory_uri() . '/assets/css/theme2.css',
         ['bizrise-ddg-style'],
+        BIZRISE_DDG_THEME_VERSION
+    );
+    wp_enqueue_style(
+        'bizrise-ddg-theme213',
+        get_template_directory_uri() . '/assets/css/theme212.css',
+        ['bizrise-ddg-theme2'],
         BIZRISE_DDG_THEME_VERSION
     );
     wp_enqueue_script(
