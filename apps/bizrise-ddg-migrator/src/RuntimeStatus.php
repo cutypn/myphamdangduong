@@ -33,7 +33,9 @@ final class RuntimeStatus {
         }
 
         $payload = array(
-            'status' => self::repair_status( $report ),
+            'status' => empty( $report )
+                ? 'not_run'
+                : ( ProductMediaRepair::is_clean_report( $report ) ? 'repair_clean' : 'repair_incomplete' ),
             'release' => self::release_marker(),
             'repair_version' => (string) get_option( self::VERSION_OPTION, '' ),
             'repair' => array(
@@ -44,7 +46,9 @@ final class RuntimeStatus {
                 'already_valid' => (int) ( $report['already_valid'] ?? 0 ),
                 'featured_repaired' => (int) ( $report['repaired'] ?? 0 ),
                 'public_products' => (int) ( $report['public_products'] ?? 0 ),
-                'public_missing_featured' => self::safe_scalar_list( $report['public_missing_featured'] ?? array() ),
+                'public_missing_featured' => self::safe_product_ids( $report['public_missing_featured'] ?? array() ),
+                'public_wrong_featured' => self::safe_product_ids( $report['public_wrong_featured'] ?? array() ),
+                'wrong_featured_count' => is_array( $report['wrong_featured'] ?? null ) ? count( $report['wrong_featured'] ) : 0,
                 'product_not_found_count' => is_array( $report['product_not_found'] ?? null ) ? count( $report['product_not_found'] ) : 0,
                 'product_ambiguous_count' => is_array( $report['product_ambiguous'] ?? null ) ? count( $report['product_ambiguous'] ) : 0,
                 'poster_missing_count' => is_array( $report['poster_missing'] ?? null ) ? count( $report['poster_missing'] ) : 0,
@@ -59,26 +63,7 @@ final class RuntimeStatus {
         return $response;
     }
 
-    private static function repair_status( array $report ): string {
-        if ( empty( $report ) ) {
-            return 'not_run';
-        }
-        if (
-            ! empty( $report['errors'] )
-            || ! empty( $report['public_missing_featured'] )
-            || ! empty( $report['product_not_found'] )
-            || ! empty( $report['product_ambiguous'] )
-            || ! empty( $report['poster_missing'] )
-            || ! empty( $report['poster_ambiguous'] )
-            || 44 !== (int) ( $report['manifest_total'] ?? 0 )
-            || 44 !== (int) ( $report['matched_products'] ?? 0 )
-        ) {
-            return 'repair_incomplete';
-        }
-        return 'repair_clean';
-    }
-
-    private static function safe_scalar_list( $value ): array {
+    private static function safe_product_ids( $value ): array {
         if ( ! is_array( $value ) ) {
             return array();
         }
@@ -86,11 +71,14 @@ final class RuntimeStatus {
         foreach ( $value as $item ) {
             if ( is_scalar( $item ) ) {
                 $safe[] = sanitize_text_field( (string) $item );
-            } elseif ( is_array( $item ) ) {
-                $id = isset( $item['product_id'] ) ? (int) $item['product_id'] : 0;
-                if ( $id > 0 ) {
-                    $safe[] = $id;
-                }
+                continue;
+            }
+            if ( ! is_array( $item ) ) {
+                continue;
+            }
+            $id = isset( $item['product_id'] ) ? (int) $item['product_id'] : (int) ( $item['id'] ?? 0 );
+            if ( $id > 0 ) {
+                $safe[] = $id;
             }
         }
         return array_values( array_unique( $safe ) );
