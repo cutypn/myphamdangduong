@@ -7,7 +7,7 @@ use RuntimeException;
 defined( 'ABSPATH' ) || exit;
 
 final class ProductMediaRepair {
-    private const VERSION = '1.1.0';
+    private const VERSION = '1.1.1';
     private const OPTION_VERSION = 'bizrise_ddg_product_media_repair_version';
     private const OPTION_REPORT = 'bizrise_ddg_product_media_repair_report';
     private const PRODUCT_SOURCE_KEYS = array(
@@ -140,6 +140,7 @@ final class ProductMediaRepair {
             'already_valid' => 0,
             'repaired' => 0,
             'wrong_featured' => array(),
+            'wrong_featured_repaired' => 0,
             'product_not_found' => array(),
             'product_ambiguous' => array(),
             'poster_missing' => array(),
@@ -177,13 +178,17 @@ final class ProductMediaRepair {
                     continue;
                 }
 
+                $wrong_featured = null;
                 if ( $current && wp_attachment_is_image( $current ) ) {
-                    $report['wrong_featured'][] = array(
+                    $wrong_featured = array(
                         'product_id' => $post_id,
                         'product' => self::row_label( $row ),
                         'current_attachment_id' => $current,
                         'expected_attachment_id' => $poster_id,
                     );
+                    if ( ! $apply ) {
+                        $report['wrong_featured'][] = $wrong_featured;
+                    }
                 }
 
                 if ( $apply ) {
@@ -195,6 +200,9 @@ final class ProductMediaRepair {
                     }
                     update_post_meta( $post_id, '_bizrise_ddg_media_repair_manifest_key', sanitize_key( $row['key'] ) );
                     update_post_meta( $post_id, '_bizrise_ddg_media_repair_version', self::VERSION );
+                    if ( null !== $wrong_featured ) {
+                        ++$report['wrong_featured_repaired'];
+                    }
                 }
                 ++$report['repaired'];
             } catch ( \Throwable $error ) {
