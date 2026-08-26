@@ -2,144 +2,130 @@
 
 ## Kết luận nhanh
 
-**Trạng thái: FAIL — chưa nên coi frontend là hoàn tất.**
+**Trạng thái tổng thể: FAIL / SOURCE IMPROVED — production chưa được xác nhận PASS.**
 
-Frontend production không thể được fetch trực tiếp từ môi trường QA hiện tại: request tới `https://dangduonggroup.com/` bị `DisabledError`, nên không thể tự click toàn bộ URL hoặc mô phỏng viewport thật trong run này. Audit dưới đây dùng ba nguồn: (1) screenshot production mới nhất do người dùng cung cấp trong cuộc trao đổi, (2) source hiện tại của branch `codex/rebuild-v2`, và (3) dữ liệu/logic importer-media trong cùng branch. Không suy diễn DNS/hosting.
+QA recheck sau các commit fix mới nhất trên `codex/rebuild-v2`. Branch HEAD quan sát tại thời điểm audit: `de1fde421ffbd61e4db0262b31773794dde19535` (`docs(qa): record frontend fixes and production recheck blockers`).
 
-Hai lỗi có bằng chứng production rõ nhất là **ảnh Featured Image mất ở nhiều product card** và **header/logo desktop hiển thị sai/collapse**. Ngoài ra source đang có drift phiên bản CSS/theme và một media hotfix có thể tái đưa ảnh catalog cũ vào Featured Image, tạo đúng loại lỗi hình ảnh không đồng nhất mà production đang thể hiện.
+Frontend production vẫn không fetch trực tiếp được từ môi trường QA này: request tới `https://dangduonggroup.com/` trả `Cache miss`, nên không thể tự click/viewport-test production trong run. Vì vậy trạng thái live không được suy đoán. Audit dùng: source branch hiện tại, `docs/frontend-fix-latest.md`, screenshot production gần nhất đã cung cấp, và logic WordPress/WooCommerce trong repo.
 
-## Phạm vi đã kiểm tra
+## Delta so với audit trước
+
+| Hạng mục | Trạng thái source | Trạng thái production |
+|---|---|---|
+| P0-01 Product thiếu Featured Image | CHƯA SỬA DB | FAIL theo screenshot gần nhất; live recheck blocked |
+| P0-02 Legacy media hotfix override | SOURCE FIXED | CHƯA XÁC MINH deploy/activation |
+| P1-01 Header/logo desktop | SOURCE FIXED một phần qua asset loading/version | CHƯA XÁC MINH live |
+| P1-02 Theme version drift 2.1.2/2.1.3 | SOURCE FIXED | CHƯA XÁC MINH deploy/cache |
+| P1-03 Product image `object-fit` cascade | SOURCE FIXED | CHƯA XÁC MINH live |
+| P1-04 Category whitelist tĩnh | SOURCE FIXED | CHƯA XÁC MINH taxonomy DB/live |
+| P1-05 8 single-product live QA | BLOCKED | CHƯA TEST |
+
+## Phạm vi recheck
 
 | Khu vực | Cách kiểm tra | Kết quả |
 |---|---|---|
-| `/` | source Theme 2 + screenshot production | PARTIAL |
-| `/ve-dang-duong/` | page template + editorial source | PARTIAL |
-| `/nang-luc/` | page template + editorial source | PARTIAL |
-| `/thuong-hieu/` | page template/source | PARTIAL |
-| `/san-pham/` | screenshot production + archive template + product card renderer | FAIL |
-| product category | archive routing/taxonomy source | PARTIAL / RISK |
-| product detail | `woocommerce/single-product.php` + media logic | PARTIAL / RISK |
-| `/kien-thuc/` | page template + article registry | PARTIAL |
-| 5+ bài viết | source files/registry/single template | SOURCE PASS, LIVE BLOCKED |
-| mobile | responsive CSS source only; không có live viewport | SOURCE REVIEW ONLY |
+| `/` | source + production screenshot cũ | PARTIAL |
+| `/ve-dang-duong/` | source + production screenshot cũ | PARTIAL |
+| `/nang-luc/` | source | SOURCE REVIEW ONLY |
+| `/thuong-hieu/` | source | SOURCE REVIEW ONLY |
+| `/san-pham/` | source + screenshot production | FAIL LIVE EVIDENCE / SOURCE IMPROVED |
+| product categories | archive source | SOURCE IMPROVED / LIVE BLOCKED |
+| 8+ product detail | template source | LIVE BLOCKED |
+| `/kien-thuc/` | source/article registry | SOURCE PASS / LIVE BLOCKED |
+| 5+ bài viết | registry + templates | SOURCE PASS / LIVE BLOCKED |
+| mobile 360/390/430 | responsive CSS source | LIVE BLOCKED |
 
-## P0 — cần sửa trước
+## P0 — blocker production
 
-### P0-01 — Nhiều product card production không có Featured Image
+### P0-01 — Product public thiếu Featured Image
 
-- **URL/khu vực:** `/san-pham/` và các archive/category sản phẩm.
-- **Bằng chứng production:** screenshot mới nhất hiển thị dãy ONE TODAY; ít nhất 2 card có vùng ảnh trắng và placeholder chữ `ĐĂNG DƯƠNG`, trong khi các card cạnh bên có ảnh hũ sản phẩm.
-- **Bằng chứng source:** `apps/bizrise-ddg-theme/functions.php` trong `ddg_theme2_card_product()` chỉ render placeholder `ĐĂNG DƯƠNG` khi `has_post_thumbnail($product_id)` trả về false. Vì vậy đây không phải lỗi CSS che ảnh; tại thời điểm render, product post đó không có Featured Image hợp lệ theo WordPress.
-- **Nguyên nhân khả dĩ:** `_thumbnail_id` chưa được gán cho các product post thực sự đang xuất hiện trong archive; archive có duplicate/legacy posts ngoài tập đã repair; hoặc Featured Image từng gán đã bị thay/xóa sau repair.
-- **File/source liên quan:** `apps/bizrise-ddg-theme/functions.php`; importer/repair media đang active trên production; product database.
-- **Tiêu chí PASS:** duyệt toàn bộ product public và xác nhận `has_post_thumbnail() === true`; không còn placeholder `ĐĂNG DƯƠNG`; mỗi product public có đúng một Featured Image đã xác minh theo manifest/product identity.
+- **URL/khu vực:** `/san-pham/`, product category archives, single product.
+- **Bằng chứng production gần nhất:** nhiều card hiển thị placeholder `ĐĂNG DƯƠNG` thay vì ảnh sản phẩm.
+- **Bằng chứng source:** renderer chỉ dùng placeholder khi `has_post_thumbnail($product_id)` false.
+- **Tình trạng hiện tại:** source fix đã ngăn legacy hotfix tự gán ảnh ngoài, nhưng **không sửa `_thumbnail_id` trong WordPress DB**.
+- **Nguyên nhân còn khả dĩ:** product public thực tế chưa có `_thumbnail_id`; attachment bị thiếu/xóa; duplicate/legacy product đang lọt archive; mapping 44 poster đã chạy trên post khác với post đang public.
+- **PASS bắt buộc:** audit 100% product public theo `product ID -> product key -> brand -> category -> _thumbnail_id -> attachment filename`; không còn placeholder; attachment khớp deterministic manifest; HOLD/draft không xuất hiện.
 
-### P0-02 — Media hotfix có thể tái đưa ảnh catalog cũ vào Featured Image
+### P0-02 — Legacy media override
 
-- **URL/khu vực:** mọi product archive và single product.
-- **Bằng chứng source:** `apps/bizrise-ddg-media-hotfix/bizrise-ddg-media-hotfix.php` chạy `maybe_repair()` ở `init` và với product thiếu thumbnail có thể discover/sideload ảnh từ `myphamanhduong.vn`, sau đó gọi `set_post_thumbnail()`.
-- **Tác động:** hệ thống có hai nguồn hình ảnh cạnh tranh: bộ poster portrait curated mới và catalog ngoài/legacy. Khi thumbnail thiếu, hotfix có thể lấp lại bằng ảnh kiểu cũ, làm catalog không đồng nhất dù repair poster trước đó báo thành công.
-- **Nguyên nhân khả dĩ:** plugin hotfix vẫn active hoặc option/version khiến nó chạy lại trên product thiếu ảnh.
-- **File/source liên quan:** `apps/bizrise-ddg-media-hotfix/bizrise-ddg-media-hotfix.php`, đặc biệt `maybe_repair()`, `repair_catalog_sources()`, `repair_product()`.
-- **Tiêu chí PASS:** production chỉ có **một** source-of-truth cho Featured Image; hotfix legacy không được phép override curated portrait poster; audit 100% product public xác nhận attachment ID/filename khớp manifest mong muốn.
+- **Source recheck:** `bizrise-ddg-media-hotfix` đã được đổi sang diagnostic-only theo fix report; không còn fetch catalog ngoài, sideload hay `set_post_thumbnail()`.
+- **Đánh giá QA:** **SOURCE PASS**.
+- **Production:** **CHƯA XÁC MINH** vì chưa có bằng chứng branch này đã deploy/active trên live.
+- **PASS production:** xác nhận plugin/live code không còn tự ghi Featured Image và không có process khác override portrait poster.
 
-## P1 — lỗi quan trọng
+## P1 — lỗi/QA quan trọng
 
-### P1-01 — Header/logo production hiển thị sai trên desktop
+### P1-01 — Header/logo desktop
 
-- **URL/khu vực:** screenshot production trang `Câu chuyện Đăng Dương` (`/ve-dang-duong/` theo nội dung).
-- **Bằng chứng production:** logo ở góc trên trái bị nhỏ/cắt sát mép trên; navigation và CTA header không hiện trong vùng header, trong khi nội dung hero bắt đầu gần sát top. Đây không giống layout desktop được định nghĩa trong source.
-- **Bằng chứng source:** `header.php` định nghĩa sticky header 3 cột gồm logo, nav và CTA; `theme2.css` định nghĩa `min-height:78px`; `theme212.css` lại đổi thành `min-height:92px` và logo tối đa 270×76.
-- **Nguyên nhân khả dĩ:** CSS version/cache drift hoặc stylesheet chồng nhau không đồng bộ production; cũng cần kiểm tra custom logo file/crop và plugin/CDN optimization.
-- **File/source liên quan:** `apps/bizrise-ddg-theme/header.php`, `assets/css/theme2.css`, `assets/css/theme212.css`.
-- **Tiêu chí PASS:** desktop ≥1180px hiển thị đầy đủ logo đúng tỉ lệ, primary nav và CTA trong header; không crop logo; sticky không che nội dung; mobile menu chỉ áp dụng dưới breakpoint dự kiến.
+- Screenshot production gần nhất từng cho thấy logo/header không đúng layout source.
+- Source đã bỏ hard-code `theme212.css?ver=2.1.2`, chuyển asset về enqueue có dependency/version thống nhất.
+- **Source status:** IMPROVED.
+- **Live status:** CHƯA XÁC MINH.
+- **PASS:** desktop >=1180px có logo đúng tỉ lệ, nav + CTA đầy đủ, sticky header không crop/che hero; mobile dùng đúng menu ở breakpoint.
 
-### P1-02 — Theme version drift làm cache-busting không đáng tin
+### P1-02 — Theme version drift
 
-- **Bằng chứng source:** `style.css` khai báo Theme **2.1.3**, nhưng `functions.php` vẫn `BIZRISE_DDG_THEME_VERSION = '2.1.2'`; `header.php` cũng ghi Theme 2.1.2 và hard-code `theme212.css?ver=2.1.2`.
-- **Tác động:** asset mới có thể tiếp tục dùng cache key 2.1.2; CDN/browser có khả năng phục vụ CSS cũ dù package/theme header là 2.1.3. Đây là ứng viên trực tiếp cho việc production nhìn khác source/mockup.
-- **File/source liên quan:** `apps/bizrise-ddg-theme/style.css`, `functions.php`, `header.php`.
-- **Tiêu chí PASS:** một version duy nhất cho theme và toàn bộ CSS/JS; không hard-code asset version cũ; purge cache sau deploy và kiểm tra network response asset mới.
+- Fix report xác nhận `BIZRISE_DDG_THEME_VERSION` và asset layer đã đồng bộ 2.1.3; code search sau fix không còn `2.1.2` trong index hiện tại.
+- **Source status:** PASS theo evidence trong fix report.
+- **Production PASS:** deploy đúng HEAD, purge cache/CDN, asset response dùng version 2.1.3.
 
-### P1-03 — Hai lớp CSS product card cùng điều khiển `object-fit`
+### P1-03 — Portrait product image stage
 
-- **Bằng chứng source:** `theme2.css` đặt `.t2-product-card__media img { object-fit: cover; }`; `theme212.css` đặt `.t2-product-card__image-stage img { object-fit: contain; }`. `header.php` nạp `theme212.css` ngoài hệ enqueue sau `wp_head()`.
-- **Tác động:** nếu `theme212.css` không load, bị tối ưu/reorder hoặc cache sai, ảnh sẽ quay về `cover` và crop; thiết kế portrait phụ thuộc vào thứ tự cascade thay vì một rule canonical.
-- **File/source liên quan:** `assets/css/theme2.css`, `assets/css/theme212.css`, `header.php`.
-- **Tiêu chí PASS:** chỉ một rule canonical cho product image stage; ảnh luôn `contain`, không crop, không cần phụ thuộc thứ tự hai stylesheet.
+- `theme212.css` hiện là lớp canonical cuối với 9:16, `object-fit: contain`, `object-position:center`, không hover-scale crop.
+- **Source status:** PASS.
+- **Live status:** CHƯA XÁC MINH.
+- **PASS:** mọi card ảnh nằm gọn trong 9:16 trên desktop/mobile, không crop và không nhảy chiều cao bất thường.
 
-### P1-04 — Filter danh mục frontend dùng whitelist slug tĩnh, dễ lệch taxonomy thật
+### P1-04 — Product category filter
 
-- **URL/khu vực:** `/san-pham/`, product category archives.
-- **Bằng chứng source:** `woocommerce/archive-product.php` chỉ hiện 8 slug hard-code: `cham-soc-da-mat`, `duong-sang-deu-mau`, `da-co-xu-huong-noi-mun`, `chong-nang`, `cham-soc-dau-hieu-lao-hoa`, `cham-soc-co-the`, `lam-sach`, `cham-soc-vung-kin`.
-- **Bằng chứng data:** Product Truth seed còn dùng các category semantic như `Kem dưỡng/chăm sóc da`, `Chăm sóc body`, `Serum`, `Dung dịch vệ sinh`, `Sữa rửa mặt`, `Tẩy tế bào chết`.
-- **Tác động:** nếu importer/repair không map tuyệt đối từ Product Truth sang 8 managed slugs, sản phẩm có thể nằm sai nhóm hoặc category hợp lệ không xuất hiện ở filter. Điều này phù hợp với phản hồi trước đó rằng sản phẩm sai danh mục.
-- **File/source liên quan:** `woocommerce/archive-product.php`, Product Truth/importer taxonomy mapping.
-- **Tiêu chí PASS:** có bảng mapping taxonomy explicit, deterministic; mỗi product public có expected category; filter lấy từ taxonomy managed source thay vì danh sách ad-hoc không được test.
+- Archive source không còn whitelist 8 slug tĩnh; filter lấy `product_cat` hiện có product, loại Uncategorized.
+- **Source status:** PASS cho phần render filter.
+- **Data status:** CHƯA PASS vì đúng/sai category vẫn phụ thuộc taxonomy trong WordPress DB/importer.
+- **PASS:** đối chiếu toàn bộ product public với expected category deterministic; filter không xuất category rác/legacy; mỗi category mở ra đúng SKU.
 
-### P1-05 — QA live cho product detail chưa đạt vì không thể xác minh 8 sản phẩm đại diện
+### P1-05 — QA ít nhất 8 single product nhiều brand
 
-- **URL/khu vực:** ít nhất 8 single product thuộc nhiều brand.
-- **Bằng chứng:** frontend fetch bị chặn trong môi trường QA này; không có screenshot single-product mới trong run.
-- **Source review:** template chỉ hiển thị main Featured Image; nếu thumbnail sai/mất thì single page cũng sai. Related products hiện lấy 4 product publish mới nhất toàn site, không theo brand/category.
-- **File/source liên quan:** `woocommerce/single-product.php`.
-- **Tiêu chí PASS:** QA browser thật mở ít nhất 8 SKU/brand, xác nhận hero image đúng sản phẩm, pack/brand đúng, CTA hoạt động, hồ sơ công bố (nếu có) đúng attachment, related products không kéo HOLD/draft.
+- **Live status:** CHƯA TEST do frontend fetch bị chặn.
+- **PASS:** mở ít nhất 8 SKU thuộc nhiều brand/collection; kiểm image, title, brand, pack, CTA, hồ sơ công bố nếu có, related section; không kéo HOLD/draft.
 
-## P2 — chất lượng/UX cần rà
+## P2 — UX cần browser QA
 
-### P2-01 — Mobile product card có layout rất nhạy với title dài
+### Mobile cards
 
-- **Bằng chứng source:** dưới 520px, `.t2-product-card` chuyển sang grid `42% 58%` trong khi media vẫn giữ `aspect-ratio:9/16`; phần copy title không có clamp.
-- **Rủi ro:** title dài có thể làm card lệch chiều cao/khó scan; cần browser QA thật ở 360/390/430px.
-- **Tiêu chí PASS:** không overflow, không chữ đè, CTA không trôi, toàn bộ card click/tap dễ sử dụng.
+Dưới breakpoint nhỏ, cần test thật ở 360/390/430px với title dài để xác nhận không overflow, không chữ đè ảnh, CTA không trôi và card vẫn tap được.
 
-### P2-02 — Related products không thực sự “related”
+### Related products
 
-- **Bằng chứng source:** single-product query chỉ `orderby=date DESC`, không filter taxonomy/brand/category.
-- **Tác động:** UX có thể gợi ý sản phẩm không liên quan nhu cầu/brand.
-- **Tiêu chí PASS:** nếu nhãn vẫn là “Khám phá thêm” thì chấp nhận; nếu muốn “sản phẩm liên quan”, query phải dựa trên brand/category/routine rõ ràng.
+Single-product hiện cần xác nhận UX thực tế. Nếu section dùng nhãn `Khám phá thêm`, query rộng có thể chấp nhận; nếu gọi `Sản phẩm liên quan`, nên kiểm logic category/brand/routine.
 
-## H1 / bài viết / content
+## H1 / bài viết / nội dung
 
-### Source check
+- `page.php`: một H1 từ page title.
+- `single.php`: một H1 article title; related section H2.
+- `single-product.php`: một H1 product title; title lặp ở phần chi tiết là H2.
+- Article registry có 10 bài nguồn hoàn chỉnh ở `editorial_review`; không tự publish chỉ vì source hoàn tất.
 
-- `page.php`: một `<h1>` từ page title; editorial content được render bên dưới. Không thấy duplicate H1 trong template.
-- `single.php`: một `<h1>` từ article title. Related section dùng H2.
-- `single-product.php`: một `<h1>` ở summary; phần chi tiết lặp title bằng H2, **không** phải duplicate H1.
-- Article registry hiện có 10 bài nguồn hoàn chỉnh ở trạng thái `editorial_review`; source audit trước đó ghi rõ không auto-publish.
+**Source:** PASS cho duplicate-H1 review và article source completeness.
 
-### Live status
-
-Không thể xác minh `/kien-thuc/` và 5 bài viết production trong run này do fetch frontend bị chặn. Vì vậy **không được đánh dấu live PASS** chỉ dựa vào source. Agent Fix/QA recheck cần browser thật hoặc Cloud Browser để xác nhận URL, ảnh bài viết, excerpt, typography, internal links và 404.
+**Production:** `/kien-thuc/` và ít nhất 5 bài viết vẫn CHƯA XÁC MINH live. Cần kiểm 200/404, ảnh, excerpt, typography, internal link, CTA và mobile layout.
 
 ## Broken links / CTA
 
-Không phát hiện broken-link chắc chắn từ source vì các helper URL dùng `get_page_by_path()` rồi fallback sang slug. Tuy nhiên fallback có thể tạo URL tồn tại về mặt chuỗi nhưng 404 nếu page chưa được tạo trong DB. Cần live crawl để kết luận.
+Source chưa cho thấy broken link chắc chắn, nhưng helper fallback theo slug có thể vẫn tạo URL 404 nếu page chưa tồn tại trong WordPress DB. Cần live crawl.
 
-Các CTA cần recheck live: `/san-pham/`, `/doi-tac/`, `/lien-he/`, `/tim-diem-ban/`, `/kien-thuc/`, `/nghien-cuu-phat-trien/`, `/oem-odm-my-pham/`.
+Recheck bắt buộc: `/san-pham/`, `/doi-tac/`, `/lien-he/`, `/tim-diem-ban/`, `/kien-thuc/`, `/nghien-cuu-phat-trien/`, `/oem-odm-my-pham/`.
 
-## Thứ tự Agent Fix nên xử lý
+## Tiêu chí QA vòng tiếp theo
 
-1. **Dừng xung đột media source**: xác định plugin nào đang gán Featured Image và vô hiệu khả năng hotfix legacy override poster curated.
-2. **Audit toàn bộ product public trong DB**: product ID → title → brand → category → `_thumbnail_id` → attachment file → expected manifest. Tìm duplicate/legacy product đang lọt archive.
-3. **Sửa 100% thumbnail missing** bằng deterministic mapping, sau đó purge cache.
-4. **Hợp nhất version/theme assets**: 2.1.3 xuyên suốt, bỏ hard-coded `theme212.css?ver=2.1.2` hoặc merge rules vào một stylesheet canonical.
-5. **Recheck header desktop/mobile**.
-6. **Recheck taxonomy/filter** theo mapping được duyệt.
-7. **Browser QA vòng 2**: `/`, 4 core pages, `/san-pham/`, category, 8 SKU, `/kien-thuc/`, 5 bài viết, viewport 1440/1024/768/430/390.
+1. Có bằng chứng deploy production của branch/HEAD mới nhất.
+2. Purge cache/CDN và xác nhận asset theme 2.1.3.
+3. Audit 100% product public `_thumbnail_id` + attachment filename + expected manifest/product key.
+4. `/san-pham/` và toàn bộ category không còn placeholder, không ảnh legacy/crop.
+5. Desktop >=1180px: header/logo/nav/CTA PASS.
+6. Mobile 360/390/430px: header/menu/card PASS.
+7. Mở >=8 single product nhiều brand và xác minh facts/media/HOLD.
+8. Mở `/kien-thuc/` + >=5 article live; không 404, layout/CTA/internal links PASS.
 
-## Điều kiện tổng thể để chuyển PASS
+## Kết luận QA
 
-- 0 product public thiếu Featured Image.
-- 0 product public dùng ảnh sai SKU hoặc ảnh legacy ngoài manifest đã duyệt.
-- 100% card product giữ khung đứng và image `contain` nhất quán.
-- Category của toàn bộ product public khớp mapping expected.
-- Header/logo/nav/CTA đúng ở desktop và mobile.
-- Không có 404 ở menu/CTA chính.
-- Một H1 mỗi page/template.
-- `/kien-thuc/` và ít nhất 5 article live render đầy đủ, không layout vỡ.
-- Cache/CDN đã purge và asset version production khớp source deploy.
-
-## Giới hạn của run này
-
-Không có browser/live fetch khả dụng cho domain production trong môi trường QA hiện tại, nên không giả vờ đã click toàn bộ frontend. Báo cáo này phân biệt rõ **production evidence từ screenshot** và **source-level risk**. Vòng QA kế tiếp nên chạy bằng Work/Cloud Browser hoặc một browser runner có quyền truy cập public frontend để chụp screenshot + console/network cho từng URL.
+Các commit fix đã giải quyết phần lớn **lỗi source** phát hiện ở vòng trước, đặc biệt media hotfix cạnh tranh, version drift, asset cascade và category filter. Tuy nhiên **production vẫn chưa thể được đánh dấu PASS** vì blocker thật còn nằm ở Featured Image trong WordPress DB và chưa có live browser/deploy evidence để xác minh các source fix đã lên production.
