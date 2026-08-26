@@ -1,6 +1,6 @@
 <?php
 /**
- * Product archive — Theme 2.1 final.
+ * Product archive — Theme 2.1.3.
  *
  * @package Bizrise_DDG
  */
@@ -23,13 +23,26 @@ $title = is_shop() ? 'Sản phẩm & Routine' : woocommerce_page_title(false);
 
   <div class="t2-shell t2-product-archive__body">
     <?php
-    $managed_slugs=['cham-soc-da-mat','duong-sang-deu-mau','da-co-xu-huong-noi-mun','chong-nang','cham-soc-dau-hieu-lao-hoa','cham-soc-co-the','lam-sach','cham-soc-vung-kin'];
-    $cats=[];
-    foreach($managed_slugs as $slug){$term=get_term_by('slug',$slug,'product_cat');if($term instanceof WP_Term&&(int)$term->count>0)$cats[]=$term;}
-    if($cats): ?>
+    // Render the taxonomy that actually has public products instead of maintaining
+    // a second hard-coded category whitelist in the theme. Product assignment stays
+    // owned by the deterministic importer/Product Truth layer.
+    $cats = get_terms([
+      'taxonomy'   => 'product_cat',
+      'hide_empty' => true,
+      'orderby'    => 'name',
+      'order'      => 'ASC',
+    ]);
+    if (is_wp_error($cats)) { $cats = []; }
+    $uncategorized = (int)get_option('default_product_cat', 0);
+    if ($uncategorized > 0) {
+      $cats = array_values(array_filter($cats, static fn($term): bool => (int)$term->term_id !== $uncategorized));
+    }
+    if ($cats): ?>
       <nav class="t2-filter-pills" aria-label="Danh mục sản phẩm">
         <a href="<?php echo esc_url(ddg_theme2_url('san-pham')); ?>">Tất cả sản phẩm</a>
-        <?php foreach($cats as $cat):$link=get_term_link($cat);if(!is_wp_error($link)): ?><a href="<?php echo esc_url($link); ?>"><?php echo esc_html($cat->name); ?></a><?php endif;endforeach; ?>
+        <?php foreach ($cats as $cat): $link = get_term_link($cat); if (!is_wp_error($link)): ?>
+          <a href="<?php echo esc_url($link); ?>"><?php echo esc_html($cat->name); ?></a>
+        <?php endif; endforeach; ?>
       </nav>
     <?php endif; ?>
 
