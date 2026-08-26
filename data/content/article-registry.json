@@ -1,6 +1,6 @@
 {
-  "version": "2026-08-21",
-  "policy": "Legacy knowledge-bank entries are topic/SEO candidates only. No automatic publish in V2.",
+  "version": "2026-08-26",
+  "policy": "Legacy knowledge-bank entries are topic/SEO candidates only. No automatic publish in V2. Completed rewrites remain in editorial review until a human reviewer approves publication.",
   "source": "legacy apps/bizrise-ddg-site-pages/bizrise-ddg-knowledge-bank-v2-1.php",
   "articles": [
     {
@@ -52,38 +52,46 @@
       "slug": "cac-buoc-phat-trien-my-pham-thuong-hieu-rieng",
       "title": "Các bước phát triển mỹ phẩm thương hiệu riêng từ ý tưởng đến launch",
       "primary_keyword": "phát triển mỹ phẩm thương hiệu riêng",
-      "status": "outline_needs_rewrite",
-      "priority": "P1"
+      "status": "editorial_review",
+      "source_file": "data/content/articles/cac-buoc-phat-trien-my-pham-thuong-hieu-rieng.md",
+      "priority": "P1",
+      "notes": "Full project-management rewrite completed; current Vietnamese regulatory references verified 2026-08-26; reviewer pending."
     },
     {
       "slug": "rd-my-pham-la-gi",
       "title": "R&D mỹ phẩm là gì? Vai trò trong quá trình phát triển sản phẩm",
       "primary_keyword": "R&D mỹ phẩm là gì",
-      "status": "outline_needs_rewrite",
+      "status": "editorial_review",
+      "source_file": "data/content/articles/rd-my-pham-la-gi.md",
       "priority": "P1",
-      "notes": "Keep R&D educational; do not convert into unverified DDG capability claims."
+      "notes": "Full educational rewrite completed without unverified DDG capability claims; reviewer pending."
     },
     {
       "slug": "nghien-cuu-cong-thuc-my-pham",
       "title": "Nghiên cứu công thức mỹ phẩm: từ nhu cầu người dùng đến tiêu chí phát triển",
       "primary_keyword": "nghiên cứu công thức mỹ phẩm",
-      "status": "outline_needs_rewrite",
-      "priority": "P1"
+      "status": "editorial_review",
+      "source_file": "data/content/articles/nghien-cuu-cong-thuc-my-pham.md",
+      "priority": "P1",
+      "notes": "Full formulation-development rewrite completed; no efficacy claims; reviewer pending."
     },
     {
       "slug": "lam-mau-my-pham-can-luu-y-gi",
       "title": "Làm mẫu mỹ phẩm cần lưu ý gì? Cách feedback để giảm vòng chỉnh sửa",
       "primary_keyword": "làm mẫu mỹ phẩm cần lưu ý gì",
-      "status": "outline_needs_rewrite",
-      "priority": "P1"
+      "status": "editorial_review",
+      "source_file": "data/content/articles/lam-mau-my-pham-can-luu-y-gi.md",
+      "priority": "P1",
+      "notes": "Full sampling and feedback workflow rewrite completed; reviewer pending."
     },
     {
       "slug": "thiet-ke-bao-bi-my-pham",
       "title": "Thiết kế bao bì mỹ phẩm: 7 quyết định cần chốt trước khi sản xuất",
       "primary_keyword": "thiết kế bao bì mỹ phẩm",
-      "status": "outline_needs_rewrite",
+      "status": "editorial_review",
+      "source_file": "data/content/articles/thiet-ke-bao-bi-my-pham.md",
       "priority": "P1",
-      "notes": "Requires current labeling/regulatory source review before publish-ready status."
+      "notes": "Full packaging/artwork workflow rewrite completed; current management regulation reference verified 2026-08-26; reviewer pending."
     }
   ]
 }
