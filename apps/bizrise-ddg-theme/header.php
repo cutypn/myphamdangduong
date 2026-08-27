@@ -1,5 +1,5 @@
 <?php
-/** Site header — Theme 2.1.3. @package Bizrise_DDG */
+/** Site header — Theme 2.1.4. @package Bizrise_DDG */
 if (!defined('ABSPATH')) { exit; }
 ?><!doctype html>
 <html <?php language_attributes(); ?>>
@@ -39,12 +39,14 @@ if (!defined('ABSPATH')) { exit; }
         ]); ?>
       <?php else : ?>
         <ul>
+          <li><a href="<?php echo esc_url(home_url('/')); ?>">Trang chủ</a></li>
           <li><a href="<?php echo esc_url(ddg_theme2_url('ve-dang-duong')); ?>">Về Đăng Dương</a></li>
           <li><a href="<?php echo esc_url(ddg_theme2_url('nang-luc')); ?>">Năng lực</a></li>
           <li><a href="<?php echo esc_url(ddg_theme2_url('thuong-hieu')); ?>">Thương hiệu</a></li>
           <li><a href="<?php echo esc_url(ddg_theme2_url('san-pham')); ?>">Sản phẩm &amp; Routine</a></li>
           <li><a href="<?php echo esc_url(ddg_theme2_url('kien-thuc')); ?>">Kiến thức làm đẹp</a></li>
           <li><a href="<?php echo esc_url(ddg_theme2_url('doi-tac')); ?>">Đối tác</a></li>
+          <li><a href="<?php echo esc_url(ddg_theme2_url('lien-he')); ?>">Liên hệ</a></li>
         </ul>
       <?php endif; ?>
     </nav>
