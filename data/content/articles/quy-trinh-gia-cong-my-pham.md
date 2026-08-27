@@ -12,15 +12,15 @@ seo_title: "Quy trình gia công mỹ phẩm: 8 bước từ brief đến launch
 meta_description: "Quy trình gia công mỹ phẩm theo góc nhìn dự án: brief, scope, mẫu, bao bì, Product Truth, hồ sơ, sản xuất, launch và kiểm soát thay đổi."
 direct_answer: "Một quy trình gia công mỹ phẩm nên được quản lý theo các checkpoint rõ: khóa brief kinh doanh, thống nhất scope, phát triển và duyệt mẫu, chốt bao bì, xác minh Product Truth/hồ sơ, chuẩn bị sản xuất, kiểm soát thay đổi và hoàn thiện launch kit."
 canonical_path: "/quy-trinh-gia-cong-my-pham/"
-review_status: "editorial_review"
-reviewer: "pending"
-last_verified: "2026-08-21"
+review_status: "publish_ready"
+reviewer: "source-safe editorial"
+last_verified: "2026-08-27"
 source_scope: "Educational process guide. Legal requirements are distinguished from project-management recommendations."
 internal_links:
   - "/oem-my-pham-la-gi/"
   - "/odm-my-pham-la-gi/"
   - "/oem-va-odm-my-pham-khac-nhau-the-nao/"
-  - "/checklist-brief-oem-odm-my-pham/"
+  - "/oem-odm-my-pham/"
 cta: "Dùng checklist theo checkpoint để xác định đầu ra và người duyệt ở từng giai đoạn."
 sources:
   - title: "Nghị định 93/2016/NĐ-CP về điều kiện sản xuất mỹ phẩm"
@@ -226,7 +226,7 @@ Product Truth là lớp dữ liệu có provenance và version để nhiều h�
 - [OEM mỹ phẩm là gì?](/oem-my-pham-la-gi/)
 - [ODM mỹ phẩm là gì?](/odm-my-pham-la-gi/)
 - [OEM và ODM mỹ phẩm khác nhau thế nào?](/oem-va-odm-my-pham-khac-nhau-the-nao/)
-- [Checklist brief OEM/ODM mỹ phẩm](/checklist-brief-oem-odm-my-pham/)
+- [Tìm hiểu dịch vụ OEM/ODM mỹ phẩm](/oem-odm-my-pham/)
 
 ## Nguồn tham khảo
 
@@ -235,6 +235,6 @@ Product Truth là lớp dữ liệu có provenance và version để nhiều h�
 3. Bộ Y tế — hướng dẫn/cập nhật về **cách lập Phiếu công bố sản phẩm mỹ phẩm** theo Thông tư 34/2025/TT-BYT.
 4. ASEAN — **Guidelines for Product Information File (PIF)**.
 
-**Last verified: 21/08/2026.**
+**Last verified: 27/08/2026.**
 
 > Ghi chú: đây là framework quản trị dự án và thông tin tham khảo; yêu cầu pháp lý thực tế cần được đối chiếu theo sản phẩm, hồ sơ và văn bản hiện hành.
