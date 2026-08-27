@@ -11,9 +11,9 @@ seo_title: "Làm mẫu mỹ phẩm: cách feedback để giảm vòng chỉnh s�
 meta_description: "Hướng dẫn làm và duyệt mẫu mỹ phẩm: chốt tiêu chí trước khi thử, đánh giá theo biến, quản lý version và tổng hợp feedback rõ ràng."
 direct_answer: "Khi làm mẫu mỹ phẩm, thương hiệu nên chốt tiêu chí trước khi thử, đánh giá từng biến cảm quan, quản lý mã phiên bản và chỉ định một người tổng hợp feedback."
 canonical_path: "/lam-mau-my-pham-can-luu-y-gi/"
-review_status: "editorial_review"
-reviewer: "pending"
-last_verified: "2026-08-26"
+review_status: "publish_ready"
+reviewer: "source-safe editorial"
+last_verified: "2026-08-27"
 source_scope: "Project-management and sampling workflow only."
 internal_links:
   - "/rd-my-pham-la-gi/"
