@@ -2,20 +2,26 @@
 
 ## Current result
 
-Mobile-first source fix completed on `codex/rebuild-v2` without changing Product Truth or publication rules.
+Mobile-first source hardening completed on `codex/rebuild-v2` without changing Product Truth or publication rules.
 
-Product/Data Recovery remains the reference for catalog data: `/san-pham/` must use WooCommerce `post_type=product`; the internal `bizrise_product` type must not own the public catalog route.
+Product/Data Recovery remains the catalog-data reference: `/san-pham/` must use WooCommerce `post_type=product`; internal `bizrise_product` remains non-public/non-queryable and must not own the storefront route.
 
-## Mobile issue fixed
+## P0 mobile issue fixed this run
 
-The base theme had a `<=520px` rule that collapsed product grids to one column and changed each product card into a horizontal 42/58 layout. That conflicted with the approved portrait product-card mockup.
+A source audit found one remaining tap-target regression inside product cards: the mobile override forced `.t2-product-card__copy .t2-text-link` to `min-height:36px`, below the project's ~44px mobile target.
 
-The final override now keeps product cards portrait and compact on phones.
+Fix applied:
+
+- product-card CTA now has `min-height:44px` and flex vertical centering;
+- article-card CTA now has `min-height:44px`;
+- pagination links/spans now have `min-height:44px`;
+- Theme asset version bumped `2.1.5` → `2.1.6` so production browsers do not retain the previous mobile CSS;
+- canonical product card remains two-column portrait 9:16 at 360/390/430 with `object-fit:contain`.
 
 ## Code
 
-- `771a47cd493d3579aac3053da775620598258c0f` — mobile CSS hardening.
-- `8842c34e22ec70b71b6a4cf19e7fb2951474ea7b` — asset cache version bump to Theme 2.1.5.
+- `321b20feb8f3a6ffe553c285309a22700b9b54d8` — enforce 44px mobile tap targets in CSS.
+- `6c60c7dc7cedd2c86686b489238f7d78d4b0ee52` — bump theme asset version to 2.1.6.
 
 Files:
 
@@ -26,62 +32,68 @@ Files:
 
 | Check | 360 | 390 | 430 |
 |---|---|---|---|
-| Header/logo/hamburger fit by final CSS | PASS source | PASS source | PASS source |
-| Menu links have >=44px target | PASS source | PASS source | PASS source |
+| Sticky header source geometry | PASS source | PASS source | PASS source |
+| Logo/hamburger fit | PASS source | PASS source | PASS source |
+| Menu/submenu links >=44px | PASS source | PASS source | PASS source |
+| Product CTA >=44px | PASS source | PASS source | PASS source |
+| Article CTA >=44px | PASS source | PASS source | PASS source |
+| Pagination target >=44px | PASS source | PASS source | PASS source |
 | Product grid stays 2 columns | PASS source | PASS source | PASS source |
 | Product media stays 9:16 | PASS source | PASS source | PASS source |
 | Product images use contain, not crop | PASS source | PASS source | PASS source |
-| Filter pills can horizontal-scroll | PASS source | PASS source | PASS source |
-| Sort select is phone friendly | PASS source | PASS source | PASS source |
-| Single product image is contained | PASS source | PASS source | PASS source |
-| H1/hero scale is moderated | PASS source | PASS source | PASS source |
-| Article body/type scale is readable | PASS source | PASS source | PASS source |
+| Filter pills horizontal-scroll | PASS source | PASS source | PASS source |
+| Sort select >=44px | PASS source | PASS source | PASS source |
+| Single product image contained | PASS source | PASS source | PASS source |
+| H1/hero scale moderated | PASS source | PASS source | PASS source |
+| Article body/type scale readable | PASS source | PASS source | PASS source |
 | Tables scroll instead of breaking viewport | PASS source | PASS source | PASS source |
 | Form controls avoid phone auto-zoom | PASS source | PASS source | PASS source |
+| Footer compact | PASS source | PASS source | PASS source |
 
-`PASS source` is a source/cascade result, not screenshot/browser evidence.
-
-## Detail of fixes
-
-- Phone shell reduced to 12px side gutters.
-- Header is 64px on phone; logo is limited to 156px and 142px below 375px.
-- Hamburger stays 44x44px.
-- Mobile menu uses dynamic viewport height and text can wrap.
-- Product grid stays two portrait columns down to 360px.
-- Product card spacing, title, brand and metadata are compacted for narrow widths.
-- Product image stage remains `object-fit: contain` and centered.
-- Page/article/product H1 scale is reduced on phone.
-- Single product image uses `min(88vw, 360px)` and remains portrait.
-- Article/editorial line-height and heading sizes are reduced to readable mobile values.
-- Tables become horizontally scrollable.
-- Inputs/selects/textareas use 16px font size on phone.
-- Footer spacing and logo size are reduced on phone.
+`PASS source` means source/cascade inspection only, not browser screenshot evidence.
 
 ## CI
 
-Exact mobile code SHA: `8842c34e22ec70b71b6a4cf19e7fb2951474ea7b`.
+Exact final SHA: `6c60c7dc7cedd2c86686b489238f7d78d4b0ee52`.
 
-- Validate Bizrise DDG V2 run `33045434598`: SUCCESS.
-- Build Bizrise DDG V2 Release run `33045434587`: SUCCESS.
+- Validate Bizrise DDG V2 run `33049212990`: **SUCCESS**.
+- Build Bizrise DDG V2 Release run `33049212972`: **SUCCESS**.
 
-## Production verification
+The preceding CSS commit `321b20f…` also passed both Validate and Release before the asset-version bump.
 
-Production is not marked PASS in this report because the current environment still cannot fetch the public deploy/runtime endpoints reliably.
+## Product/Data context
 
-Browser verification is still required for:
+Latest Product Recovery report continues to show:
 
-- `/san-pham/` at 360, 390, 430 and desktop >=1180;
-- category archive;
-- representative product single pages;
-- homepage/core pages;
-- knowledge archive and article pages;
-- sticky header/menu behavior;
-- horizontal overflow and actual visual polish.
+- controlled manifest: 44;
+- controlled matched: 44;
+- last verified controlled wrong Featured Image: 0;
+- last verified product/poster missing or ambiguity: 0;
+- unmanaged/legacy public missing Featured Image candidates remain a Product/Data concern and are not hidden or fuzzy-mapped by frontend.
+
+No frontend code in this run changes publication status, Product Truth, product mapping or product media records.
+
+## Production / browser verification
+
+Production is not marked PASS from this runtime because public REST/browser access is still not reliably available here. The Deploy Bridge should pick up the final SHA after CI success, but deployed SHA must be confirmed independently before claiming production PASS.
+
+Required browser checks remain:
+
+1. `/san-pham/` at 360, 390, 430 and desktop >=1180.
+2. Representative `product_cat` archive.
+3. >=8 representative product singles across brands.
+4. Homepage/core pages.
+5. `/kien-thuc/` and representative article pages.
+6. Sticky header/menu opening and submenu tapping.
+7. No horizontal overflow at 360/390/430.
+8. Actual visual polish of portrait cards, spacing, hero height, typography, CTA visibility and footer.
 
 ## Status
 
-**MOBILE SOURCE FIX: PASS**
+**MOBILE SOURCE: PASS**
 
-**EXACT CI: PASS**
+**FINAL CI: PASS**
 
-**PRODUCTION / BROWSER QA: CHƯA XÁC MINH**
+**PRODUCTION DEPLOY: CHƯA XÁC MINH**
+
+**BROWSER QA 360/390/430: CHƯA XÁC MINH**
