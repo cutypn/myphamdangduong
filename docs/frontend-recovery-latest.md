@@ -4,24 +4,25 @@
 
 Mobile-first recovery continues on `codex/rebuild-v2` without changing Product Truth, publication rules or WooCommerce mapping. Product/Data Recovery remains authoritative: public catalog = WooCommerce `post_type=product`; internal `bizrise_product` remains non-public/non-queryable and must not own `/san-pham/`. Latest Product Recovery reports controlled manifest **44**, controlled matched **44**, last verified controlled wrong Featured Image **0**; unmanaged/legacy missing-media rows remain separate for deterministic Product/Data classification.
 
-## P0 mobile fix this run
+## P0 frontend fix this run
 
-Static cascade audit found a real regression introduced by the new Product Mockup 2.2 stylesheet: because `product-mockup.css` is enqueued after `theme212.css`, its phone rules overrode the earlier ~44px interaction targets. At `<=720px`, product category filter pills were only **38px** high and product-card CTA was only **40px** high.
+Static cascade audit found a real responsive regression in Product Mockup 2.2.1: category filter pills only switched to horizontal scrolling at `<=720px`. Between **721px and 980px** the filter remained a single non-wrapping flex row, so a larger WooCommerce product taxonomy could push beyond the content width and create horizontal overflow on tablets/small laptops.
 
 Fixes applied:
 
-- product mockup stylesheet updated to **2.2.1**;
-- product filter pills now keep `min-height:44px` at desktop and phone breakpoints;
-- product-card CTA now keeps `min-height:44px` and explicit flex centering on phone;
-- archive and `/san-pham/` fallback template asset version changed from `2.2.0` to `2.2.1` to break browser/CDN cache;
+- product mockup stylesheet updated to **2.2.2**;
+- base product filter row now uses `flex-wrap:wrap` plus `min-width:0`, preventing the taxonomy row from widening its container on desktop/tablet;
+- phone breakpoint `<=720px` intentionally overrides back to `flex-wrap:nowrap` + `overflow-x:auto`, preserving the approved horizontal-chip mobile interaction;
+- filter pills retain `min-height:44px` and product-card CTA retains `min-height:44px` on phone;
+- Woo archive and `/san-pham/` fallback both bump the product mockup asset from `2.2.1` to `2.2.2` to invalidate browser/CDN cache;
 - product layout remains two columns on phone, portrait 9:16 media, source image `object-fit:contain`;
 - no Product Truth or publication-rule changes.
 
-Frontend code commits in this run:
+Frontend code commits this run:
 
-- `fac49a88b79fedfe3afaf3ae7420dbc6c6bf974c` — restore 44px product interaction targets;
-- `877262132c9461b041cdd17e49ffc28c2375af55` — bump Woo archive mockup asset to 2.2.1;
-- `c1d405d32eb20ac2dab3fd9e4b58a3dc43bdb1c6` — bump `/san-pham/` fallback mockup asset to 2.2.1.
+- `ae7846622ea00d0a457ba64352fdb7ee59939406` — prevent product filter overflow on tablet;
+- `5d53d29dc9c0cf33cb592e216403b8c5b0c6aa8f` — bump Woo archive asset to 2.2.2;
+- `9284d7db87a47cce39b95ed21d848fee82536923` — bump `/san-pham/` fallback asset to 2.2.2.
 
 Files:
 
@@ -58,27 +59,33 @@ Files:
 
 `PASS source` means static source/cascade/interaction inspection, not live screenshot verification.
 
+## Tablet / desktop overflow guard
+
+- Product filter taxonomy row: **PASS source** at 721–980px via wrapping.
+- Product filter taxonomy row: **PASS source** at >=981px via wrapping.
+- Product grid: 3 columns at <=980px, 4 columns on larger desktop.
+- Phone filter chips remain horizontal-scroll instead of wrapping into tall multi-row controls.
+
 ## CI
 
-Exact frontend code SHA: `c1d405d32eb20ac2dab3fd9e4b58a3dc43bdb1c6`.
+Exact frontend code SHA to verify: `9284d7db87a47cce39b95ed21d848fee82536923`.
 
-- Validate Bizrise DDG V2 run `33071326418`: **SUCCESS**.
-- Build Bizrise DDG V2 Release run `33071326432`: **SUCCESS**.
+CI status is updated after the exact SHA workflows complete.
 
 ## Production / browser verification
 
-Live production verification is still unavailable from this execution environment. Direct REST/page opening cannot be established from current web retrieval, so no production visual claim is made.
+Live production verification remains unavailable from this execution environment, so no production visual claim is made.
 
 Required production PASS evidence remains:
 
-1. deployed SHA equals `c1d405d32eb20ac2dab3fd9e4b58a3dc43bdb1c6` or validated descendant;
+1. deployed SHA equals `9284d7db87a47cce39b95ed21d848fee82536923` or validated descendant;
 2. `/san-pham/` at 360, 390, 430 and desktop >=1180;
 3. representative `product_cat` archive;
 4. >=8 product singles across brands;
 5. homepage/core pages;
 6. `/kien-thuc/` plus representative article pages;
 7. sticky header/menu/submenu interaction including Escape and orientation/viewport transition;
-8. zero horizontal overflow at 360/390/430;
+8. zero horizontal overflow at 360/390/430 and no category-pill overflow at 721–980;
 9. product filter chips and card CTA render with >=44px touch height;
 10. visual polish of product 9:16 cards, spacing, hero height, typography, CTA visibility and footer.
 
@@ -86,7 +93,9 @@ Required production PASS evidence remains:
 
 **MOBILE SOURCE: PASS**
 
-**EXACT FRONTEND CI: PASS**
+**TABLET FILTER OVERFLOW SOURCE: PASS**
+
+**EXACT FRONTEND CI: PENDING**
 
 **PRODUCTION DEPLOY: CHƯA XÁC MINH**
 
