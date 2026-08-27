@@ -11,10 +11,12 @@ BACKUP_DIR="$BACKUP_ROOT/${TIMESTAMP}-${RELEASE_SHA}"
 CORE_SRC="$REPO_ROOT/apps/bizrise-core"
 THEME_SRC="$REPO_ROOT/apps/bizrise-ddg-theme"
 MIGRATOR_SRC="$REPO_ROOT/apps/bizrise-ddg-migrator"
+CONTENT_SRC="$REPO_ROOT/data/content"
 
 CORE_DST="$WP_ROOT/wp-content/plugins/bizrise-core"
 THEME_DST="$WP_ROOT/wp-content/themes/bizrise-ddg"
 MIGRATOR_DST="$WP_ROOT/wp-content/plugins/bizrise-ddg-migrator"
+CONTENT_DST="$MIGRATOR_DST/data/content"
 
 required=(
   "$CORE_SRC/bizrise-core.php"
@@ -22,6 +24,7 @@ required=(
   "$THEME_SRC/functions.php"
   "$THEME_SRC/index.php"
   "$MIGRATOR_SRC/bizrise-ddg-migrator.php"
+  "$CONTENT_SRC/article-registry.json"
 )
 
 for file in "${required[@]}"; do
@@ -30,6 +33,11 @@ for file in "${required[@]}"; do
     exit 1
   fi
 done
+
+if [[ ! -d "$CONTENT_SRC/articles" ]]; then
+  echo "[deploy] article source directory not found: $CONTENT_SRC/articles" >&2
+  exit 1
+fi
 
 if [[ ! -d "$WP_ROOT/wp-content" ]]; then
   echo "[deploy] WordPress wp-content not found at $WP_ROOT" >&2
@@ -51,6 +59,8 @@ while IFS= read -r -d '' file; do
   php -l "$file" >/dev/null
 done < <(find "$CORE_SRC" "$THEME_SRC" "$MIGRATOR_SRC" -type f -name '*.php' -print0)
 
+python3 -m json.tool "$CONTENT_SRC/article-registry.json" >/dev/null
+
 mkdir -p "$BACKUP_DIR"
 for target in "$CORE_DST" "$THEME_DST" "$MIGRATOR_DST"; do
   if [[ -d "$target" ]]; then
@@ -65,6 +75,8 @@ mkdir -p "$CORE_DST" "$THEME_DST" "$MIGRATOR_DST"
 rsync -a --delete --exclude='tests/' "$CORE_SRC/" "$CORE_DST/"
 rsync -a --delete --exclude='tests/' "$THEME_SRC/" "$THEME_DST/"
 rsync -a --delete --exclude='tests/' "$MIGRATOR_SRC/" "$MIGRATOR_DST/"
+mkdir -p "$CONTENT_DST"
+rsync -a --delete "$CONTENT_SRC/" "$CONTENT_DST/"
 
 cat > "$WP_ROOT/wp-content/.bizrise-ddg-release" <<EOF
 branch=codex/rebuild-v2
@@ -78,4 +90,5 @@ DDG_WP_ROOT="$WP_ROOT" /bin/bash "$REPO_ROOT/deploy/smoke-test.sh"
 echo "[deploy] V2 source deployed successfully"
 echo "[deploy] release: $RELEASE_SHA"
 echo "[deploy] backup: $BACKUP_DIR"
+echo "[deploy] approved article sources synced into migrator runtime data"
 echo "[deploy] theme/plugins were NOT activated automatically"
