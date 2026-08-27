@@ -12,9 +12,9 @@ seo_title: "OEM và ODM mỹ phẩm khác nhau thế nào? Cách chọn"
 meta_description: "So sánh OEM và ODM mỹ phẩm theo mức độ phát triển, tùy biến, dữ liệu, nguồn lực nội bộ và cách chọn mô hình phù hợp với thương hiệu."
 direct_answer: "OEM và ODM mỹ phẩm khác nhau chủ yếu ở mức độ sẵn sàng của brief và mức độ đối tác tham gia vào phát triển sản phẩm. OEM thường thiên về sản xuất theo yêu cầu đã rõ hơn; ODM thường thiên về hỗ trợ phát triển giải pháp sâu hơn. Ranh giới thực tế cần được xác định bằng scope, không chỉ bằng tên gọi."
 canonical_path: "/oem-va-odm-my-pham-khac-nhau-the-nao/"
-review_status: "editorial_review"
-reviewer: "pending"
-last_verified: "2026-08-21"
+review_status: "publish_ready"
+reviewer: "source-safe editorial"
+last_verified: "2026-08-27"
 source_scope: "Educational comparison. No unverified DDG capability claims."
 internal_links:
   - "/oem-my-pham-la-gi/"
@@ -160,6 +160,6 @@ Có thể, nếu đối tác cung cấp nhiều scope khác nhau. Điều cần 
 2. Bộ Y tế — **Thông tư 34/2025/TT-BYT** sửa đổi quy định quản lý mỹ phẩm, có hiệu lực từ 18/08/2025.
 3. ASEAN — **Guidelines for Product Information File (PIF)**.
 
-**Last verified: 21/08/2026.**
+**Last verified: 27/08/2026.**
 
 > Ghi chú: bài viết mang tính thông tin và hỗ trợ ra quyết định dự án; không thay thế tư vấn pháp lý cho một hồ sơ cụ thể.
