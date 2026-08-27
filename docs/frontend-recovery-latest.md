@@ -68,9 +68,10 @@ Files:
 
 ## CI
 
-Exact frontend code SHA to verify: `9284d7db87a47cce39b95ed21d848fee82536923`.
+Exact frontend code SHA: `9284d7db87a47cce39b95ed21d848fee82536923`.
 
-CI status is updated after the exact SHA workflows complete.
+- Validate Bizrise DDG V2 run `33081915749`: **SUCCESS**.
+- Build Bizrise DDG V2 Release run `33081915775`: **SUCCESS**.
 
 ## Production / browser verification
 
@@ -95,7 +96,7 @@ Required production PASS evidence remains:
 
 **TABLET FILTER OVERFLOW SOURCE: PASS**
 
-**EXACT FRONTEND CI: PENDING**
+**EXACT FRONTEND CI: PASS**
 
 **PRODUCTION DEPLOY: CHƯA XÁC MINH**
 
