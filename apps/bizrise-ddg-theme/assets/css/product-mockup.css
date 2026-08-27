@@ -1,0 +1,71 @@
+/* DDG Product Mockup 2.2 — mobile-first storefront */
+.t2-product-archive{background:#fbfaf7;color:#16233d}
+.t2-product-archive .t2-index-hero--product{padding:0;background:linear-gradient(135deg,#071b35 0%,#0d294b 58%,#12385f 100%);color:#fff;border-bottom:1px solid rgba(255,255,255,.08)}
+.t2-product-archive .t2-index-hero__grid{min-height:310px;display:grid;grid-template-columns:minmax(0,1.3fr) minmax(280px,.7fr);gap:48px;align-items:end;padding-top:70px;padding-bottom:54px}
+.t2-product-archive .t2-index-hero .t2-eyebrow{margin:0 0 14px;color:#e8bb63;font-size:.72rem;letter-spacing:.17em}
+.t2-product-archive .t2-index-hero h1{max-width:820px;margin:0;color:#fff;font-size:clamp(2.7rem,5vw,5.2rem);font-weight:800;line-height:1.02;letter-spacing:-.045em}
+.t2-product-archive .t2-index-hero p:not(.t2-eyebrow){max-width:720px;margin:20px 0 0;color:#d8e0eb;font-size:1rem;line-height:1.75}
+.t2-product-archive__intro{align-self:end;padding:22px 24px;border:1px solid rgba(255,255,255,.16);border-radius:20px;background:rgba(255,255,255,.07);backdrop-filter:blur(10px)}
+.t2-product-archive__intro span{display:block;color:#e8bb63;font-size:.67rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.t2-product-archive__intro strong{display:block;margin-top:7px;color:#fff;font-size:1.12rem;line-height:1.35}
+.t2-product-archive__body{padding-top:28px;padding-bottom:88px}
+.t2-product-discovery{position:relative;z-index:5;margin:-48px auto 24px;padding:18px;border:1px solid #e6dfd5;border-radius:22px;background:#fff;box-shadow:0 18px 48px rgba(16,35,61,.1)}
+.t2-product-search{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px}
+.t2-product-search__field{width:100%;min-height:52px;padding:0 18px;border:1px solid #dcd7cf;border-radius:14px;background:#fff;color:#17243d;font:inherit;outline:none}
+.t2-product-search__field:focus{border-color:#b78533;box-shadow:0 0 0 3px rgba(183,133,51,.12)}
+.t2-product-search__button{min-height:52px;padding:0 22px;border:0;border-radius:14px;background:#c89437;color:#fff;font-weight:800;cursor:pointer}
+.t2-product-search__button:hover{background:#ad7620}
+.t2-product-archive .t2-filter-pills{display:flex;gap:9px;margin:14px 0 0;padding:0;list-style:none}
+.t2-product-archive .t2-filter-pills a{min-height:40px;display:inline-flex;align-items:center;padding:0 15px;border:1px solid #e1ddd6;border-radius:999px;background:#f7f6f3;color:#4b5565;text-decoration:none;font-size:.74rem;font-weight:700;transition:.2s ease}
+.t2-product-archive .t2-filter-pills a:hover,.t2-product-archive .t2-filter-pills a[aria-current="page"],.t2-product-archive .t2-filter-pills .current-cat a{border-color:#c89437;background:#c89437;color:#fff}
+.t2-product-toolbar{display:flex;justify-content:space-between;align-items:center;gap:16px;margin:32px 0 22px;color:#596273;font-size:.82rem}
+.t2-product-toolbar p,.t2-product-toolbar .woocommerce-result-count{margin:0}
+.t2-product-toolbar select{min-height:44px;padding:0 36px 0 13px;border:1px solid #ded9d2;border-radius:12px;background:#fff;color:#27334a}
+.t2-product-archive .t2-product-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:20px}
+.t2-product-archive .t2-product-card{overflow:hidden;border:1px solid #e7e2da;border-radius:20px;background:#fff;box-shadow:0 10px 30px rgba(18,38,64,.055)}
+.t2-product-archive .t2-product-card__media{padding:11px;background:#f5f1e9}
+.t2-product-archive .t2-product-card__image-stage{box-shadow:none;background:#fff}
+.t2-product-archive .t2-product-card__copy{min-height:132px;padding:14px 15px 16px}
+.t2-product-archive .t2-product-card__copy h3{font-size:.82rem;line-height:1.45}
+.t2-product-archive .t2-product-card__copy h3 a{color:#17243d}
+.t2-product-archive .t2-product-card__copy .t2-text-link{color:#a86d19}
+.t2-product-archive .t2-pagination{margin-top:42px}
+
+@media(max-width:980px){
+ .t2-product-archive .t2-index-hero__grid{grid-template-columns:1fr;gap:24px;min-height:0;padding-top:58px;padding-bottom:74px}
+ .t2-product-archive__intro{max-width:520px}
+ .t2-product-archive .t2-product-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+}
+@media(max-width:720px){
+ .t2-product-archive .t2-index-hero__grid{padding-top:40px;padding-bottom:70px}
+ .t2-product-archive .t2-index-hero h1{font-size:clamp(2.15rem,10vw,3.1rem);line-height:1.06}
+ .t2-product-archive .t2-index-hero p:not(.t2-eyebrow){font-size:.92rem;line-height:1.68}
+ .t2-product-archive__intro{display:none}
+ .t2-product-discovery{margin-top:-38px;padding:12px;border-radius:18px}
+ .t2-product-search{grid-template-columns:1fr auto}
+ .t2-product-search__field{min-height:48px;padding:0 13px;font-size:16px}
+ .t2-product-search__button{min-width:48px;min-height:48px;padding:0 14px;font-size:0}
+ .t2-product-search__button::before{content:"⌕";font-size:1.25rem;line-height:1}
+ .t2-product-archive .t2-filter-pills{flex-wrap:nowrap;overflow-x:auto;margin-top:11px;padding-bottom:2px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+ .t2-product-archive .t2-filter-pills::-webkit-scrollbar{display:none}
+ .t2-product-archive .t2-filter-pills a{flex:0 0 auto;min-height:38px;padding:0 13px;font-size:.68rem}
+ .t2-product-toolbar{margin:22px 0 16px;align-items:flex-start;flex-direction:column}
+ .t2-product-toolbar>div{width:100%}
+ .t2-product-toolbar select{width:100%}
+ .t2-product-archive .t2-product-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+ .t2-product-archive .t2-product-card{border-radius:15px;box-shadow:0 8px 22px rgba(18,38,64,.055)}
+ .t2-product-archive .t2-product-card__media{padding:7px}
+ .t2-product-archive .t2-product-card__media-brand{font-size:.48rem;padding-bottom:5px}
+ .t2-product-archive .t2-product-card__media-meta{min-height:46px;padding-top:6px}
+ .t2-product-archive .t2-product-card__media-meta strong{font-size:.56rem}
+ .t2-product-archive .t2-product-card__copy{min-height:104px;padding:9px 9px 11px}
+ .t2-product-archive .t2-product-card__copy .t2-kicker{font-size:.49rem}
+ .t2-product-archive .t2-product-card__copy h3{font-size:.69rem;line-height:1.42}
+ .t2-product-archive .t2-product-card__copy .t2-text-link{min-height:40px;font-size:.58rem}
+}
+@media(max-width:380px){
+ .t2-product-archive__body{padding-bottom:62px}
+ .t2-product-discovery{margin-left:-2px;margin-right:-2px}
+ .t2-product-archive .t2-product-grid{gap:8px}
+ .t2-product-archive .t2-product-card__copy{padding-left:8px;padding-right:8px}
+}
