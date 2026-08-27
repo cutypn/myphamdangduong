@@ -14,12 +14,12 @@ The public storefront remains WooCommerce `post_type=product`. Internal Product 
 ## Current Git / CI
 
 - Branch: `codex/rebuild-v2`
-- Current HEAD observed before this report refresh: `d76f30551ee2c83b8e97f59efc0fd45121064786`
-- Commit: `fix(nav): enforce approved primary architecture`
-- Product-impact assessment: **navigation-only; no product/media/status mutation**.
-- Validate Bizrise DDG V2 run `33096290103`: **SUCCESS**.
-- Build Bizrise DDG V2 Release run `33096290050`: **SUCCESS**.
-- Existing fallback `/san-pham/` visibility fix, related-product visibility fix and storefront-wide `_bizrise_legal_hold=1` exclusion remain in validated source.
+- Current HEAD observed before this report refresh: `b22a9faadd2be593bd5e0d8d0b21e9f88e0a6827`
+- Commit: `fix(catalog): enforce legal HOLD exclusion in fallback query`
+- Product-impact assessment: **positive P0 storefront safety fix** — fallback `/san-pham/` now excludes Woo rows carrying `_bizrise_legal_hold=1`; no Product Truth publication, media reassignment, deletion or fuzzy mapping is introduced.
+- Validate Bizrise DDG V2 run `33101670801`: **SUCCESS**.
+- Build Bizrise DDG V2 Release run `33101670715`: **SUCCESS**.
+- Existing canonical Woo `exclude-from-catalog` fallback handling, related-product visibility fix and storefront-wide direct single-product HOLD protection remain in validated source.
 - `MediaInventory` remains implemented and registered in migrator source.
 - `RuntimeStatus` remains implemented with `catalog_runtime` for published/visible/HOLD/excluded/shop-page counters.
 
@@ -56,12 +56,7 @@ Runtime triage endpoint in source:
 
 `/wp-json/bizrise-ddg/v1/runtime-status`
 
-The current runtime payload exposes live Woo catalog counts. Once production serves the current validated HEAD or descendant, this lets recovery distinguish:
-
-- total published Woo rows from actually catalog-visible rows;
-- explicit legal HOLD rows still published in the database from rows visible publicly;
-- Woo `exclude-from-catalog` rows from ordinary public catalog rows;
-- shop page configuration/route state from product-data state.
+The runtime payload exposes live Woo catalog counts so recovery can distinguish total published Woo rows, actually catalog-visible rows, explicit legal HOLD rows, Woo `exclude-from-catalog` rows and shop-page route state.
 
 ## Product Truth publication policy
 
@@ -80,6 +75,7 @@ No Product Truth HOLD/unknown/unverified record should be newly exposed. No fuzz
 |---|---|---|
 | `/san-pham/` ownership | route collision possible | WooCommerce intended as only public catalog route |
 | Woo `exclude-from-catalog` handling in fallback | localized/name lookup could silently fail | canonical slug lookup; CI PASS |
+| Legal HOLD handling in fallback | HOLD row could remain visible if fallback query bypassed main Woo query gates | explicit `_bizrise_legal_hold != 1` exclusion; CI PASS |
 | Related-product visibility on single product | custom query could re-show excluded products | canonical `exclude-from-catalog` exclusion; CI PASS |
 | Controlled manifest mapping | unresolved | **44 / 44 matched** |
 | Controlled wrong Featured Image | unresolved | **0** |
@@ -88,8 +84,8 @@ No Product Truth HOLD/unknown/unverified record should be newly exposed. No fuzz
 | Unmanaged public missing Featured Image | mixed into global repair gate | separated; last known **22** |
 | Product media inventory | unavailable | endpoint implemented and registered |
 | Runtime catalog observability | no direct Woo catalog-health counters | **`catalog_runtime` implemented; CI PASS** |
-| Public legal HOLD exclusion | no explicit storefront-wide theme gate | archive/search excluded + direct single 404 in source |
-| Current HEAD CI | stale | **Validate PASS + Release PASS** on `d76f3055…` |
+| Public legal HOLD exclusion | incomplete fallback protection | archive/search/direct single/fallback protection in source + CI |
+| Current HEAD CI | stale | **Validate PASS + Release PASS** on `b22a9faa…` |
 | Current HEAD production deploy | unknown | **CHƯA XÁC MINH** |
 
 ## Production verification gate
@@ -107,15 +103,15 @@ Required PASS evidence:
 - controlled public media problem IDs are empty;
 - 44 controlled SKU mapping remains exact;
 - `catalog_runtime.available=true`;
-- `catalog_runtime.public_catalog_visible` is consistent with the live public catalog and excludes legal HOLD / Woo hidden rows;
+- `catalog_runtime.public_catalog_visible` is consistent with live catalog and excludes legal HOLD / Woo hidden rows;
 - no Product Truth HOLD/draft record is newly exposed;
-- WooCommerce products marked `exclude-from-catalog` are absent from `/san-pham/` fallback and custom related-product cards;
-- explicit HOLD-mapped Woo rows are not publicly reachable if `_bizrise_legal_hold=1` is present;
+- WooCommerce products marked `exclude-from-catalog` are absent from fallback `/san-pham/` and custom related-product cards;
+- Woo rows with `_bizrise_legal_hold=1` are absent from archive/search/fallback and not publicly reachable as direct product pages;
 - every unmanaged missing-image row is classified with deterministic metadata before any status/media change.
 
 ## Blocker this run
 
-Production verification remains blocked from this execution environment. Direct REST retrieval for `dangduonggroup.com` could not be established, so current deployed SHA, live `catalog_runtime`, live product inventory, duplicate Featured Image groups, current live missing-image IDs and storefront counts remain **CHƯA XÁC MINH**.
+Production verification remains blocked from this execution environment. Direct retrieval of `dangduonggroup.com` and its REST endpoints could not be established, so current deployed SHA, live `catalog_runtime`, live product inventory, duplicate Featured Image groups, current missing-image IDs and storefront counts remain **CHƯA XÁC MINH**.
 
 No destructive or guessed recovery action was taken in this run.
 
