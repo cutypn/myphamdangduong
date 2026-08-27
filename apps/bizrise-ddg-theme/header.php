@@ -7,6 +7,12 @@ if (!defined('ABSPATH')) { exit; }
 <meta charset="<?php bloginfo('charset'); ?>">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <?php wp_head(); ?>
+<style id="ddg-mobile-overflow-guard">
+@media (max-width:520px){
+  .t2-article-card{grid-template-columns:minmax(104px,32%) minmax(0,1fr)!important}
+  .t2-article-card__copy{min-width:0}
+}
+</style>
 </head>
 <body <?php body_class('t2-site'); ?>>
 <?php wp_body_open(); ?>
