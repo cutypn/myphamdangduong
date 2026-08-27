@@ -114,9 +114,7 @@ if ($product_query->posts) {
         ?>
           <a class="t2-brand-card" href="<?php echo esc_url($link); ?>"><strong><?php echo esc_html($term->name); ?></strong><span>Khám phá thương hiệu →</span></a>
         <?php endforeach; else : ?>
-          <?php foreach (['One Today', 'Ever Today', 'Cream X2', 'Hatagold'] as $brand_name) : ?>
-            <a class="t2-brand-card" href="<?php echo esc_url(ddg_theme2_url('thuong-hieu')); ?>"><strong><?php echo esc_html($brand_name); ?></strong><span>Khám phá thương hiệu →</span></a>
-          <?php endforeach; ?>
+          <a class="t2-brand-card" href="<?php echo esc_url(ddg_theme2_url('thuong-hieu')); ?>"><strong>Khám phá hệ sinh thái thương hiệu</strong><span>Xem thông tin thương hiệu đã được công khai →</span></a>
         <?php endif; ?>
       </div>
       <div class="t2-center"><a class="t2-btn t2-btn--ghost" href="<?php echo esc_url(ddg_theme2_url('thuong-hieu')); ?>">Xem tất cả thương hiệu <span>→</span></a></div>
