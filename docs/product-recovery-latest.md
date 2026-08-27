@@ -4,6 +4,8 @@
 
 **SOURCE / CI: PASS**
 
+**PUBLIC HOLD EXCLUSION: PASS in source + CI**
+
 **CONTROLLED 44-SKU MEDIA: PASS by last verified production evidence**
 
 **PRODUCTION ON CURRENT HEAD: CHƯA XÁC MINH**
@@ -13,11 +15,13 @@ The public storefront remains WooCommerce `post_type=product`. Internal Product 
 ## Current Git / CI
 
 - Branch: `codex/rebuild-v2`
-- Current HEAD observed before this report refresh: `d668a84eedc7039b6dd96c7435fb630ab6a9b68d`
-- Commit: `fix(theme): align fallback navigation with managed site architecture`
-- Current HEAD changes fallback navigation only; it does not change WooCommerce product mapping, Product Truth publication policy, product media repair behavior, or product status.
-- Validate Bizrise DDG V2 run `33065487139`: **SUCCESS**.
-- Build Bizrise DDG V2 Release run `33065487036`: **SUCCESS**.
+- Current HEAD observed before this report refresh: `cc70e72a06f6dd188b605ee5cc70776729e59373`
+- Commit: `fix(catalog): harden public HOLD product exclusion`
+- Theme version bumped to `2.1.8`.
+- The current change adds a public WooCommerce safety gate for `_bizrise_legal_hold=1`: public archive/search/product queries exclude HOLD products, and a direct public single-product request is forced to 404. Editors with product-edit capability retain preview access.
+- Validate Bizrise DDG V2 run `33070258354`: **SUCCESS**.
+- Build Bizrise DDG V2 Release run `33070258335`: **SUCCESS**.
+- Validate workflow covers PHP 8.2 syntax for theme/migrator/core, deployment shell syntax, Product Truth seed validation, and JSON validation for Product Truth, brand profile, media manifest and article registry.
 - `MediaInventory` remains implemented and registered in migrator source.
 
 ## Last verified production evidence
@@ -67,7 +71,7 @@ Current verification seed does not establish publish eligibility for any of its 
 - explicit regulatory HOLD: **1** (`havigold-serum-nam-trang-da-18g`)
 - remaining 25: unknown / partial verification
 
-Therefore Product Truth must not mass-draft or mass-publish the existing WooCommerce catalog until deterministic Woo mapping and an approved publication policy exist.
+Therefore Product Truth must not mass-draft or mass-publish the existing WooCommerce catalog until deterministic Woo mapping and an approved publication policy exist. The current theme safety gate additionally prevents any WooCommerce product explicitly carrying `_bizrise_legal_hold=1` from being publicly exposed through catalog/search/direct single-product access.
 
 ## Before / after
 
@@ -80,7 +84,8 @@ Therefore Product Truth must not mass-draft or mass-publish the existing WooComm
 | Product/poster missing in controlled manifest | unresolved | **0** |
 | Unmanaged public missing Featured Image | mixed into global repair gate | separated; last known **22** |
 | Product media inventory | unavailable | endpoint implemented and registered |
-| Current HEAD CI | stale | **Validate PASS + Release PASS** on `d668a84e…` |
+| Public legal HOLD exclusion | no explicit storefront-wide theme gate | **archive/search excluded + direct single returns 404 in source** |
+| Current HEAD CI | stale | **Validate PASS + Release PASS** on `cc70e72a…` |
 | Current HEAD production deploy | unknown | **CHƯA XÁC MINH** |
 
 ## Production verification gate
@@ -98,10 +103,11 @@ Required PASS evidence:
 - controlled public media problem IDs are empty;
 - 44 controlled SKU mapping remains exact;
 - no Product Truth HOLD/draft record is newly exposed;
+- direct public access to the explicit HOLD-mapped product is not publicly reachable if the Woo row carries `_bizrise_legal_hold=1`;
 - every unmanaged missing-image row is classified with deterministic metadata before any status/media change.
 
 ## Blocker this run
 
-The execution environment still cannot resolve/fetch `dangduonggroup.com` production REST directly. Web retrieval cannot open the production REST endpoints without a discoverable source URL, so current deployed SHA and live product inventory remain **CHƯA XÁC MINH** here.
+Production verification remains blocked from this execution environment. Direct HTTPS fetches to `dangduonggroup.com` fail DNS resolution here, while web retrieval cannot discover/open the REST URLs from search results. Therefore current deployed SHA, live product inventory, duplicate Featured Image groups and the live 59-product/legacy counts remain **CHƯA XÁC MINH**.
 
-No fuzzy mapping, guessed image assignment, mass draft or deletion was performed. The next safe action is to read the live product inventory once production REST is reachable, classify unmanaged rows deterministically, then apply only exact non-destructive fixes.
+No fuzzy mapping, guessed image assignment, mass draft, mass publish or deletion was performed. The next safe action is to read live production runtime/media inventory when DNS/REST becomes reachable, classify unmanaged rows deterministically, then apply only exact non-destructive fixes.
