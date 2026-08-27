@@ -10,12 +10,12 @@ Core-page source trong `apps/bizrise-ddg-theme/inc/editorial-content.php` tiếp
 
 ## Cải thiện source vòng này
 
-Phát hiện gap ở `rd-my-pham-la-gi.md`: front matter đã khai báo 3 internal links và CTA nhưng body chưa render cụm điều hướng hoặc bước tiếp theo.
+Phát hiện gap ở `cac-buoc-phat-trien-my-pham-thuong-hieu-rieng.md`: front matter đã khai báo 4 internal links và CTA nhưng phần body kết thúc ngay sau kết luận, chưa render cụm điều hướng hoặc bước tiếp theo.
 
-Đã sửa ở commit `c211756cf74ecd8caa2d490e784325ce4244efe9`:
+Đã sửa ở commit `6d5745058bdf691fe5376f38c1b52468aa9c4542`:
 
 - thêm mục **Đọc tiếp theo hành trình phát triển**;
-- render exact links tới nghiên cứu công thức, làm mẫu và quy trình gia công;
+- render exact links tới OEM, ODM, quy trình gia công và R&D;
 - thêm CTA cuối bài bám đúng metadata;
 - không thêm claim, certification, capacity, named partner, contact fact hoặc product detail copy.
 
@@ -28,8 +28,8 @@ Phát hiện gap ở `rd-my-pham-la-gi.md`: front matter đã khai báo 3 intern
 - Markdown reviewer pending: **0**
 - deterministic importer: **CÓ**
 - exact-slug/idempotent publication path: **CÓ**
-- R&D internal-link/CTA body gap before: **1**
-- R&D internal-link/CTA body gap after: **0**
+- private-label guide internal-link/CTA body gap before: **1**
+- private-label guide internal-link/CTA body gap after: **0**
 
 ## Core pages source
 
@@ -61,13 +61,13 @@ Counts vòng này:
 
 - article source before: **10 publish-ready / 10 metadata synchronized**;
 - article source after: **10 publish-ready / 10 metadata synchronized**;
-- R&D internal-link/CTA body gap before: **1**;
-- R&D internal-link/CTA body gap after: **0**;
+- private-label guide internal-link/CTA body gap before: **1**;
+- private-label guide internal-link/CTA body gap after: **0**;
 - article runtime media before: **CHƯA XÁC MINH**;
 - article runtime media after: **CHƯA XÁC MINH**;
 - media mapping tự tạo/gán mơ hồ: **0**.
 
-Production endpoint, runtime-status và `/kien-thuc/` chưa đọc được đáng tin cậy từ môi trường kiểm tra hiện tại. Direct request tới `dangduonggroup.com` tiếp tục gặp DNS resolution failure trong runtime kiểm tra, nên không suy diễn Featured Image/ALT/missing/duplicate counts, article sync runtime hay trạng thái live render.
+Production endpoint chưa đọc được từ runtime kiểm tra hiện tại; search public không index REST inventory và direct open bị giới hạn bởi safe-URL policy. Vì vậy không suy diễn Featured Image/ALT/missing/duplicate counts, article sync runtime hay trạng thái live render.
 
 ## Production gate
 
@@ -89,6 +89,6 @@ Không thêm cGMP/ISO/FDA không có hồ sơ hiện hành, số liệu công su
 
 **MARKDOWN METADATA SYNC: 10/10 CONFIRMED.**
 
-**LATEST CONTENT FIX: R&D INTERNAL LINKS + CTA RENDERED IN BODY.**
+**LATEST CONTENT FIX: PRIVATE-LABEL DEVELOPMENT GUIDE INTERNAL LINKS + CTA RENDERED IN BODY.**
 
 **PENDING: FINAL CI + PRODUCTION ARTICLE/MEDIA QA.**
