@@ -6,7 +6,7 @@
 - **CATALOG VISIBILITY SAFETY: PASS in source + CI**
 - **PUBLIC HOLD EXCLUSION: PASS in source + CI**
 - **CONTROLLED 44-SKU MEDIA: PASS by last verified production evidence**
-- **RELEASE RUNTIME GATE: PASS in source + CI** — active production smoke now requires runtime-status HTTP 200, verifies controlled catalog health, and requires product media inventory HTTP 200.
+- **CONTROLLED REPAIR GATE: FIXED in source + CI** — unmanaged/legacy public products missing Featured Image remain observable but no longer force the deterministic 44-SKU repair to rerun.
 - **LIVE PRODUCT INVENTORY: CHƯA XÁC MINH trong run này do DNS production không resolve**
 - **PRODUCTION ON CURRENT HEAD: CHƯA XÁC MINH**
 
@@ -15,14 +15,12 @@ Public storefront remains WooCommerce `post_type=product`. Internal Product Trut
 ## Current Git / CI
 
 - Branch: `codex/rebuild-v2`
-- Current HEAD before this report refresh: `49ed8723b6950779eba5d2f76cddba2794dd2d96`
-- Commit: `test(release): enforce controlled catalog runtime health`
-- Product-impact assessment: **non-destructive release verification only** — no WooCommerce mapping, Product Truth, media assignment, HOLD rules or publication state changed.
-- Validate Bizrise DDG V2 run `33116373466`: **SUCCESS**.
-- Build Bizrise DDG V2 Release run `33116373461`: **SUCCESS**.
-- `MediaInventory` remains implemented and registered.
-- `RuntimeStatus` remains implemented with `catalog_runtime` counters.
-- Active smoke now fails release if `/wp-json/bizrise-ddg/v1/runtime-status` is not HTTP 200 or controlled runtime health fails verification; `/wp-json/bizrise-ddg/v1/media-inventory?scope=products&per_page=1` must also return HTTP 200.
+- Current HEAD before this report refresh: `2c38c3b3cb607135d5ab3f3b0eaac7e9c75fe138`
+- Commit: `fix(media): stop legacy missing images from retriggering controlled repair`
+- Product-impact assessment: **safe repair-gate correction** — ProductMediaRepair `1.1.2` now defines clean state by the 44 controlled manifest and exact controlled media checks; `public_missing_featured` remains reported but is no longer a blocker that retriggers repair on every admin init.
+- Validate Bizrise DDG V2 run `33120876071`: **SUCCESS**.
+- Build Bizrise DDG V2 Release run `33120876060`: **SUCCESS**.
+- No fuzzy mapping, guessed image assignment, product deletion, mass draft or mass publish was performed.
 
 ## Last verified production evidence
 
@@ -75,20 +73,20 @@ No Product Truth HOLD/unknown/unverified record should be newly exposed. No fuzz
 | Controlled wrong Featured Image | unresolved | **0** |
 | Product/poster ambiguity | unresolved | **0** |
 | Product/poster missing in controlled manifest | unresolved | **0** |
-| Unmanaged public missing Featured Image | mixed into global repair gate | separated; last known **22** |
-| Product media inventory | unavailable | endpoint implemented and release smoke now requires HTTP 200 when active |
-| Runtime catalog observability | no direct counters | `catalog_runtime` implemented; runtime health now release-gated |
-| Current code HEAD CI | unknown | **Validate PASS + Release PASS** on `49ed8723…` |
+| Unmanaged public missing Featured Image | mixed into controlled clean gate | still reported; last known **22**, but no longer retriggers controlled repair |
+| Product media inventory | unavailable | endpoint implemented; full live payload pending production reachability |
+| Runtime catalog observability | no direct counters | `catalog_runtime` implemented |
+| Current code HEAD CI | unknown | **Validate PASS + Release PASS** on `2c38c3b3…` |
 | Current HEAD production deploy | unknown | **CHƯA XÁC MINH** |
 
-## Production verification attempt — 2026-08-28 04:09 ICT
+## Production verification attempt — 2026-08-28 05:07 ICT
 
 This run attempted direct DNS/HTTP access to:
 
 - `https://dangduonggroup.com/wp-json/bizrise-ddg/v1/media-inventory?scope=products&per_page=100`
 - `https://dangduonggroup.com/wp-json/bizrise-ddg/v1/runtime-status`
 
-Production DNS failed to resolve from the execution environment (`Could not resolve host: dangduonggroup.com`), so no fresh production payload could be obtained.
+Production DNS failed to resolve from the execution environment (`Temporary failure in name resolution` / `Could not resolve host: dangduonggroup.com`), so no fresh production payload could be obtained.
 
 Therefore the following remain **CHƯA XÁC MINH** on current HEAD:
 
@@ -103,4 +101,4 @@ No destructive, fuzzy, guessed or publication-changing recovery action was taken
 
 ## Next safe action
 
-When production DNS is reachable, read deploy status + runtime + product inventory, confirm the validated SHA/descendant is deployed, classify every unmanaged missing-image row deterministically, and apply only exact non-destructive fixes. Do not fuzzy-map or publish Product Truth records without verified eligibility.
+When production DNS is reachable, read deploy status + runtime + product inventory, confirm the validated SHA/descendant is deployed, audit all public Woo products against the 44-row manifest and Product Truth, then classify unmanaged missing-image rows deterministically. Apply only exact non-destructive fixes. Do not fuzzy-map or publish Product Truth records without verified eligibility.
