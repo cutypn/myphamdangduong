@@ -44,8 +44,9 @@ if (!defined('ABSPATH')) { exit; }
           'depth' => 2,
         ]); ?>
       <?php else : ?>
-        <?php /* Keep the no-menu fallback identical to apps/bizrise-ddg-migrator/data/site-content.php. */ ?>
+        <?php /* Keep the no-menu fallback aligned with the approved site architecture. */ ?>
         <ul>
+          <li><a href="<?php echo esc_url(home_url('/')); ?>">Trang chủ</a></li>
           <li><a href="<?php echo esc_url(ddg_theme2_url('ve-dang-duong')); ?>">Về Đăng Dương Group</a></li>
           <li class="menu-item-has-children">
             <a href="<?php echo esc_url(ddg_theme2_url('nang-luc')); ?>">Năng lực</a>
