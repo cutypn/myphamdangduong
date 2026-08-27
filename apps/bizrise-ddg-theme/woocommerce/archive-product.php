@@ -10,7 +10,7 @@ wp_enqueue_style(
     'bizrise-ddg-product-mockup',
     get_template_directory_uri() . '/assets/css/product-mockup.css',
     ['bizrise-ddg-theme213'],
-    '2.2.1'
+    '2.2.2'
 );
 
 get_header();
