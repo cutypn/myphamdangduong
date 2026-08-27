@@ -210,6 +210,10 @@ Việc khảo sát trực tiếp có thể hữu ích tùy quy mô và mức đ�
 - [Quy trình gia công mỹ phẩm](/quy-trinh-gia-cong-my-pham/)
 - [Các bước phát triển mỹ phẩm thương hiệu riêng](/cac-buoc-phat-trien-my-pham-thuong-hieu-rieng/)
 
+## Bước tiếp theo
+
+Mang cùng một product brief đến nhiều đối tác và yêu cầu mỗi bên phản hồi trên **cùng phạm vi công việc, cùng dữ liệu đầu vào và cùng các đầu ra cần bàn giao**. Khi scope được giữ nhất quán, bảng so sánh mới phản ánh khác biệt thực sự giữa cách làm, mức độ minh bạch và chi phí.
+
 ## Nguồn tham khảo
 
 1. Chính phủ — **Nghị định 93/2016/NĐ-CP về điều kiện sản xuất mỹ phẩm**.
