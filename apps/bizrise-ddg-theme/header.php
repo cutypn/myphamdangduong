@@ -8,7 +8,17 @@ if (!defined('ABSPATH')) { exit; }
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <?php wp_head(); ?>
 <style id="ddg-mobile-overflow-guard">
+/* WordPress makes #wpadminbar absolute at <=600px. Once it scrolls away, the
+ * sticky theme header/menu must return to the viewport top instead of keeping
+ * the 46px fixed-admin-bar offset used at 601-782px. */
+@media (max-width:600px){
+  body.admin-bar .t2-header{top:0}
+}
+@media (min-width:521px) and (max-width:600px){
+  body.admin-bar .t2-nav{top:72px;max-height:calc(100dvh - 72px)}
+}
 @media (max-width:520px){
+  body.admin-bar .t2-nav{top:64px;max-height:calc(100dvh - 64px)}
   .t2-article-card{grid-template-columns:minmax(104px,32%) minmax(0,1fr)!important}
   .t2-article-card__copy{min-width:0}
 }
