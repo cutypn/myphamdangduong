@@ -24,7 +24,10 @@ $search = isset($_GET['s']) ? sanitize_text_field(wp_unslash((string)$_GET['s'])
 
 $tax_query = [];
 if (taxonomy_exists('product_visibility')) {
-    $exclude_term = get_term_by('name', 'exclude-from-catalog', 'product_visibility');
+    // WooCommerce stores catalog visibility as taxonomy term slugs. Using the
+    // localized term name here can silently fail and expose products explicitly
+    // marked "exclude-from-catalog" on the /san-pham/ fallback page.
+    $exclude_term = get_term_by('slug', 'exclude-from-catalog', 'product_visibility');
     if ($exclude_term instanceof WP_Term) {
         $tax_query[] = [
             'taxonomy' => 'product_visibility',
