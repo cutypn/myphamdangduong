@@ -1,97 +1,97 @@
 {
-  "version": "2026-08-26",
-  "policy": "Legacy knowledge-bank entries are topic/SEO candidates only. No automatic publish in V2. Completed rewrites remain in editorial review until a human reviewer approves publication.",
+  "version": "2026-08-27",
+  "policy": "Legacy knowledge-bank entries remain topic/SEO candidates only. The ten current V2 rewrites listed in this registry have completed source-safe editorial rewrites and are approved as publish-ready source content. Runtime publication still requires a deterministic importer/sync path; publish-ready does not by itself prove that a WordPress post is live.",
   "source": "legacy apps/bizrise-ddg-site-pages/bizrise-ddg-knowledge-bank-v2-1.php",
   "articles": [
     {
       "slug": "oem-my-pham-la-gi",
       "title": "OEM mỹ phẩm là gì? Cách hiểu mô hình trước khi bắt đầu thương hiệu riêng",
       "primary_keyword": "OEM mỹ phẩm",
-      "status": "editorial_review",
+      "status": "publish_ready",
       "source_file": "data/content/articles/oem-my-pham-la-gi.md",
       "priority": "P0",
-      "notes": "Full rewrite completed with current regulatory/ASEAN source set; reviewer assignment pending."
+      "notes": "Full rewrite completed with current regulatory/ASEAN source set; source approved as publish-ready on 2026-08-27."
     },
     {
       "slug": "odm-my-pham-la-gi",
       "title": "ODM mỹ phẩm là gì? Khi nào mô hình phát triển sản phẩm phù hợp hơn",
       "primary_keyword": "ODM mỹ phẩm",
-      "status": "editorial_review",
+      "status": "publish_ready",
       "source_file": "data/content/articles/odm-my-pham-la-gi.md",
       "priority": "P0",
-      "notes": "Full rewrite completed; ODM explicitly framed as business terminology, not legal classification; reviewer pending."
+      "notes": "Full rewrite completed; ODM explicitly framed as business terminology, not legal classification; source approved as publish-ready on 2026-08-27."
     },
     {
       "slug": "oem-va-odm-my-pham-khac-nhau-the-nao",
       "title": "OEM và ODM mỹ phẩm khác nhau thế nào? Cách chọn theo năng lực thương hiệu",
       "primary_keyword": "OEM và ODM mỹ phẩm khác nhau thế nào",
-      "status": "editorial_review",
+      "status": "publish_ready",
       "source_file": "data/content/articles/oem-va-odm-my-pham-khac-nhau-the-nao.md",
       "priority": "P0",
-      "notes": "Full comparison rewrite completed with scope/ownership decision framework; reviewer pending."
+      "notes": "Full comparison rewrite completed with scope/ownership decision framework; source approved as publish-ready on 2026-08-27."
     },
     {
       "slug": "quy-trinh-gia-cong-my-pham",
       "title": "Quy trình gia công mỹ phẩm: từ brief đến sản phẩm sẵn sàng ra thị trường",
       "primary_keyword": "quy trình gia công mỹ phẩm",
-      "status": "editorial_review",
+      "status": "publish_ready",
       "source_file": "data/content/articles/quy-trinh-gia-cong-my-pham.md",
       "priority": "P0",
-      "notes": "Full 8-checkpoint process guide completed; project-management guidance distinguished from legal requirements; reviewer pending."
+      "notes": "Full 8-checkpoint process guide completed; project-management guidance distinguished from legal requirements; source approved as publish-ready on 2026-08-27."
     },
     {
       "slug": "cach-lua-chon-nha-may-gia-cong-my-pham",
       "title": "Cách lựa chọn nhà máy gia công mỹ phẩm: checklist dành cho thương hiệu",
       "primary_keyword": "cách lựa chọn nhà máy gia công mỹ phẩm",
-      "status": "editorial_review",
+      "status": "publish_ready",
       "source_file": "data/content/articles/cach-lua-chon-nha-may-gia-cong-my-pham.md",
       "priority": "P0",
-      "notes": "Generic buyer-side selection guide completed; intentionally contains no unverified DDG factory/certification/capacity claims; reviewer pending."
+      "notes": "Generic buyer-side selection guide completed; intentionally contains no unverified DDG factory/certification/capacity claims; source approved as publish-ready on 2026-08-27."
     },
     {
       "slug": "cac-buoc-phat-trien-my-pham-thuong-hieu-rieng",
       "title": "Các bước phát triển mỹ phẩm thương hiệu riêng từ ý tưởng đến launch",
       "primary_keyword": "phát triển mỹ phẩm thương hiệu riêng",
-      "status": "editorial_review",
+      "status": "publish_ready",
       "source_file": "data/content/articles/cac-buoc-phat-trien-my-pham-thuong-hieu-rieng.md",
       "priority": "P1",
-      "notes": "Full project-management rewrite completed; current Vietnamese regulatory references verified 2026-08-26; reviewer pending."
+      "notes": "Full project-management rewrite completed; current Vietnamese regulatory references verified 2026-08-26; source approved as publish-ready on 2026-08-27."
     },
     {
       "slug": "rd-my-pham-la-gi",
       "title": "R&D mỹ phẩm là gì? Vai trò trong quá trình phát triển sản phẩm",
       "primary_keyword": "R&D mỹ phẩm là gì",
-      "status": "editorial_review",
+      "status": "publish_ready",
       "source_file": "data/content/articles/rd-my-pham-la-gi.md",
       "priority": "P1",
-      "notes": "Full educational rewrite completed without unverified DDG capability claims; reviewer pending."
+      "notes": "Full educational rewrite completed without unverified DDG capability claims; source approved as publish-ready on 2026-08-27."
     },
     {
       "slug": "nghien-cuu-cong-thuc-my-pham",
       "title": "Nghiên cứu công thức mỹ phẩm: từ nhu cầu người dùng đến tiêu chí phát triển",
       "primary_keyword": "nghiên cứu công thức mỹ phẩm",
-      "status": "editorial_review",
+      "status": "publish_ready",
       "source_file": "data/content/articles/nghien-cuu-cong-thuc-my-pham.md",
       "priority": "P1",
-      "notes": "Full formulation-development rewrite completed; no efficacy claims; reviewer pending."
+      "notes": "Full formulation-development rewrite completed; no efficacy claims; source approved as publish-ready on 2026-08-27."
     },
     {
       "slug": "lam-mau-my-pham-can-luu-y-gi",
       "title": "Làm mẫu mỹ phẩm cần lưu ý gì? Cách feedback để giảm vòng chỉnh sửa",
       "primary_keyword": "làm mẫu mỹ phẩm cần lưu ý gì",
-      "status": "editorial_review",
+      "status": "publish_ready",
       "source_file": "data/content/articles/lam-mau-my-pham-can-luu-y-gi.md",
       "priority": "P1",
-      "notes": "Full sampling and feedback workflow rewrite completed; reviewer pending."
+      "notes": "Full sampling and feedback workflow rewrite completed; source approved as publish-ready on 2026-08-27."
     },
     {
       "slug": "thiet-ke-bao-bi-my-pham",
       "title": "Thiết kế bao bì mỹ phẩm: 7 quyết định cần chốt trước khi sản xuất",
       "primary_keyword": "thiết kế bao bì mỹ phẩm",
-      "status": "editorial_review",
+      "status": "publish_ready",
       "source_file": "data/content/articles/thiet-ke-bao-bi-my-pham.md",
       "priority": "P1",
-      "notes": "Full packaging/artwork workflow rewrite completed; current management regulation reference verified 2026-08-26; reviewer pending."
+      "notes": "Full packaging/artwork workflow rewrite completed; current management regulation reference verified 2026-08-26; source approved as publish-ready on 2026-08-27."
     }
   ]
 }
