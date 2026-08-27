@@ -44,13 +44,25 @@ if (!defined('ABSPATH')) { exit; }
           'depth' => 2,
         ]); ?>
       <?php else : ?>
+        <?php /* Keep the no-menu fallback identical to apps/bizrise-ddg-migrator/data/site-content.php. */ ?>
         <ul>
-          <li><a href="<?php echo esc_url(home_url('/')); ?>">Trang chủ</a></li>
-          <li><a href="<?php echo esc_url(ddg_theme2_url('ve-dang-duong')); ?>">Về Đăng Dương</a></li>
-          <li><a href="<?php echo esc_url(ddg_theme2_url('nang-luc')); ?>">Năng lực</a></li>
+          <li><a href="<?php echo esc_url(ddg_theme2_url('ve-dang-duong')); ?>">Về Đăng Dương Group</a></li>
+          <li class="menu-item-has-children">
+            <a href="<?php echo esc_url(ddg_theme2_url('nang-luc')); ?>">Năng lực</a>
+            <ul class="sub-menu">
+              <li><a href="<?php echo esc_url(ddg_theme2_url('nghien-cuu-phat-trien')); ?>">Nghiên cứu &amp; Phát triển</a></li>
+              <li><a href="<?php echo esc_url(ddg_theme2_url('nha-may-san-xuat-my-pham')); ?>">Năng lực sản xuất</a></li>
+              <li><a href="<?php echo esc_url(ddg_theme2_url('oem-odm-my-pham')); ?>">OEM / ODM mỹ phẩm</a></li>
+            </ul>
+          </li>
           <li><a href="<?php echo esc_url(ddg_theme2_url('thuong-hieu')); ?>">Thương hiệu</a></li>
-          <li><a href="<?php echo esc_url(ddg_theme2_url('san-pham')); ?>">Sản phẩm &amp; Routine</a></li>
-          <li><a href="<?php echo esc_url(ddg_theme2_url('kien-thuc')); ?>">Kiến thức làm đẹp</a></li>
+          <li class="menu-item-has-children">
+            <a href="<?php echo esc_url(ddg_theme2_url('san-pham')); ?>">Sản phẩm &amp; Routine</a>
+            <ul class="sub-menu">
+              <li><a href="<?php echo esc_url(ddg_theme2_url('tim-diem-ban')); ?>">Tìm điểm bán</a></li>
+            </ul>
+          </li>
+          <li><a href="<?php echo esc_url(ddg_theme2_url('kien-thuc')); ?>">Kiến thức</a></li>
           <li><a href="<?php echo esc_url(ddg_theme2_url('doi-tac')); ?>">Đối tác</a></li>
           <li><a href="<?php echo esc_url(ddg_theme2_url('lien-he')); ?>">Liên hệ</a></li>
         </ul>
