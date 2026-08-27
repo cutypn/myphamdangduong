@@ -11,9 +11,9 @@ seo_title: "Nghiên cứu công thức mỹ phẩm: từ brief đến tiêu chí
 meta_description: "Cách tổ chức nghiên cứu công thức mỹ phẩm từ nhu cầu người dùng, brief, tiêu chí cảm quan, mẫu thử đến dữ liệu cần chốt trước triển khai."
 direct_answer: "Nghiên cứu công thức mỹ phẩm nên bắt đầu từ nhu cầu và trải nghiệm mong muốn, sau đó chuyển thành tiêu chí có thể đánh giá qua mẫu thử. Thành phần là một phần của bài toán, không phải điểm bắt đầu duy nhất."
 canonical_path: "/nghien-cuu-cong-thuc-my-pham/"
-review_status: "editorial_review"
-reviewer: "pending"
-last_verified: "2026-08-26"
+review_status: "publish_ready"
+reviewer: "source-safe editorial"
+last_verified: "2026-08-27"
 source_scope: "Educational formulation-development content. No product efficacy or DDG capability claims."
 internal_links:
   - "/rd-my-pham-la-gi/"
