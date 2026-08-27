@@ -1,7 +1,49 @@
-/* Mobile P0 fixes that must load after the main Theme 2 styles. */
-@media (max-width: 782px) {
-  /* WordPress admin bar is 46px tall on phone/tablet widths. */
-  .admin-bar .t2-header {
-    top: 46px;
+/* Mobile P0 — canonical 360/390/430 safeguards loaded after Theme 2 styles. */
+@media (max-width: 520px) {
+  /* Product cards outside /san-pham/ (homepage + related products) must remain
+   * readable in the approved two-column portrait layout. Older Theme 2 rules
+   * dropped these labels to roughly 8–11px at 360px. */
+  .t2-product-card__media-brand {
+    font-size: .60rem;
+    line-height: 1.35;
+  }
+  .t2-product-card__media-meta strong {
+    font-size: .66rem;
+    line-height: 1.35;
+  }
+  .t2-product-card__media-meta small {
+    font-size: .58rem;
+    line-height: 1.35;
+  }
+  .t2-product-card__copy {
+    min-height: 118px;
+  }
+  .t2-product-card__copy .t2-kicker {
+    font-size: .58rem;
+    line-height: 1.35;
+  }
+  .t2-product-card__copy h3 {
+    font-size: .76rem;
+    line-height: 1.42;
+  }
+  .t2-product-card__copy .t2-text-link {
+    min-height: 44px;
+    font-size: .66rem;
+    line-height: 1.35;
+  }
+
+  /* Article aside links become horizontal on tablet; keep their phone tap
+   * target explicit when they collapse/wrap into the article flow. */
+  .t2-article-aside a {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+  }
+}
+
+@media (max-width: 374px) {
+  /* 360px is a canonical target. Do not re-introduce the old tiny-title rule. */
+  .t2-product-card__copy h3 {
+    font-size: .74rem;
   }
 }
