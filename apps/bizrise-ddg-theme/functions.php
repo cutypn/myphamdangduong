@@ -9,7 +9,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('BIZRISE_DDG_THEME_VERSION', '2.1.7');
+define('BIZRISE_DDG_THEME_VERSION', '2.1.8');
 
 add_action('after_setup_theme', static function (): void {
     add_theme_support('title-tag');
@@ -198,6 +198,70 @@ function ddg_theme2_visible_product_statuses(): array {
     }
     return ['publish'];
 }
+
+/**
+ * Public storefront safety gate for products explicitly marked legal HOLD.
+ * Editors keep preview access; public archive/search/related queries do not.
+ */
+function ddg_theme2_public_product_meta_query(array $meta_query = []): array {
+    $hold_clause = [
+        'relation' => 'OR',
+        [
+            'key'     => '_bizrise_legal_hold',
+            'compare' => 'NOT EXISTS',
+        ],
+        [
+            'key'     => '_bizrise_legal_hold',
+            'value'   => '1',
+            'compare' => '!=',
+        ],
+    ];
+
+    if (!$meta_query) {
+        return [$hold_clause];
+    }
+
+    return [
+        'relation' => 'AND',
+        $meta_query,
+        $hold_clause,
+    ];
+}
+
+add_action('pre_get_posts', static function (WP_Query $query): void {
+    if (is_admin() || (is_user_logged_in() && current_user_can('edit_products'))) {
+        return;
+    }
+
+    $post_type = $query->get('post_type');
+    $is_product_query = $post_type === 'product'
+        || (is_array($post_type) && in_array('product', $post_type, true))
+        || ($query->is_search() && (string)$query->get('post_type') === 'product');
+
+    if (!$is_product_query) {
+        return;
+    }
+
+    $existing = $query->get('meta_query');
+    $query->set('meta_query', ddg_theme2_public_product_meta_query(is_array($existing) ? $existing : []));
+}, 50);
+
+add_action('template_redirect', static function (): void {
+    if (is_admin() || (is_user_logged_in() && current_user_can('edit_products'))) {
+        return;
+    }
+    if (!function_exists('is_product') || !is_product()) {
+        return;
+    }
+
+    $product_id = get_queried_object_id();
+    if ($product_id > 0 && (string)get_post_meta($product_id, '_bizrise_legal_hold', true) === '1') {
+        global $wp_query;
+        $wp_query->set_404();
+        status_header(404);
+        nocache_headers();
+    }
+}, 1);
 
 function ddg_theme2_company_contact(): array {
     $data = [
