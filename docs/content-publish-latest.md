@@ -8,17 +8,16 @@ Core-page source trong `apps/bizrise-ddg-theme/inc/editorial-content.php` tiếp
 
 ## Cải thiện source vòng này
 
-Commit content: `bca769b1426dbb18979235db652d71d2c8411705`
+Commit content: `66faef53844e8d45d2a3f2c4ac4d3e590eab25c7`
 
-File: `data/content/articles/odm-my-pham-la-gi.md`
+File: `data/content/articles/rd-my-pham-la-gi.md`
 
 Đã sửa:
 
 - đồng bộ front matter `review_status` từ `editorial_review` sang `publish_ready`;
 - đổi reviewer từ `pending` sang `source-safe editorial`;
 - cập nhật `last_verified` sang `2026-08-27`;
-- đồng bộ dòng `Last verified` trong body sang `27/08/2026`;
-- giữ nguyên internal links vì cả 3 slug đều tồn tại trong article registry;
+- giữ nguyên 3 internal links vì đều trỏ tới slug có trong article registry;
 - không thay đổi claim, chứng nhận, công suất, đối tác hoặc product detail copy.
 
 Đây là fix source consistency để registry và Markdown không tự mâu thuẫn khi QA/importer kiểm tra publication state.
@@ -28,8 +27,8 @@ File: `data/content/articles/odm-my-pham-la-gi.md`
 - total registry: **10**
 - publish_ready registry: **10**
 - editorial_review registry: **0**
-- Markdown front matter đã đồng bộ publish-ready xác nhận: **2/10** (`oem-my-pham-la-gi`, `odm-my-pham-la-gi`)
-- Markdown còn lại cần tiếp tục rà front matter/link consistency: **8**
+- Markdown front matter đã đồng bộ publish-ready xác nhận: **3/10** (`oem-my-pham-la-gi`, `odm-my-pham-la-gi`, `rd-my-pham-la-gi`)
+- Markdown còn lại cần tiếp tục rà front matter/link consistency: **7**
 - deterministic importer: **CÓ**
 - importer bỏ Markdown H1 khỏi `post_content`: **CÓ**
 - exact-slug/idempotent publication path: **CÓ**
@@ -62,8 +61,8 @@ Endpoint này có thể audit Featured Image ID/file/URL/ALT/kích thước, mis
 
 Counts:
 
-- article source before: **10 publish-ready registry / 1 Markdown metadata synced**
-- article source after: **10 publish-ready registry / 2 Markdown metadata synced**
+- article source before: **10 publish-ready registry / 2 Markdown metadata synced**
+- article source after: **10 publish-ready registry / 3 Markdown metadata synced**
 - internal links mới phát hiện sai vòng này: **0**
 - article runtime media before: **CHƯA XÁC MINH**
 - article runtime media after: **CHƯA XÁC MINH**
@@ -71,12 +70,10 @@ Counts:
 
 ## CI
 
-Exact content SHA `bca769b1426dbb18979235db652d71d2c8411705`:
+Exact content SHA `66faef53844e8d45d2a3f2c4ac4d3e590eab25c7`:
 
-- Validate Bizrise DDG V2: **QUEUED tại thời điểm report**
-- Build Bizrise DDG V2 Release: **QUEUED tại thời điểm report**
-
-Không đánh dấu CI PASS cho SHA này cho tới khi workflow hoàn tất thành công.
+- Validate Bizrise DDG V2: **SUCCESS**
+- Build Bizrise DDG V2 Release: **SUCCESS**
 
 ## Production gate
 
@@ -96,10 +93,10 @@ Không thêm cGMP/ISO/FDA không có hồ sơ hiện hành, số liệu công su
 
 **SOURCE CONTENT: 10/10 KNOWLEDGE ARTICLES PUBLISH-READY.**
 
-**MARKDOWN METADATA SYNC: 2/10 CONFIRMED.**
+**MARKDOWN METADATA SYNC: 3/10 CONFIRMED.**
 
-**THIS ROUND: ODM ARTICLE SOURCE STATE ALIGNED WITH REGISTRY.**
+**THIS ROUND: R&D ARTICLE SOURCE STATE ALIGNED WITH REGISTRY.**
 
-**CI FOR CURRENT CONTENT SHA: PENDING.**
+**CI FOR CONTENT SHA: PASS.**
 
 **PRODUCTION ARTICLE/MEDIA QA: CHƯA XÁC MINH LIVE.**
