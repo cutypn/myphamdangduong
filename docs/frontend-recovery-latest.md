@@ -2,31 +2,30 @@
 
 ## Current result
 
-Mobile-first source hardening completed on `codex/rebuild-v2` without changing Product Truth or publication rules.
+Mobile-first source hardening continues on `codex/rebuild-v2` without changing Product Truth, publication rules, product mapping or WooCommerce data.
 
-Product/Data Recovery remains the catalog-data reference: `/san-pham/` must use WooCommerce `post_type=product`; internal `bizrise_product` remains non-public/non-queryable and must not own the storefront route.
+Product/Data Recovery remains authoritative for catalog data: `/san-pham/` must use WooCommerce `post_type=product`; internal `bizrise_product` remains non-public/non-queryable and must not own the storefront route.
 
-## P0 mobile issue fixed this run
+## P0 issue fixed this run
 
-A source audit found one remaining tap-target regression inside product cards: the mobile override forced `.t2-product-card__copy .t2-text-link` to `min-height:36px`, below the project's ~44px mobile target.
+A source/cascade audit found a reproducible horizontal-overflow risk on article cards at `<=520px`:
 
-Fix applied:
+```css
+.t2-article-card { grid-template-columns:34% minmax(0,66%); }
+```
 
-- product-card CTA now has `min-height:44px` and flex vertical centering;
-- article-card CTA now has `min-height:44px`;
-- pagination links/spans now have `min-height:44px`;
-- Theme asset version bumped `2.1.5` → `2.1.6` so production browsers do not retain the previous mobile CSS;
-- canonical product card remains two-column portrait 9:16 at 360/390/430 with `object-fit:contain`.
+The two percentage columns already consume 100% of the grid width, while the inherited article-grid gap adds another 14px. On 360/390/430px phones this can make the article card exceed its container.
 
-## Code
+Fix commit: `0f654428e8c5e7e7fbc818f7bd5ebf11a8bb2279`
 
-- `321b20feb8f3a6ffe553c285309a22700b9b54d8` — enforce 44px mobile tap targets in CSS.
-- `6c60c7dc7cedd2c86686b489238f7d78d4b0ee52` — bump theme asset version to 2.1.6.
+File: `apps/bizrise-ddg-theme/header.php`
 
-Files:
+A small post-`wp_head()` mobile overflow guard now forces:
 
-- `apps/bizrise-ddg-theme/assets/css/theme212.css`
-- `apps/bizrise-ddg-theme/functions.php`
+- article card columns to `minmax(104px,32%) minmax(0,1fr)` at `<=520px`;
+- article copy to `min-width:0` so long titles/excerpts can shrink and wrap instead of widening the grid.
+
+This preserves the existing horizontal editorial-card design while eliminating the `100% + gap` geometry.
 
 ## Mobile checklist
 
@@ -35,12 +34,13 @@ Files:
 | Sticky header source geometry | PASS source | PASS source | PASS source |
 | Logo/hamburger fit | PASS source | PASS source | PASS source |
 | Menu/submenu links >=44px | PASS source | PASS source | PASS source |
+| No known article-card horizontal overflow | PASS source | PASS source | PASS source |
 | Product CTA >=44px | PASS source | PASS source | PASS source |
 | Article CTA >=44px | PASS source | PASS source | PASS source |
 | Pagination target >=44px | PASS source | PASS source | PASS source |
 | Product grid stays 2 columns | PASS source | PASS source | PASS source |
-| Product media stays 9:16 | PASS source | PASS source | PASS source |
-| Product images use contain, not crop | PASS source | PASS source | PASS source |
+| Product media stays portrait 9:16 | PASS source | PASS source | PASS source |
+| Product images use `object-fit:contain` | PASS source | PASS source | PASS source |
 | Filter pills horizontal-scroll | PASS source | PASS source | PASS source |
 | Sort select >=44px | PASS source | PASS source | PASS source |
 | Single product image contained | PASS source | PASS source | PASS source |
@@ -50,49 +50,46 @@ Files:
 | Form controls avoid phone auto-zoom | PASS source | PASS source | PASS source |
 | Footer compact | PASS source | PASS source | PASS source |
 
-`PASS source` means source/cascade inspection only, not browser screenshot evidence.
+`PASS source` means static source/cascade inspection. It is not a browser screenshot PASS.
 
 ## CI
 
-Exact final SHA: `6c60c7dc7cedd2c86686b489238f7d78d4b0ee52`.
+Exact frontend fix SHA: `0f654428e8c5e7e7fbc818f7bd5ebf11a8bb2279`.
 
-- Validate Bizrise DDG V2 run `33049212990`: **SUCCESS**.
-- Build Bizrise DDG V2 Release run `33049212972`: **SUCCESS**.
-
-The preceding CSS commit `321b20f…` also passed both Validate and Release before the asset-version bump.
+- Validate Bizrise DDG V2 run `33053798958`: **SUCCESS**.
+- Build Bizrise DDG V2 Release run `33053798953`: **SUCCESS**.
 
 ## Product/Data context
 
-Latest Product Recovery report continues to show:
+Latest Product Recovery report states:
 
-- controlled manifest: 44;
-- controlled matched: 44;
-- last verified controlled wrong Featured Image: 0;
-- last verified product/poster missing or ambiguity: 0;
+- controlled manifest: **44**;
+- controlled matched: **44**;
+- last verified controlled wrong Featured Image: **0**;
+- last verified product/poster missing or ambiguity: **0**;
 - unmanaged/legacy public missing Featured Image candidates remain a Product/Data concern and are not hidden or fuzzy-mapped by frontend.
-
-No frontend code in this run changes publication status, Product Truth, product mapping or product media records.
 
 ## Production / browser verification
 
-Production is not marked PASS from this runtime because public REST/browser access is still not reliably available here. The Deploy Bridge should pick up the final SHA after CI success, but deployed SHA must be confirmed independently before claiming production PASS.
+Current execution environment still cannot reliably fetch production REST/browser pages, so no live visual claim is made.
 
-Required browser checks remain:
+Required production PASS evidence remains:
 
-1. `/san-pham/` at 360, 390, 430 and desktop >=1180.
-2. Representative `product_cat` archive.
-3. >=8 representative product singles across brands.
-4. Homepage/core pages.
-5. `/kien-thuc/` and representative article pages.
-6. Sticky header/menu opening and submenu tapping.
-7. No horizontal overflow at 360/390/430.
-8. Actual visual polish of portrait cards, spacing, hero height, typography, CTA visibility and footer.
+1. deployed SHA equals this fix or a validated descendant;
+2. `/san-pham/` at 360, 390, 430 and desktop >=1180;
+3. representative `product_cat` archive;
+4. >=8 product singles across brands;
+5. homepage/core pages;
+6. `/kien-thuc/` plus representative article pages;
+7. sticky header/menu/submenu interaction;
+8. zero horizontal overflow at 360/390/430;
+9. visual polish of product 9:16 cards, spacing, hero height, typography, CTA visibility and footer.
 
 ## Status
 
 **MOBILE SOURCE: PASS**
 
-**FINAL CI: PASS**
+**EXACT FIX CI: PASS**
 
 **PRODUCTION DEPLOY: CHƯA XÁC MINH**
 
