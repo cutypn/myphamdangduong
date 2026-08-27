@@ -246,7 +246,14 @@ final class SiteContentImporter {
         return $ids ? (int) $ids[0] : 0;
     }
 
-    private static function sync_menu( string $menu_name, string $location, array $keys, array $page_ids, array $pages ): int {
+    /**
+     * Sync a deterministic menu tree.
+     *
+     * Backward-compatible node formats:
+     * - 'about'
+     * - array( 'key' => 'capability', 'children' => array( 'rnd', 'factory' ) )
+     */
+    private static function sync_menu( string $menu_name, string $location, array $nodes, array $page_ids, array $pages ): int {
         if ( ! function_exists( 'wp_update_nav_menu_item' ) ) {
             require_once ABSPATH . 'wp-admin/includes/nav-menu.php';
         }
@@ -270,10 +277,53 @@ final class SiteContentImporter {
             }
         }
 
-        $count = 0;
+        $desired_page_ids = array();
+        self::collect_menu_page_ids( $nodes, $page_ids, $desired_page_ids );
+
         $position = 1;
-        foreach ( $keys as $key ) {
-            if ( empty( $page_ids[ $key ] ) || empty( $pages[ $key ] ) ) {
+        $count = self::sync_menu_nodes(
+            $menu_id,
+            $nodes,
+            $page_ids,
+            $pages,
+            $by_object_id,
+            0,
+            $position
+        );
+
+        foreach ( $existing_items as $item ) {
+            if ( 'page' !== $item->object ) {
+                continue;
+            }
+            if ( ! in_array( (int) $item->object_id, $desired_page_ids, true ) ) {
+                wp_delete_post( (int) $item->ID, true );
+            }
+        }
+
+        $locations = get_theme_mod( 'nav_menu_locations', array() );
+        if ( ! is_array( $locations ) ) {
+            $locations = array();
+        }
+        $locations[ $location ] = $menu_id;
+        set_theme_mod( 'nav_menu_locations', $locations );
+
+        return $count;
+    }
+
+    private static function sync_menu_nodes(
+        int $menu_id,
+        array $nodes,
+        array $page_ids,
+        array $pages,
+        array $by_object_id,
+        int $parent_item_id,
+        int &$position
+    ): int {
+        $count = 0;
+
+        foreach ( $nodes as $node ) {
+            $key = is_array( $node ) ? (string) ( $node['key'] ?? '' ) : (string) $node;
+            if ( '' === $key || empty( $page_ids[ $key ] ) || empty( $pages[ $key ] ) ) {
                 continue;
             }
 
@@ -288,6 +338,7 @@ final class SiteContentImporter {
                     'menu-item-type' => 'post_type',
                     'menu-item-title' => sanitize_text_field( $pages[ $key ]['title'] ),
                     'menu-item-position' => $position,
+                    'menu-item-parent-id' => $parent_item_id,
                     'menu-item-status' => 'publish',
                 )
             );
@@ -295,17 +346,35 @@ final class SiteContentImporter {
             if ( is_wp_error( $saved ) ) {
                 throw new RuntimeException( $saved->get_error_message() );
             }
-            ++$count;
-            ++$position;
-        }
 
-        $locations = get_theme_mod( 'nav_menu_locations', array() );
-        if ( ! is_array( $locations ) ) {
-            $locations = array();
+            ++$position;
+            ++$count;
+
+            if ( is_array( $node ) && ! empty( $node['children'] ) && is_array( $node['children'] ) ) {
+                $count += self::sync_menu_nodes(
+                    $menu_id,
+                    $node['children'],
+                    $page_ids,
+                    $pages,
+                    $by_object_id,
+                    (int) $saved,
+                    $position
+                );
+            }
         }
-        $locations[ $location ] = $menu_id;
-        set_theme_mod( 'nav_menu_locations', $locations );
 
         return $count;
+    }
+
+    private static function collect_menu_page_ids( array $nodes, array $page_ids, array &$desired_page_ids ): void {
+        foreach ( $nodes as $node ) {
+            $key = is_array( $node ) ? (string) ( $node['key'] ?? '' ) : (string) $node;
+            if ( '' !== $key && ! empty( $page_ids[ $key ] ) ) {
+                $desired_page_ids[] = (int) $page_ids[ $key ];
+            }
+            if ( is_array( $node ) && ! empty( $node['children'] ) && is_array( $node['children'] ) ) {
+                self::collect_menu_page_ids( $node['children'], $page_ids, $desired_page_ids );
+            }
+        }
     }
 }
