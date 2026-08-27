@@ -10,14 +10,14 @@ Core-page source trong `apps/bizrise-ddg-migrator/data/site-content.php` tiếp 
 
 ## Cải thiện source vòng này
 
-Phát hiện `/nha-may-san-xuat-my-pham/` đã có body copy, cấu trúc H2 và internal links nhưng chưa có CTA kết thúc rõ như các core page khác.
+Phát hiện homepage `front-page.php` có fallback hard-code bốn tên thương hiệu khi taxonomy thương hiệu không trả về dữ liệu. Fallback này có thể khiến production hiển thị tên thương hiệu không được xác minh từ runtime taxonomy hiện tại.
 
-Đã sửa source ở commit `e4d62b081abc33b4a3bfd8f9d7e29165d4202c90`:
+Đã sửa source ở commit `094b3a0936bf3fdfbe3bba6c82ba15e878837cc2`:
 
-- thêm CTA kết thúc cho `/nha-may-san-xuat-my-pham/`;
-- CTA hướng người đọc hoàn thiện brief + danh sách dữ liệu cần xác minh rồi dùng cùng bộ đầu vào để so sánh phạm vi, điểm bàn giao và trách nhiệm;
-- giữ nguyên internal links tới checklist lựa chọn nhà máy và quy trình gia công;
-- không thêm claim cGMP/ISO/FDA, công suất, đối tác, contact fact hoặc product detail copy.
+- bỏ toàn bộ bốn tên thương hiệu hard-code khỏi fallback homepage;
+- khi taxonomy không có term public, homepage chỉ hiển thị một CTA chung tới `/thuong-hieu/`;
+- tên thương hiệu cụ thể chỉ được render khi lấy được term thật từ taxonomy public;
+- không thay Product Truth, không sửa product detail copy và không thêm brand/partner/contact fact chưa xác minh.
 
 ## Knowledge articles
 
@@ -47,10 +47,11 @@ Curated/source-safe content bao phủ:
 
 Homepage nằm trong `front-page.php`.
 
-Core-page targeted CTA gap this round:
+Homepage unverified brand fallback:
 
-- before: **1** (`Năng lực sản xuất`)
-- after: **0**
+- before: **4 hard-coded brand names**;
+- after: **0 hard-coded brand names**;
+- runtime taxonomy-backed brand names: render only when public terms exist.
 
 ## Article media inventory
 
@@ -64,13 +65,13 @@ Counts vòng này:
 
 - article source before: **10 publish-ready / 10 metadata synchronized**;
 - article source after: **10 publish-ready / 10 metadata synchronized**;
-- core-page targeted CTA gaps before: **1**;
-- core-page targeted CTA gaps after: **0**;
+- homepage hard-coded brand fallbacks before: **4**;
+- homepage hard-coded brand fallbacks after: **0**;
 - article runtime media before: **CHƯA XÁC MINH**;
 - article runtime media after: **CHƯA XÁC MINH**;
 - media mapping tự tạo/gán mơ hồ: **0**.
 
-Production endpoint vẫn chưa đọc được từ runtime kiểm tra hiện tại: DNS resolution tới `dangduonggroup.com` thất bại, còn web direct-open bị safe-URL restriction. Vì vậy không suy diễn Featured Image/ALT/missing/duplicate counts, article sync runtime hay trạng thái live render.
+Production endpoint vẫn chưa đọc được từ runtime kiểm tra hiện tại: direct web open tới URL REST bị safe-URL restriction và search không trả endpoint indexable. Vì vậy không suy diễn Featured Image/ALT/missing/duplicate counts, article sync runtime hay trạng thái live render.
 
 ## Production gate
 
@@ -84,7 +85,7 @@ Chưa đánh production PASS nếu chưa có live runtime/media verification cho
 
 ## An toàn nội dung
 
-Không thêm cGMP/ISO/FDA không có hồ sơ hiện hành, số liệu công suất chưa xác minh, tên đối tác chưa xác minh, contact fact chưa có nguồn, claim y tế/hiệu quả chưa được duyệt hoặc product detail copy.
+Không thêm cGMP/ISO/FDA không có hồ sơ hiện hành, số liệu công suất chưa xác minh, tên đối tác/thương hiệu chưa được runtime xác minh, contact fact chưa có nguồn, claim y tế/hiệu quả chưa được duyệt hoặc product detail copy.
 
 ## Trạng thái
 
@@ -92,6 +93,6 @@ Không thêm cGMP/ISO/FDA không có hồ sơ hiện hành, số liệu công su
 
 **MARKDOWN METADATA SYNC: 10/10 CONFIRMED.**
 
-**CORE CONTENT FIX: FACTORY PAGE CTA GAP CLOSED.**
+**HOMEPAGE CONTENT TRUTH FIX: 4 UNVERIFIED HARD-CODED BRAND FALLBACKS REMOVED.**
 
 **PENDING: CI FOR FINAL HEAD + PRODUCTION ARTICLE/MEDIA QA.**
