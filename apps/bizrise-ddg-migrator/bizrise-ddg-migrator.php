@@ -2,14 +2,14 @@
 /**
  * Plugin Name: Bizrise DDG Migrator
  * Description: Controlled, idempotent migration, media and site-import tools for the Đăng Dương Group V2 rebuild.
- * Version: 0.3.8
+ * Version: 0.3.9
  * Requires PHP: 8.2
  * Text Domain: bizrise-ddg-migrator
  */
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'BIZRISE_DDG_MIGRATOR_VERSION', '0.3.8' );
+define( 'BIZRISE_DDG_MIGRATOR_VERSION', '0.3.9' );
 define( 'BIZRISE_DDG_MIGRATOR_PATH', plugin_dir_path( __FILE__ ) );
 
 require_once BIZRISE_DDG_MIGRATOR_PATH . 'src/ProductImporter.php';
@@ -17,6 +17,7 @@ require_once BIZRISE_DDG_MIGRATOR_PATH . 'src/SiteContentImporter.php';
 require_once BIZRISE_DDG_MIGRATOR_PATH . 'src/ArticleContentImporter.php';
 require_once BIZRISE_DDG_MIGRATOR_PATH . 'src/MediaContentImporter.php';
 require_once BIZRISE_DDG_MIGRATOR_PATH . 'src/ProductMediaRepair.php';
+require_once BIZRISE_DDG_MIGRATOR_PATH . 'src/StorefrontProductAudit.php';
 require_once BIZRISE_DDG_MIGRATOR_PATH . 'src/RuntimeStatus.php';
 
 register_activation_hook(
@@ -42,15 +43,16 @@ add_action(
 /**
  * Complete deterministic media integrity repair automatically after deployment.
  *
- * The exact-clean gate comes from ProductMediaRepair itself so runtime retry,
- * admin repair and the status endpoint cannot drift to different definitions
- * of "clean". A transient lock serialises work and retry backoff avoids doing
- * database/media scans on every request while production is unresolved.
+ * The controlled 44-row manifest is independent from unrelated/legacy public
+ * WooCommerce rows. Unmanaged storefront media gaps are exposed separately by
+ * StorefrontProductAudit and must not force a full deterministic repair every
+ * five minutes after all controlled SKU media is already exact-clean.
  */
 add_action(
     'init',
     static function (): void {
         $repair_class   = \Bizrise\DDG\Migrator\ProductMediaRepair::class;
+        $audit_class    = \Bizrise\DDG\Migrator\StorefrontProductAudit::class;
         $repair_version = $repair_class::version();
         $version_option = 'bizrise_ddg_product_media_repair_version';
         $report_option  = 'bizrise_ddg_product_media_repair_report';
@@ -58,7 +60,7 @@ add_action(
         $retry_key      = 'bizrise_ddg_product_media_repair_retry_after';
 
         $saved_report = get_option( $report_option, array() );
-        $saved_clean  = is_array( $saved_report ) && $repair_class::is_clean_report( $saved_report );
+        $saved_clean  = is_array( $saved_report ) && $audit_class::controlled_media_clean( $saved_report );
 
         if ( $repair_version === (string) get_option( $version_option, '' ) && $saved_clean ) {
             return;
@@ -75,7 +77,7 @@ add_action(
             $report['ran_at']  = gmdate( 'c' );
             update_option( $report_option, $report, false );
 
-            if ( $repair_class::is_clean_report( $report ) ) {
+            if ( $audit_class::controlled_media_clean( $report ) ) {
                 update_option( $version_option, $repair_version, false );
                 delete_transient( $retry_key );
             } else {
