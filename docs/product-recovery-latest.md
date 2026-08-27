@@ -14,11 +14,11 @@ Public storefront remains WooCommerce `post_type=product`. Internal Product Trut
 ## Current Git / CI
 
 - Branch: `codex/rebuild-v2`
-- Current HEAD: `bedbb38c0cf805b3909e87acf287989bf6e685cf`
-- Commit: `docs: record core content expansion and media QA state`
-- Product-impact assessment: **none** — current HEAD is documentation/content-state only and does not alter WooCommerce mapping, Product Truth, media assignment, HOLD rules, visibility gates or publication state.
-- Validate Bizrise DDG V2 run `33104026646`: **SUCCESS**.
-- Build Bizrise DDG V2 Release run `33104026648`: **SUCCESS**.
+- Current HEAD before this report refresh: `6a40a5d25f8caf95a73690d4bf6395c564633580`
+- Commit: `fix(release): align active smoke URLs with approved DDG architecture`
+- Product-impact assessment: **none** — current HEAD changes release smoke URL coverage only; it does not alter WooCommerce mapping, Product Truth, media assignment, HOLD rules, visibility gates or publication state.
+- Validate Bizrise DDG V2 run `33111340658`: **SUCCESS**.
+- Build Bizrise DDG V2 Release run `33111340723`: **SUCCESS**.
 - `MediaInventory` remains implemented and registered.
 - `RuntimeStatus` remains implemented with `catalog_runtime` counters.
 
@@ -76,12 +76,12 @@ No Product Truth HOLD/unknown/unverified record should be newly exposed. No fuzz
 | Unmanaged public missing Featured Image | mixed into global repair gate | separated; last known **22** |
 | Product media inventory | unavailable | endpoint implemented and registered |
 | Runtime catalog observability | no direct counters | `catalog_runtime` implemented; CI PASS |
-| Current HEAD CI | unknown | **Validate PASS + Release PASS** on `bedbb38c…` |
+| Current code HEAD CI | unknown | **Validate PASS + Release PASS** on `6a40a5d2…` |
 | Current HEAD production deploy | unknown | **CHƯA XÁC MINH** |
 
 ## Production verification attempt — 2026-08-28
 
-This run attempted all three live endpoints from two independent execution paths. Production DNS failed to resolve (`Temporary failure in name resolution`), so no fresh production payload could be obtained.
+This run attempted the live runtime and product inventory endpoints. Production DNS failed to resolve (`Temporary failure in name resolution`), so no fresh production payload could be obtained.
 
 Therefore the following remain **CHƯA XÁC MINH** on current HEAD:
 
