@@ -10,17 +10,14 @@ Core-page source trong `apps/bizrise-ddg-migrator/data/site-content.php` tiếp 
 
 ## Cải thiện source vòng này
 
-Phát hiện các trang `/nang-luc/`, `/thuong-hieu/`, `/kien-thuc/`, `/doi-tac/`, `/lien-he/` và `/tim-diem-ban/` còn ngắn, thiếu hành trình đọc, internal links hoặc CTA đủ rõ.
+Phát hiện `/nha-may-san-xuat-my-pham/` đã có body copy, cấu trúc H2 và internal links nhưng chưa có CTA kết thúc rõ như các core page khác.
 
-Đã sửa source ở commit `cd2925189211261340075483e843cc21410f0055`:
+Đã sửa source ở commit `e4d62b081abc33b4a3bfd8f9d7e29165d4202c90`:
 
-- mở rộng `/nang-luc/` theo hành trình R&D → phát triển sản phẩm → sản xuất/chất lượng → OEM/ODM; thêm internal links và bước tiếp theo;
-- mở rộng `/thuong-hieu/` với cách đi từ câu chuyện thương hiệu tới routine, link sang `/san-pham/` và `/kien-thuc/`, không tạo claim thương hiệu chưa xác minh;
-- mở rộng `/kien-thuc/` theo bốn hướng đọc: làn da, thành phần, routine và B2B; thêm exact internal links tới bài quy trình gia công và so sánh OEM/ODM;
-- mở rộng `/doi-tac/` theo từng nhu cầu phân phối, đại lý, affiliate, OEM/ODM; thêm chuẩn bị brief và CTA, không tự nêu điều kiện thương mại;
-- mở rộng `/lien-he/` bằng checklist dữ liệu cần chuẩn bị theo mục tiêu, không tự điền contact fact;
-- mở rộng `/tim-diem-ban/` với policy chỉ hiển thị dữ liệu điểm bán đã xác minh và fallback về `/lien-he/`;
-- không sửa product detail copy.
+- thêm CTA kết thúc cho `/nha-may-san-xuat-my-pham/`;
+- CTA hướng người đọc hoàn thiện brief + danh sách dữ liệu cần xác minh rồi dùng cùng bộ đầu vào để so sánh phạm vi, điểm bàn giao và trách nhiệm;
+- giữ nguyên internal links tới checklist lựa chọn nhà máy và quy trình gia công;
+- không thêm claim cGMP/ISO/FDA, công suất, đối tác, contact fact hoặc product detail copy.
 
 ## Knowledge articles
 
@@ -50,10 +47,10 @@ Curated/source-safe content bao phủ:
 
 Homepage nằm trong `front-page.php`.
 
-Core-page targeted content gaps this round:
+Core-page targeted CTA gap this round:
 
-- before: **6** (`Năng lực`, `Thương hiệu`, `Kiến thức`, `Đối tác`, `Liên hệ`, `Tìm điểm bán`)
-- after: **0** cho sáu trang đã nhắm mục tiêu trong vòng này
+- before: **1** (`Năng lực sản xuất`)
+- after: **0**
 
 ## Article media inventory
 
@@ -67,13 +64,13 @@ Counts vòng này:
 
 - article source before: **10 publish-ready / 10 metadata synchronized**;
 - article source after: **10 publish-ready / 10 metadata synchronized**;
-- core-page targeted gaps before: **6**;
-- core-page targeted gaps after: **0**;
+- core-page targeted CTA gaps before: **1**;
+- core-page targeted CTA gaps after: **0**;
 - article runtime media before: **CHƯA XÁC MINH**;
 - article runtime media after: **CHƯA XÁC MINH**;
 - media mapping tự tạo/gán mơ hồ: **0**.
 
-Production endpoint chưa đọc được từ runtime kiểm tra hiện tại: direct open bị safe-URL policy chặn và public search không index REST inventory. Vì vậy không suy diễn Featured Image/ALT/missing/duplicate counts, article sync runtime hay trạng thái live render.
+Production endpoint vẫn chưa đọc được từ runtime kiểm tra hiện tại: DNS resolution tới `dangduonggroup.com` thất bại, còn web direct-open bị safe-URL restriction. Vì vậy không suy diễn Featured Image/ALT/missing/duplicate counts, article sync runtime hay trạng thái live render.
 
 ## Production gate
 
@@ -95,6 +92,6 @@ Không thêm cGMP/ISO/FDA không có hồ sơ hiện hành, số liệu công su
 
 **MARKDOWN METADATA SYNC: 10/10 CONFIRMED.**
 
-**CORE CONTENT FIX: SIX REMAINING CORE-PAGE JOURNEYS EXPANDED WITH SOURCE-SAFE COPY, INTERNAL LINKS AND CTA.**
+**CORE CONTENT FIX: FACTORY PAGE CTA GAP CLOSED.**
 
 **PENDING: CI FOR FINAL HEAD + PRODUCTION ARTICLE/MEDIA QA.**
