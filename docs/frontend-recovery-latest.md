@@ -14,29 +14,30 @@ Latest Product/Data Recovery state read before this frontend change:
 
 ## P0 frontend audit / fix this run
 
-A real logged-in mobile sticky-header regression remained in the CSS cascade. WordPress uses a 46px admin bar below 783px, but at `<=600px` core changes `#wpadminbar` from fixed to absolute. The theme still forced `.admin-bar .t2-header{top:46px}` and an admin-bar-adjusted fixed-nav top, so after the admin bar scrolled away the theme header/menu could retain a false 46px gap on phone widths.
+A sticky-header navigation defect remained on the single-product page. The in-page product navigation links to `#mo-ta` and `#cong-bo`, but neither target had `scroll-margin-top`. On 360/390/430px a tap on “Mô tả” or “Phiếu công bố” could therefore land the target heading under the sticky header even though the page itself had no layout overflow.
 
-Fix applied in `apps/bizrise-ddg-theme/header.php` as the final theme-side mobile guard after `wp_head()`:
+Fix applied in `apps/bizrise-ddg-theme/header.php` as the final theme-side guard after `wp_head()`:
 
-- `<=600px`: logged-in sticky header returns to `top:0` after the absolute WP admin bar scrolls away;
-- `521–600px`: logged-in fixed nav aligns to the 72px theme header and uses `100dvh - 72px`;
-- `<=520px`: logged-in fixed nav aligns to the canonical 64px phone header and uses `100dvh - 64px`;
-- existing article overflow guard is retained;
-- 601–782px keeps the 46px offset required while the WordPress admin bar is fixed;
+- `#mo-ta` and `#cong-bo` now reserve **112px** scroll margin on large screens;
+- tablet / compact layouts use **96px**;
+- canonical phone widths `<=520px` use **80px**, covering the 64px phone header plus breathing room;
+- the prior logged-in WordPress admin-bar geometry guards remain unchanged;
+- the prior article overflow guard remains unchanged;
 - no Product Truth, SKU, media, publish status or WooCommerce visibility rule changed.
 
-Exact frontend code SHA: `da9e8207322501e35e9ebe8ecc24d26b6d4de2c6`.
+Exact frontend code SHA: `ad51ff88f8d8d737316f15cbe4b5f97f27a8983e`.
 
 CI for that exact code SHA:
 
-- Validate Bizrise DDG V2 run `33103325112`: **SUCCESS**;
-- Build Bizrise DDG V2 Release run `33103325195`: **SUCCESS**.
+- Validate Bizrise DDG V2 run `33107990781`: **SUCCESS**;
+- Build Bizrise DDG V2 Release run `33107990765`: **SUCCESS**.
 
 ## Mobile checklist
 
 | Check | 360 | 390 | 430 |
 |---|---|---|---|
 | Sticky header source geometry | PASS source | PASS source | PASS source |
+| Single-product anchor clears sticky header | PASS source | PASS source | PASS source |
 | Logged-in WP admin-bar scroll geometry | PASS source | PASS source | PASS source |
 | Logo/hamburger fit | PASS source | PASS source | PASS source |
 | Hamburger target >=44px | PASS source | PASS source | PASS source |
@@ -76,9 +77,10 @@ Required production PASS evidence remains:
 2. `/san-pham/` at 360, 390, 430 and desktop >=1180;
 3. representative `product_cat` archive and product singles;
 4. homepage/core pages and `/kien-thuc/` article views;
-5. logged-in phone scroll test proving no 46px stale gap after WP admin bar scrolls away;
-6. hamburger/submenu interaction and zero horizontal overflow;
-7. visual polish of 9:16 cards, spacing, hero height, typography, CTA visibility and footer.
+5. single-product taps on `#mo-ta` and `#cong-bo` proving target headings remain visible below the sticky header;
+6. logged-in phone scroll test proving no stale admin-bar gap;
+7. hamburger/submenu interaction and zero horizontal overflow;
+8. visual polish of 9:16 cards, spacing, hero height, typography, CTA visibility and footer.
 
 ## Status
 
