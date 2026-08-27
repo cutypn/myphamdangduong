@@ -15,11 +15,12 @@ Public storefront remains WooCommerce `post_type=product`. Internal Product Trut
 ## Current Git / CI
 
 - Branch: `codex/rebuild-v2`
-- Current HEAD before this report refresh: `2c38c3b3cb607135d5ab3f3b0eaac7e9c75fe138`
-- Commit: `fix(media): stop legacy missing images from retriggering controlled repair`
-- Product-impact assessment: **safe repair-gate correction** — ProductMediaRepair `1.1.2` now defines clean state by the 44 controlled manifest and exact controlled media checks; `public_missing_featured` remains reported but is no longer a blocker that retriggers repair on every admin init.
-- Validate Bizrise DDG V2 run `33120876071`: **SUCCESS**.
-- Build Bizrise DDG V2 Release run `33120876060`: **SUCCESS**.
+- Current HEAD before this report refresh: `3b122953c4e62c451b5c514a56e898697be221bb`
+- Commit: `docs: update content publish and media QA state`
+- Product-impact assessment: **none** — current HEAD only refreshes content/media QA documentation and does not change WooCommerce mapping, Product Truth, Featured Image assignment, HOLD handling, catalog visibility or product publish state.
+- Validate Bizrise DDG V2 run `33122718665`: **SUCCESS**.
+- Build Bizrise DDG V2 Release run `33122718730`: **SUCCESS**.
+- CI validation therefore covers the repository PHP lint / JSON / data checks configured by `validate-v2.yml` on this HEAD.
 - No fuzzy mapping, guessed image assignment, product deletion, mass draft or mass publish was performed.
 
 ## Last verified production evidence
@@ -76,17 +77,17 @@ No Product Truth HOLD/unknown/unverified record should be newly exposed. No fuzz
 | Unmanaged public missing Featured Image | mixed into controlled clean gate | still reported; last known **22**, but no longer retriggers controlled repair |
 | Product media inventory | unavailable | endpoint implemented; full live payload pending production reachability |
 | Runtime catalog observability | no direct counters | `catalog_runtime` implemented |
-| Current code HEAD CI | unknown | **Validate PASS + Release PASS** on `2c38c3b3…` |
+| Current code HEAD CI | unknown | **Validate PASS + Release PASS** on `3b122953c…` |
 | Current HEAD production deploy | unknown | **CHƯA XÁC MINH** |
 
-## Production verification attempt — 2026-08-28 05:07 ICT
+## Production verification attempt — 2026-08-28 06:08 ICT
 
 This run attempted direct DNS/HTTP access to:
 
 - `https://dangduonggroup.com/wp-json/bizrise-ddg/v1/media-inventory?scope=products&per_page=100`
 - `https://dangduonggroup.com/wp-json/bizrise-ddg/v1/runtime-status`
 
-Production DNS failed to resolve from the execution environment (`Temporary failure in name resolution` / `Could not resolve host: dangduonggroup.com`), so no fresh production payload could be obtained.
+Production DNS failed to resolve from the execution environment (`Temporary failure in name resolution`), so no fresh production payload could be obtained.
 
 Therefore the following remain **CHƯA XÁC MINH** on current HEAD:
 
