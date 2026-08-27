@@ -8,7 +8,7 @@ wp_enqueue_style(
     'bizrise-ddg-mobile-p0',
     get_template_directory_uri() . '/assets/css/mobile-p0.css',
     ['bizrise-ddg-theme213'],
-    '2026.08.28.1'
+    '2026.08.28.2'
 );
 ?><!doctype html>
 <html <?php language_attributes(); ?>>
@@ -17,9 +17,6 @@ wp_enqueue_style(
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <?php wp_head(); ?>
 <style id="ddg-mobile-overflow-guard">
-/* WordPress makes #wpadminbar absolute at <=600px. Once it scrolls away, the
- * sticky theme header/menu must return to the viewport top instead of keeping
- * the 46px fixed-admin-bar offset used at 601-782px. */
 @media (max-width:600px){
   body.admin-bar .t2-header{top:0}
 }
@@ -31,9 +28,6 @@ wp_enqueue_style(
   .t2-article-card{grid-template-columns:minmax(104px,32%) minmax(0,1fr)!important}
   .t2-article-card__copy{min-width:0}
 }
-/* In-page product navigation must land below the sticky header instead of
- * hiding the target heading under it. Desktop keeps the larger header offset;
- * canonical phones use the 64px header plus breathing room. */
 #mo-ta,#cong-bo{scroll-margin-top:112px}
 @media (max-width:980px){#mo-ta,#cong-bo{scroll-margin-top:96px}}
 @media (max-width:520px){#mo-ta,#cong-bo{scroll-margin-top:80px}}
@@ -61,11 +55,6 @@ wp_enqueue_style(
     </button>
 
     <nav id="t2-primary-nav" class="t2-nav" data-t2-nav aria-label="<?php esc_attr_e('Điều hướng chính', 'bizrise-ddg'); ?>">
-      <?php /*
-       * The public primary navigation is intentionally deterministic.
-       * Do not delegate this architecture to a stale wp_nav_menu assignment:
-       * Release/QA treats this exact tree as the approved site mindmap.
-       */ ?>
       <ul>
         <li><a href="<?php echo esc_url(home_url('/')); ?>">Trang chủ</a></li>
         <li><a href="<?php echo esc_url(ddg_theme2_url('ve-dang-duong')); ?>">Về Đăng Dương Group</a></li>
