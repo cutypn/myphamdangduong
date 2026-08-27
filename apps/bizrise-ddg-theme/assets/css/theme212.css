@@ -1,4 +1,4 @@
-/* Theme 2.1.6 — Be Vietnam Pro, moderate type scale, unified product visual system */
+/* Theme 2.1.7 — Be Vietnam Pro, moderate type scale, unified product visual system */
 :root{--t2-serif:"Be Vietnam Pro",sans-serif}
 body,.t2-site,.t2-main,.t2-footer,button,input,select,textarea{font-family:"Be Vietnam Pro",sans-serif}
 
@@ -142,10 +142,10 @@ body,.t2-site,.t2-main,.t2-footer,button,input,select,textarea{font-family:"Be V
   .t2-notification{padding:52px 0}
 
   .t2-article-grid{grid-template-columns:1fr;gap:14px}
-  .t2-article-card{grid-template-columns:34% minmax(0,66%)}
+  .t2-article-card{grid-template-columns:minmax(104px,32%) minmax(0,1fr)}
   .t2-article-card__media{min-height:150px}
-  .t2-article-card__copy{padding:14px}
-  .t2-article-card h3{font-size:1rem;line-height:1.38}
+  .t2-article-card__copy{min-width:0;padding:14px}
+  .t2-article-card h3{font-size:1rem;line-height:1.38;overflow-wrap:anywhere}
   .t2-article-card .t2-text-link,.t2-pagination a,.t2-pagination span{min-height:44px;display:inline-flex;align-items:center}
 
   .t2-btn,.t2-header-cta,input,select,textarea,button{max-width:100%}
