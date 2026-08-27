@@ -31,7 +31,7 @@ jobs:
           bash -n deploy/deploy.sh
           bash -n deploy/smoke-test.sh
 
-      - name: Validate Product Truth and JSON data
+      - name: Validate Product Truth and content data
         shell: bash
         run: |
           set -Eeuo pipefail
@@ -40,6 +40,22 @@ jobs:
           python3 -m json.tool profiles/dang-duong/brand.json >/dev/null
           python3 -m json.tool profiles/dang-duong/media-manifest.json >/dev/null
           python3 -m json.tool data/content/article-registry.json >/dev/null
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          registry = json.loads(Path('data/content/article-registry.json').read_text(encoding='utf-8'))
+          eligible = [a for a in registry.get('articles', []) if a.get('status') == 'publish_ready']
+          if len(eligible) != 10:
+              raise SystemExit(f'expected 10 publish_ready articles, got {len(eligible)}')
+          for article in eligible:
+              path = Path(article['source_file'])
+              if not path.is_file():
+                  raise SystemExit(f'missing article source: {path}')
+              body = path.read_text(encoding='utf-8')
+              if '# ' not in body or '## ' not in body:
+                  raise SystemExit(f'article source lacks required heading structure: {path}')
+          print(f'validated {len(eligible)} publish-ready article sources')
+          PY
 
       - name: Build release packages
         id: package
@@ -53,12 +69,19 @@ jobs:
           printf 'branch=codex/rebuild-v2\nsha=%s\nbuilt_at=%s\n' \
             "$GITHUB_SHA" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$OUT/RELEASE.txt"
 
+          # Standalone migrator ZIP must carry the exact same approved content payload
+          # that deploy.sh syncs during repository-based deployments.
+          rm -rf .release-migrator
+          mkdir -p .release-migrator/bizrise-ddg-migrator/data/content
+          rsync -a apps/bizrise-ddg-migrator/ .release-migrator/bizrise-ddg-migrator/
+          rsync -a data/content/ .release-migrator/bizrise-ddg-migrator/data/content/
+
           (cd apps && zip -qr "../$OUT/bizrise-ddg-theme-${SHORT_SHA}.zip" bizrise-ddg-theme)
           (cd apps && zip -qr "../$OUT/bizrise-core-${SHORT_SHA}.zip" bizrise-core)
-          (cd apps && zip -qr "../$OUT/bizrise-ddg-migrator-${SHORT_SHA}.zip" bizrise-ddg-migrator)
+          (cd .release-migrator && zip -qr "../$OUT/bizrise-ddg-migrator-${SHORT_SHA}.zip" bizrise-ddg-migrator)
 
           tar -czf "$OUT/ddg-v2-deploy-source-${SHORT_SHA}.tar.gz" \
-            .cpanel.yml deploy apps/bizrise-core apps/bizrise-ddg-theme apps/bizrise-ddg-migrator
+            .cpanel.yml deploy apps/bizrise-core apps/bizrise-ddg-theme apps/bizrise-ddg-migrator data/content
 
           sha256sum "$OUT"/* > "$OUT/SHA256SUMS"
           echo "short_sha=$SHORT_SHA" >> "$GITHUB_OUTPUT"
