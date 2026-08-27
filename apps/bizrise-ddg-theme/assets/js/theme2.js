@@ -3,13 +3,27 @@
   const nav = document.querySelector('[data-t2-nav]');
   if (!toggle || !nav) return;
 
+  const toggleLabel = toggle.querySelector('.screen-reader-text');
   const submenuItems = Array.from(nav.querySelectorAll('.menu-item-has-children'));
+
+  const setToggleLabel = (open) => {
+    const text = open ? 'Đóng menu' : 'Mở menu';
+    toggle.setAttribute('aria-label', text);
+    if (toggleLabel) toggleLabel.textContent = text;
+  };
+
+  const setSubmenuState = (item, open) => {
+    const button = item.querySelector(':scope > .t2-submenu-toggle');
+    if (!button) return;
+    const parentLabel = button.dataset.parentLabel || 'menu con';
+    button.setAttribute('aria-expanded', String(open));
+    button.setAttribute('aria-label', `${open ? 'Đóng' : 'Mở'} menu con: ${parentLabel}`);
+  };
 
   const closeSubmenus = () => {
     submenuItems.forEach((item) => {
       item.classList.remove('is-submenu-open');
-      const button = item.querySelector(':scope > .t2-submenu-toggle');
-      if (button) button.setAttribute('aria-expanded', 'false');
+      setSubmenuState(item, false);
     });
   };
 
@@ -20,12 +34,14 @@
 
     if (!submenu.id) submenu.id = `t2-submenu-${index + 1}`;
 
+    const parentLabel = parentLink.textContent.trim();
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 't2-submenu-toggle';
+    button.dataset.parentLabel = parentLabel;
     button.setAttribute('aria-expanded', 'false');
     button.setAttribute('aria-controls', submenu.id);
-    button.setAttribute('aria-label', `Mở menu con: ${parentLink.textContent.trim()}`);
+    button.setAttribute('aria-label', `Mở menu con: ${parentLabel}`);
     button.innerHTML = '<span aria-hidden="true">⌄</span>';
     parentLink.insertAdjacentElement('afterend', button);
 
@@ -35,17 +51,20 @@
       const willOpen = !item.classList.contains('is-submenu-open');
       closeSubmenus();
       item.classList.toggle('is-submenu-open', willOpen);
-      button.setAttribute('aria-expanded', String(willOpen));
+      setSubmenuState(item, willOpen);
     });
   });
 
   const setMenuState = (open, { restoreFocus = false } = {}) => {
     toggle.setAttribute('aria-expanded', String(open));
+    setToggleLabel(open);
     nav.classList.toggle('is-open', open);
     document.body.classList.toggle('t2-menu-open', open);
     if (!open) closeSubmenus();
     if (restoreFocus) toggle.focus();
   };
+
+  setToggleLabel(false);
 
   toggle.addEventListener('click', () => {
     const open = toggle.getAttribute('aria-expanded') === 'true';
