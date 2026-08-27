@@ -13,11 +13,11 @@ The public storefront remains WooCommerce `post_type=product`. Internal Product 
 ## Current Git / CI
 
 - Branch: `codex/rebuild-v2`
-- Current HEAD observed: `96bb0c66f33ba253f594d83461ff9fd26cbde909`
-- Commit: `content: align OEM vs ODM article publication metadata`
+- Current HEAD observed before this report refresh: `4eebed008e6d2ae608dcd9104d6d3088522bb836`
+- Commit: `content: align factory selection article publication metadata`
 - Current HEAD does not change WooCommerce product mapping, Product Truth publication policy, or product media repair behavior.
-- Validate Bizrise DDG V2 run `33056538434`: **SUCCESS**.
-- Build Bizrise DDG V2 Release run `33056538468`: **SUCCESS**.
+- Validate Bizrise DDG V2 run `33061113536`: **SUCCESS**.
+- Build Bizrise DDG V2 Release run `33061113534`: **SUCCESS**.
 - `MediaInventory` remains implemented and registered in migrator source.
 
 ## Last verified production evidence
@@ -80,7 +80,7 @@ Therefore Product Truth must not mass-draft or mass-publish the existing WooComm
 | Product/poster missing in controlled manifest | unresolved | **0** |
 | Unmanaged public missing Featured Image | mixed into global repair gate | separated; last known **22** |
 | Product media inventory | unavailable | endpoint implemented and registered |
-| Current HEAD CI | stale | **Validate PASS + Release PASS** on `96bb0c66…` |
+| Current HEAD CI | stale | **Validate PASS + Release PASS** on `4eebed00…` |
 | Current HEAD production deploy | unknown | **CHƯA XÁC MINH** |
 
 ## Production verification gate
@@ -102,6 +102,6 @@ Required PASS evidence:
 
 ## Blocker this run
 
-This execution environment still cannot resolve/fetch `dangduonggroup.com` production REST directly (DNS/fetch limitation). Therefore current deployed SHA and live product inventory are **CHƯA XÁC MINH** here.
+This execution environment still cannot resolve/fetch `dangduonggroup.com` production REST directly. Web retrieval also cannot open the production REST endpoints without a discoverable source URL, so current deployed SHA and live product inventory remain **CHƯA XÁC MINH** here.
 
 No fuzzy mapping, guessed image assignment, mass draft or deletion was performed. The next safe action is to read the live product inventory once production REST is reachable, classify unmanaged rows deterministically, then apply only exact non-destructive fixes.
