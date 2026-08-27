@@ -2,6 +2,7 @@
 set -Eeuo pipefail
 
 WP_ROOT="${DDG_WP_ROOT:?DDG_WP_ROOT is required}"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 checks=(
   "$WP_ROOT/wp-content/plugins/bizrise-core/bizrise-core.php"
@@ -51,9 +52,6 @@ if [[ "${DDG_SMOKE_ACTIVE:-0}" == "1" ]]; then
   CURL_TIMEOUT="${DDG_SMOKE_HTTP_TIMEOUT:-15}"
 
   # These paths mirror the deterministic public navigation in the V2 theme.
-  # Keep this list on canonical current routes only: obsolete legacy routes such
-  # as /gioi-thieu/ and /he-thong-phan-phoi/ can legitimately 404 and must not
-  # block an otherwise valid release.
   urls=(
     "/"
     "/ve-dang-duong/"
@@ -77,20 +75,25 @@ if [[ "${DDG_SMOKE_ACTIVE:-0}" == "1" ]]; then
     fi
   done
 
-  # Runtime observability is required for release verification. If the endpoints
-  # exist, they must answer successfully. A 404 is tolerated for installations
-  # where the Deploy Bridge is not present yet; transport/5xx failures are not.
-  runtime_paths=(
-    "/wp-json/bizrise-ddg/v1/runtime-status"
-    "/wp-json/bizrise-ddg/v1/media-inventory?scope=products&per_page=1"
-  )
-  for path in "${runtime_paths[@]}"; do
-    code="$(curl --connect-timeout 5 --max-time "$CURL_TIMEOUT" -L -sS -o /dev/null -w '%{http_code}' "${BASE_URL%/}${path}")"
-    if [[ "$code" != "200" && "$code" != "404" ]]; then
-      echo "[smoke] runtime endpoint HTTP $code: $path" >&2
-      exit 1
-    fi
-  done
+  # Runtime status is mandatory for an active production smoke. It proves the
+  # deployed runtime sees the controlled 44-SKU catalog, not merely that PHP
+  # files were copied successfully.
+  runtime_json="$(mktemp)"
+  trap 'rm -f "$runtime_json"' EXIT
+  code="$(curl --connect-timeout 5 --max-time "$CURL_TIMEOUT" -L -sS -o "$runtime_json" -w '%{http_code}' "${BASE_URL%/}/wp-json/bizrise-ddg/v1/runtime-status")"
+  if [[ "$code" != "200" ]]; then
+    echo "[smoke] runtime-status HTTP $code" >&2
+    exit 1
+  fi
+  python3 "$REPO_ROOT/deploy/verify-runtime.py" "$runtime_json"
+
+  # Media inventory must also be live so Release/QA can inspect exact product
+  # attachment metadata after deployment.
+  code="$(curl --connect-timeout 5 --max-time "$CURL_TIMEOUT" -L -sS -o /dev/null -w '%{http_code}' "${BASE_URL%/}/wp-json/bizrise-ddg/v1/media-inventory?scope=products&per_page=1")"
+  if [[ "$code" != "200" ]]; then
+    echo "[smoke] product media inventory HTTP $code" >&2
+    exit 1
+  fi
 fi
 
 echo "[smoke] filesystem, PHP and configured active checks passed"
