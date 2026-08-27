@@ -24,8 +24,21 @@ final class StorefrontProductAudit {
 
     public static function summary( array $report ): array {
         $public_ids = self::public_woocommerce_ids();
-        $missing_ids = self::extract_ids( $report['public_missing_featured'] ?? array() );
-        $controlled_problem_ids = self::extract_ids( $report['public_wrong_featured'] ?? array() );
+
+        // ProductMediaRepair may report public rows from legacy/internal post types.
+        // StorefrontProductAudit must only describe actual WooCommerce storefront rows.
+        $missing_ids = array_values(
+            array_intersect(
+                self::extract_ids( $report['public_missing_featured'] ?? array() ),
+                $public_ids
+            )
+        );
+        $controlled_problem_ids = array_values(
+            array_intersect(
+                self::extract_ids( $report['public_wrong_featured'] ?? array() ),
+                $public_ids
+            )
+        );
         $unmanaged_missing_ids = array_values( array_diff( $missing_ids, $controlled_problem_ids ) );
 
         return array(
@@ -74,7 +87,11 @@ final class StorefrontProductAudit {
         $rows = array();
         foreach ( $ids as $post_id ) {
             $post_id = (int) $post_id;
-            if ( $post_id <= 0 || 'publish' !== get_post_status( $post_id ) ) {
+            if (
+                $post_id <= 0
+                || 'publish' !== get_post_status( $post_id )
+                || 'product' !== get_post_type( $post_id )
+            ) {
                 continue;
             }
             $categories = array();
