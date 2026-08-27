@@ -6,27 +6,25 @@ Mobile-first hardening continues on `codex/rebuild-v2` without changing Product 
 
 Product/Data Recovery remains authoritative: public catalog = WooCommerce `post_type=product`; internal `bizrise_product` remains non-public/non-queryable and must not own `/san-pham/`. Latest Product Recovery still reports controlled manifest **44**, controlled matched **44**, last verified controlled wrong Featured Image **0**, with unmanaged/legacy missing-media rows kept separate for deterministic Product/Data classification.
 
-## P0 mobile UX fix this run
+## P0 mobile layout fix this run
 
-Source audit found the hamburger controller could leave mobile UI in a stale locked state:
+Static source audit found a real mismatch between the previous report and the CSS actually on branch: the mobile article card still used `grid-template-columns:34% minmax(0,66%)` while the grid also had a column gap. At 360/390/430 this can make the computed track widths plus gap exceed the available card width and create horizontal overflow or compressed copy.
 
-- menu could not be closed with `Escape`;
-- if the viewport crossed from mobile/tablet to desktop while menu was open, `body.t2-menu-open` could remain set and preserve scroll locking;
-- keyboard users did not get focus restored to the menu toggle after closing with Escape.
+Fixes:
 
-Fix commit: `b6d5cdd2ad85cf25c5b99d826ce0abb80522d2a3`
-
-File: `apps/bizrise-ddg-theme/assets/js/theme2.js`
+- CSS commit: `9a6fe16fd8362db8ebb156eabdacc7a55a503ddf`
+- Cache/version commit: `5abcccdd02a99540440e29b7a7c12ab6c12fec2f`
+- Files:
+  - `apps/bizrise-ddg-theme/assets/css/theme212.css`
+  - `apps/bizrise-ddg-theme/functions.php`
 
 Changes:
 
-- centralized menu state into `setMenuState()`;
-- `Escape` closes the menu and restores focus to the hamburger button;
-- `matchMedia('(min-width: 981px)')` clears open/locked mobile state when crossing into desktop;
-- nav-link clicks still close the menu;
-- legacy `MediaQueryList.addListener` fallback retained for older browsers.
-
-This directly hardens menu interaction on 360 / 390 / 430px and prevents a stale `overflow:hidden` body state after orientation/viewport changes.
+- article mobile grid changed to `minmax(104px,32%) minmax(0,1fr)` so the second track consumes remaining width instead of declaring another percentage beside a gap;
+- `.t2-article-card__copy{min-width:0}` prevents long content from forcing the grid wider;
+- article H3 now uses `overflow-wrap:anywhere` as a final guard for long tokens;
+- theme asset version bumped to **2.1.7** so mobile browsers do not keep the pre-fix stylesheet in cache;
+- approved product mockup behavior remains untouched: two portrait cards, 9:16 media frame, `object-fit:contain`.
 
 ## Mobile checklist
 
@@ -38,7 +36,7 @@ This directly hardens menu interaction on 360 / 390 / 430px and prevents a stale
 | Menu/submenu links >=44px | PASS source | PASS source | PASS source |
 | Escape closes menu + restores focus | PASS source | PASS source | PASS source |
 | Resize/orientation to desktop clears scroll lock | PASS source | PASS source | PASS source |
-| No known article-card horizontal overflow | PASS source | PASS source | PASS source |
+| Article-card horizontal overflow guard | PASS source | PASS source | PASS source |
 | Product CTA >=44px | PASS source | PASS source | PASS source |
 | Article CTA >=44px | PASS source | PASS source | PASS source |
 | Pagination target >=44px | PASS source | PASS source | PASS source |
@@ -58,10 +56,12 @@ This directly hardens menu interaction on 360 / 390 / 430px and prevents a stale
 
 ## CI
 
-Exact frontend code SHA: `b6d5cdd2ad85cf25c5b99d826ce0abb80522d2a3`.
+Exact latest frontend SHA: `5abcccdd02a99540440e29b7a7c12ab6c12fec2f`.
 
-- Validate Bizrise DDG V2 run `33057980136`: **SUCCESS**.
-- Build Bizrise DDG V2 Release run `33057980153`: **SUCCESS**.
+- Validate Bizrise DDG V2 run `33062494815`: **SUCCESS**.
+- Build Bizrise DDG V2 Release run `33062494824`: **SUCCESS**.
+
+These workflows include the repository's PHP/source validation and release build checks.
 
 ## Production / browser verification
 
@@ -69,7 +69,7 @@ Current execution environment still cannot reliably fetch `dangduonggroup.com` p
 
 Required production PASS evidence remains:
 
-1. deployed SHA equals this fix or a validated descendant;
+1. deployed SHA equals `5abcccdd02a99540440e29b7a7c12ab6c12fec2f` or a validated descendant;
 2. `/san-pham/` at 360, 390, 430 and desktop >=1180;
 3. representative `product_cat` archive;
 4. >=8 product singles across brands;
