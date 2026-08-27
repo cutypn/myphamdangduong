@@ -9,7 +9,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('BIZRISE_DDG_THEME_VERSION', '2.1.3');
+define('BIZRISE_DDG_THEME_VERSION', '2.1.4');
 
 add_action('after_setup_theme', static function (): void {
     add_theme_support('title-tag');
@@ -127,7 +127,7 @@ function ddg_theme2_page_image(string $slug, string $size = 'large'): string {
 }
 
 function ddg_theme2_brand_taxonomy(): string {
-    foreach (['product_brand', 'pwb-brand', 'yith_product_brand', 'bizrise_brand'] as $taxonomy) {
+    foreach (['product_brand', 'pwb-brand', 'yith_product_brand', 'bizrise_brand', 'brand'] as $taxonomy) {
         if (taxonomy_exists($taxonomy)) {
             return $taxonomy;
         }
@@ -144,7 +144,7 @@ function ddg_theme2_product_brand(int $product_id): string {
         }
     }
 
-    foreach (['_bizrise_brand_label', '_bizrise_packaging_label'] as $meta_key) {
+    foreach (['_bizrise_brand_label', 'brand', '_brand', 'brand_name', '_brand_name', 'product_brand', '_product_brand', 'ddg_brand', '_ddg_brand'] as $meta_key) {
         $value = trim((string)get_post_meta($product_id, $meta_key, true));
         if ($value !== '') {
             return $value;
