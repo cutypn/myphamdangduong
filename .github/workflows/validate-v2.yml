@@ -38,7 +38,7 @@ jobs:
       - name: Validate Product Truth seed
         run: python3 tests/smoke/validate_product_seed.py
 
-      - name: Validate JSON data
+      - name: Validate JSON and publish-ready article data
         shell: bash
         run: |
           set -Eeuo pipefail
@@ -46,3 +46,24 @@ jobs:
           python3 -m json.tool profiles/dang-duong/brand.json >/dev/null
           python3 -m json.tool profiles/dang-duong/media-manifest.json >/dev/null
           python3 -m json.tool data/content/article-registry.json >/dev/null
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          registry = json.loads(Path('data/content/article-registry.json').read_text(encoding='utf-8'))
+          eligible = [a for a in registry.get('articles', []) if a.get('status') == 'publish_ready']
+          if len(eligible) != 10:
+              raise SystemExit(f'expected 10 publish_ready articles, got {len(eligible)}')
+          slugs = set()
+          for article in eligible:
+              slug = article.get('slug', '')
+              if not slug or slug in slugs:
+                  raise SystemExit(f'invalid or duplicate slug: {slug!r}')
+              slugs.add(slug)
+              path = Path(article['source_file'])
+              if not path.is_file():
+                  raise SystemExit(f'missing article source: {path}')
+              body = path.read_text(encoding='utf-8')
+              if '# ' not in body or '## ' not in body:
+                  raise SystemExit(f'article source lacks required heading structure: {path}')
+          print(f'validated {len(eligible)} publish-ready article sources')
+          PY
