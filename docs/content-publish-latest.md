@@ -10,13 +10,13 @@ Core-page source trong `apps/bizrise-ddg-theme/inc/editorial-content.php` tiếp
 
 ## Cải thiện source vòng này
 
-Phát hiện gap ở `cach-lua-chon-nha-may-gia-cong-my-pham.md`: front matter đã khai báo CTA “Mang cùng một product brief đến nhiều đối tác để so sánh cùng scope” nhưng body chưa render bước hành động tương ứng.
+Phát hiện gap ở `rd-my-pham-la-gi.md`: front matter đã khai báo 3 internal links và CTA nhưng body chưa render cụm điều hướng hoặc bước tiếp theo.
 
-Đã sửa ở commit `37c87aabbfd763c5230ddf0a6d79c129cc9619f5`:
+Đã sửa ở commit `c211756cf74ecd8caa2d490e784325ce4244efe9`:
 
-- thêm mục **Bước tiếp theo** sau cụm internal links;
-- CTA bám đúng metadata: dùng cùng một product brief, cùng scope, cùng dữ liệu đầu vào và cùng đầu ra bàn giao để so sánh;
-- giữ nguyên 3 exact internal links hiện có;
+- thêm mục **Đọc tiếp theo hành trình phát triển**;
+- render exact links tới nghiên cứu công thức, làm mẫu và quy trình gia công;
+- thêm CTA cuối bài bám đúng metadata;
 - không thêm claim, certification, capacity, named partner, contact fact hoặc product detail copy.
 
 ## Knowledge articles
@@ -28,7 +28,8 @@ Phát hiện gap ở `cach-lua-chon-nha-may-gia-cong-my-pham.md`: front matter �
 - Markdown reviewer pending: **0**
 - deterministic importer: **CÓ**
 - exact-slug/idempotent publication path: **CÓ**
-- article CTA/body gap phát hiện/sửa vòng này: **1**
+- R&D internal-link/CTA body gap before: **1**
+- R&D internal-link/CTA body gap after: **0**
 
 ## Core pages source
 
@@ -60,13 +61,13 @@ Counts vòng này:
 
 - article source before: **10 publish-ready / 10 metadata synchronized**;
 - article source after: **10 publish-ready / 10 metadata synchronized**;
-- factory-selection CTA/body gap before: **1**;
-- factory-selection CTA/body gap after: **0**;
+- R&D internal-link/CTA body gap before: **1**;
+- R&D internal-link/CTA body gap after: **0**;
 - article runtime media before: **CHƯA XÁC MINH**;
 - article runtime media after: **CHƯA XÁC MINH**;
 - media mapping tự tạo/gán mơ hồ: **0**.
 
-Production endpoint, runtime-status và `/kien-thuc/` chưa đọc được đáng tin cậy từ môi trường kiểm tra hiện tại, nên không suy diễn Featured Image/ALT/missing/duplicate counts, article sync runtime hay trạng thái live render.
+Production endpoint, runtime-status và `/kien-thuc/` chưa đọc được đáng tin cậy từ môi trường kiểm tra hiện tại. Direct request tới `dangduonggroup.com` tiếp tục gặp DNS resolution failure trong runtime kiểm tra, nên không suy diễn Featured Image/ALT/missing/duplicate counts, article sync runtime hay trạng thái live render.
 
 ## Production gate
 
@@ -88,6 +89,6 @@ Không thêm cGMP/ISO/FDA không có hồ sơ hiện hành, số liệu công su
 
 **MARKDOWN METADATA SYNC: 10/10 CONFIRMED.**
 
-**LATEST CONTENT FIX: FACTORY-SELECTION CTA RENDERED IN BODY.**
+**LATEST CONTENT FIX: R&D INTERNAL LINKS + CTA RENDERED IN BODY.**
 
 **PENDING: FINAL CI + PRODUCTION ARTICLE/MEDIA QA.**
