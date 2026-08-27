@@ -11,7 +11,7 @@ wp_enqueue_style(
     'bizrise-ddg-product-mockup',
     get_template_directory_uri() . '/assets/css/product-mockup.css',
     ['bizrise-ddg-theme213'],
-    '2.2.2'
+    '2.2.3'
 );
 
 get_header();
@@ -24,9 +24,6 @@ $search = isset($_GET['s']) ? sanitize_text_field(wp_unslash((string)$_GET['s'])
 
 $tax_query = [];
 if (taxonomy_exists('product_visibility')) {
-    // WooCommerce stores catalog visibility as taxonomy term slugs. Using the
-    // localized term name here can silently fail and expose products explicitly
-    // marked "exclude-from-catalog" on the /san-pham/ fallback page.
     $exclude_term = get_term_by('slug', 'exclude-from-catalog', 'product_visibility');
     if ($exclude_term instanceof WP_Term) {
         $tax_query[] = [
@@ -47,9 +44,6 @@ $query_args = [
     'orderby'             => ['menu_order' => 'ASC', 'date' => 'DESC'],
 ];
 
-// Keep the safety rule inside this fallback query as well as the global
-// pre_get_posts gate. This prevents an explicitly legal-HOLD product from ever
-// entering /san-pham/ if another plugin changes query hooks/order at runtime.
 if (function_exists('ddg_theme2_public_product_meta_query')) {
     $query_args['meta_query'] = ddg_theme2_public_product_meta_query([]);
 }
