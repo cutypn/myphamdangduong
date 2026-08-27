@@ -8,28 +8,28 @@ Core-page source trong `apps/bizrise-ddg-theme/inc/editorial-content.php` tiếp
 
 ## Cải thiện source vòng này
 
-Commit content: `88006b4dba021ea69aa8f8b5687b5f340b728986`
+Commit content: `bca769b1426dbb18979235db652d71d2c8411705`
 
-File: `data/content/articles/oem-my-pham-la-gi.md`
+File: `data/content/articles/odm-my-pham-la-gi.md`
 
 Đã sửa:
 
 - đồng bộ front matter `review_status` từ `editorial_review` sang `publish_ready`;
 - đổi reviewer từ `pending` sang `source-safe editorial`;
 - cập nhật `last_verified` sang `2026-08-27`;
-- loại internal link `/checklist-brief-oem-odm-my-pham/` vì slug này không tồn tại trong registry hiện hành;
-- thay bằng hub hợp lệ `/oem-odm-my-pham/` ở cả metadata và phần “Đọc tiếp”;
+- đồng bộ dòng `Last verified` trong body sang `27/08/2026`;
+- giữ nguyên internal links vì cả 3 slug đều tồn tại trong article registry;
 - không thay đổi claim, chứng nhận, công suất, đối tác hoặc product detail copy.
 
-Đây là fix user-facing thực tế: tránh publish một internal link có nguy cơ 404 và giảm inconsistency giữa registry với Markdown source.
+Đây là fix source consistency để registry và Markdown không tự mâu thuẫn khi QA/importer kiểm tra publication state.
 
 ## Knowledge articles
 
 - total registry: **10**
 - publish_ready registry: **10**
 - editorial_review registry: **0**
-- Markdown front matter đã đồng bộ publish-ready xác nhận vòng này: **1/10** (`oem-my-pham-la-gi`)
-- các Markdown còn lại cần tiếp tục rà front matter/link consistency ở vòng sau: **9**
+- Markdown front matter đã đồng bộ publish-ready xác nhận: **2/10** (`oem-my-pham-la-gi`, `odm-my-pham-la-gi`)
+- Markdown còn lại cần tiếp tục rà front matter/link consistency: **8**
 - deterministic importer: **CÓ**
 - importer bỏ Markdown H1 khỏi `post_content`: **CÓ**
 - exact-slug/idempotent publication path: **CÓ**
@@ -58,27 +58,29 @@ Endpoint source:
 
 `/wp-json/bizrise-ddg/v1/media-inventory?scope=articles&per_page=100`
 
-Nó có thể audit Featured Image ID/file/URL/ALT/kích thước, missing featured và duplicate attachment cho bài public. Môi trường fetch hiện tại vẫn không truy cập trực tiếp endpoint production một cách đáng tin cậy, vì vậy vòng này không tự suy diễn media live.
+Endpoint này có thể audit Featured Image ID/file/URL/ALT/kích thước, missing featured và duplicate attachment cho bài public. Môi trường kiểm tra hiện tại chưa đọc production endpoint trực tiếp một cách đáng tin cậy, vì vậy không tự suy diễn media live.
 
 Counts:
 
-- article source before: **10 publish-ready**
-- article source after: **10 publish-ready**
-- known broken/unregistered internal link fixed this round: **1**
+- article source before: **10 publish-ready registry / 1 Markdown metadata synced**
+- article source after: **10 publish-ready registry / 2 Markdown metadata synced**
+- internal links mới phát hiện sai vòng này: **0**
 - article runtime media before: **CHƯA XÁC MINH**
 - article runtime media after: **CHƯA XÁC MINH**
 - media mapping tự tạo/gán mơ hồ: **0**
 
 ## CI
 
-Exact content SHA `88006b4dba021ea69aa8f8b5687b5f340b728986`:
+Exact content SHA `bca769b1426dbb18979235db652d71d2c8411705`:
 
-- Validate Bizrise DDG V2: **SUCCESS**
-- Build Bizrise DDG V2 Release: **SUCCESS**
+- Validate Bizrise DDG V2: **QUEUED tại thời điểm report**
+- Build Bizrise DDG V2 Release: **QUEUED tại thời điểm report**
+
+Không đánh dấu CI PASS cho SHA này cho tới khi workflow hoàn tất thành công.
 
 ## Production gate
 
-Chưa đánh production PASS trong report này vì chưa đọc được live runtime/media endpoint từ môi trường fetch. Production PASS cần đủ:
+Chưa đánh production PASS vì chưa có live runtime/media verification cho final HEAD. Production PASS cần đủ:
 
 1. Deploy Bridge `deployed_sha` khớp final HEAD đã PASS CI.
 2. Runtime status báo article sync `10/10`, `error_count=0`.
@@ -94,8 +96,10 @@ Không thêm cGMP/ISO/FDA không có hồ sơ hiện hành, số liệu công su
 
 **SOURCE CONTENT: 10/10 KNOWLEDGE ARTICLES PUBLISH-READY.**
 
-**THIS ROUND: OEM ARTICLE METADATA + INTERNAL LINK CONSISTENCY IMPROVED.**
+**MARKDOWN METADATA SYNC: 2/10 CONFIRMED.**
 
-**CI FOR CONTENT SHA: PASS.**
+**THIS ROUND: ODM ARTICLE SOURCE STATE ALIGNED WITH REGISTRY.**
+
+**CI FOR CURRENT CONTENT SHA: PENDING.**
 
 **PRODUCTION ARTICLE/MEDIA QA: CHƯA XÁC MINH LIVE.**
