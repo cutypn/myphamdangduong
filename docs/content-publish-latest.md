@@ -10,18 +10,21 @@ Core-page source trong `apps/bizrise-ddg-migrator/data/site-content.php` tiếp 
 
 ## Cải thiện source vòng này
 
-Đã rà bài `thiet-ke-bao-bi-my-pham.md` và phát hiện nhiều jargon nội bộ/tiếng Anh chưa được giải thích cho người đọc phổ thông: `hierarchy`, `artwork`, `version`, `preflight`, `Product Truth`.
+Đã rà bài `oem-va-odm-my-pham-khac-nhau-the-nao.md` và phát hiện nhiều jargon/tiếng Anh làm giảm độ rõ với người đọc phổ thông: `brief/spec`, `scope`, `audience`, `product role`, `owner`, `brand strategy`, `technical brief`, `trade-off`, `product architecture`, `go-to-market`, `timeline`, `ownership`, `Product Truth`, `provenance`, `hero product`, `proposal`.
 
-Đã sửa source ở commit `f4c95198833cb56987710ce2a35c7bd10e2b4cb6`:
+Đã sửa source ở commit `8d9b4b7c3a191b3fe0f9d9ef499abfbb28fdf2c1`:
 
-- đổi `hierarchy` thành “thứ tự ưu tiên thông tin”;
-- đổi `artwork` thành “file thiết kế (artwork)” ở lần xuất hiện cần thiết, sau đó dùng tiếng Việt;
-- đổi `version` thành “phiên bản” và làm rõ các trạng thái nháp/kiểm tra/đã duyệt/sản xuất;
-- giải thích `preflight` là “kiểm tra lần cuối trước khi gửi sản xuất”;
-- thay `Product Truth` trong body bằng “nguồn dữ liệu sản phẩm chuẩn/đã thống nhất” để người đọc không cần biết jargon nội bộ;
-- cập nhật meta description, direct answer và CTA cho nhất quán với cách gọi mới;
-- cập nhật `last_verified` sang **2026-08-28**;
-- không thay Product Truth, không sửa product detail copy và không thêm claim/certification/contact fact chưa xác minh.
+- đổi `brief/spec` thành “yêu cầu sản phẩm/yêu cầu phát triển”;
+- đổi `scope` thành “phạm vi công việc”;
+- đổi `audience`, `product role`, `owner` thành “nhóm khách hàng”, “vai trò sản phẩm”, “người phụ trách/ra quyết định”;
+- đổi `technical brief`, `trade-off`, `timeline` thành cách diễn đạt tiếng Việt dễ hiểu;
+- bỏ `Product Truth/provenance` khỏi body, thay bằng “nguồn dữ liệu đã được kiểm tra và thống nhất”;
+- đổi `go-to-market`, `hero product`, `proposal` thành “cách ra thị trường”, “sản phẩm ưu tiên”, “phương án/phạm vi công việc”;
+- cập nhật meta description, direct answer, CTA và `last_verified` sang **2026-08-28**;
+- giữ nguyên trạng thái `publish_ready`, internal links và các nguồn pháp lý/ASEAN;
+- không sửa product detail copy và không thêm claim/certification/contact fact chưa xác minh.
+
+Nguồn pháp lý được kiểm lại ngày 2026-08-28 trên Cổng TTĐT Chính phủ: Nghị định 93/2016/NĐ-CP là văn bản về điều kiện sản xuất mỹ phẩm; Thông tư 34/2025/TT-BYT sửa đổi quy định quản lý mỹ phẩm và có hiệu lực từ 18/08/2025.
 
 ## Knowledge articles
 
@@ -63,13 +66,13 @@ Counts vòng này:
 
 - article source before: **10 publish-ready / 10 metadata synchronized**;
 - article source after: **10 publish-ready / 10 metadata synchronized**;
-- bài packaging còn jargon chưa giải thích trước: **1**;
-- bài packaging còn jargon chưa giải thích sau: **0**;
+- bài OEM-vs-ODM còn cụm jargon cần làm sạch trước: **1**;
+- bài OEM-vs-ODM còn cụm jargon cần làm sạch sau: **0**;
 - article runtime media before: **CHƯA XÁC MINH**;
 - article runtime media after: **CHƯA XÁC MINH**;
 - media mapping tự tạo/gán mơ hồ: **0**.
 
-Production endpoint vẫn chưa đọc được từ runtime kiểm tra hiện tại: direct web open tới URL REST bị safe-URL restriction và search không trả endpoint indexable. Vì vậy không suy diễn Featured Image ID/file/URL/ALT/kích thước, missing featured, duplicate attachment, article sync runtime hay trạng thái live render.
+Production endpoint vẫn chưa đọc được từ runtime kiểm tra hiện tại: direct web open tới URL REST bị safe-URL restriction; exact URL search trên `dangduonggroup.com` không trả endpoint indexable. Vì vậy không suy diễn Featured Image ID/file/URL/ALT/kích thước, missing featured, duplicate attachment, article sync runtime hay trạng thái live render.
 
 ## Production gate
 
@@ -91,6 +94,6 @@ Không thêm cGMP/ISO/FDA không có hồ sơ hiện hành, số liệu công su
 
 **MARKDOWN METADATA SYNC: 10/10 CONFIRMED.**
 
-**PACKAGING ARTICLE LANGUAGE QA: 1/1 JARGON CLEANUP COMPLETE.**
+**OEM-vs-ODM LANGUAGE QA: JARGON CLEANUP COMPLETE.**
 
 **PENDING: CI FOR FINAL HEAD + PRODUCTION ARTICLE/MEDIA QA.**
