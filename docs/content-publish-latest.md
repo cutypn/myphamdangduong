@@ -2,36 +2,41 @@
 
 ## Kết luận
 
-Knowledge content vẫn có **10/10** bài trong `data/content/article-registry.json` ở trạng thái `publish_ready`. Runtime importer deterministic tồn tại trong `apps/bizrise-ddg-migrator/src/ArticleContentImporter.php`: exact-slug upsert, `post_status=publish`, category `kien-thuc`, idempotent content fingerprint và bỏ H1 trong Markdown khi render để theme sở hữu H1 duy nhất.
+Knowledge content hiện có **10/10** bài trong `data/content/article-registry.json` ở trạng thái `publish_ready`, và **10/10 Markdown front matter đã được xác nhận đồng bộ `publish_ready`** với reviewer/source-safe metadata phù hợp.
+
+Runtime importer deterministic tồn tại trong `apps/bizrise-ddg-migrator/src/ArticleContentImporter.php`: exact-slug upsert, `post_status=publish`, category `kien-thuc`, idempotent content fingerprint và bỏ H1 trong Markdown khi render để theme sở hữu H1 duy nhất.
 
 Core-page source trong `apps/bizrise-ddg-theme/inc/editorial-content.php` tiếp tục dùng curated source-safe copy, không công bố cGMP/ISO/FDA/công suất/đối tác hoặc claim y tế khi chưa có hồ sơ xác minh.
 
 ## Cải thiện source vòng này
 
-Commit content: `c32088d7db052416b838c4b9500a6682f558ac12`
+Đã đồng bộ bốn bài còn lệch metadata:
 
-File: `data/content/articles/cac-buoc-phat-trien-my-pham-thuong-hieu-rieng.md`
+1. `quy-trinh-gia-cong-my-pham.md` — commit `eb8037f63f69a4d84c824d274df9d49c974c1b0a`.
+2. `nghien-cuu-cong-thuc-my-pham.md` — commit `1db91e7b31b0ed435a75cabd9a0dedfe03656b2d`.
+3. `lam-mau-my-pham-can-luu-y-gi.md` — commit `f6752b311b69c281e1984609a466c4e2df2ff09c`.
+4. `thiet-ke-bao-bi-my-pham.md` — commit `406a003bb002bf32c4897ee0558b08b803785204`.
 
-Đã sửa:
+Các thay đổi chung:
 
-- đồng bộ front matter `review_status` từ `editorial_review` sang `publish_ready`;
-- đổi reviewer từ `pending` sang `source-safe editorial`;
-- cập nhật `last_verified` sang `2026-08-27`;
-- giữ nguyên 4 internal links vì đều trỏ tới slug có trong article registry;
+- `review_status: editorial_review` → `publish_ready`;
+- reviewer `pending` → `source-safe editorial`;
+- `last_verified` → `2026-08-27`;
 - không thêm claim, chứng nhận, công suất, đối tác hoặc product detail copy.
 
-Đây là fix source consistency để registry và Markdown không tự mâu thuẫn khi importer/QA kiểm publication state.
+Riêng bài `quy-trinh-gia-cong-my-pham.md` còn có internal link `/checklist-brief-oem-odm-my-pham/` không tồn tại trong 10-article registry. Link này đã được thay deterministic bằng hub hợp lệ `/oem-odm-my-pham/` ở cả front matter và phần “Đọc tiếp”; dòng `Last verified` trong body cũng được cập nhật 27/08/2026.
 
 ## Knowledge articles
 
 - total registry: **10**
 - publish_ready registry: **10**
 - editorial_review registry: **0**
-- Markdown front matter đã đồng bộ publish-ready xác nhận: **4/10** (`oem-my-pham-la-gi`, `odm-my-pham-la-gi`, `rd-my-pham-la-gi`, `cac-buoc-phat-trien-my-pham-thuong-hieu-rieng`)
-- Markdown còn lại cần tiếp tục rà front matter/link consistency: **6**
+- Markdown front matter publish_ready confirmed: **10/10**
+- Markdown reviewer pending còn lại: **0**
 - deterministic importer: **CÓ**
 - importer bỏ Markdown H1 khỏi `post_content`: **CÓ**
 - exact-slug/idempotent publication path: **CÓ**
+- invalid registry-link phát hiện/sửa vòng này: **1**
 
 ## Core pages source
 
@@ -57,27 +62,20 @@ Endpoint source:
 
 `/wp-json/bizrise-ddg/v1/media-inventory?scope=articles&per_page=100`
 
-Endpoint này có thể audit Featured Image ID/file/URL/ALT/kích thước, missing featured và duplicate attachment cho bài public. Lần kiểm tra production trong vòng này bị giới hạn bởi môi trường fetch (không mở được URL endpoint trực tiếp), nên không tự suy diễn media live.
+Endpoint này có thể audit Featured Image ID/file/URL/ALT/kích thước, missing featured và duplicate attachment cho bài public.
 
-Counts:
+Counts source vòng này:
 
-- article source before: **10 publish-ready registry / 3 Markdown metadata synced**
-- article source after: **10 publish-ready registry / 4 Markdown metadata synced**
-- internal links mới phát hiện sai vòng này: **0**
-- article runtime media before: **CHƯA XÁC MINH**
-- article runtime media after: **CHƯA XÁC MINH**
-- media mapping tự tạo/gán mơ hồ: **0**
-
-## CI
-
-Exact content SHA `c32088d7db052416b838c4b9500a6682f558ac12`:
-
-- Validate Bizrise DDG V2: **SUCCESS**
-- Build Bizrise DDG V2 Release: **SUCCESS**
+- article source before: **10 publish-ready registry / 6 Markdown metadata confirmed** (report trước ghi 4/10 nhưng audit lại phát hiện `oem-va-odm-my-pham-khac-nhau-the-nao` và `cach-lua-chon-nha-may-gia-cong-my-pham` đã được đồng bộ từ trước);
+- article source after: **10 publish-ready registry / 10 Markdown metadata confirmed**;
+- internal links sai phát hiện/sửa: **1**;
+- article runtime media before: **CHƯA XÁC MINH**;
+- article runtime media after: **CHƯA XÁC MINH**;
+- media mapping tự tạo/gán mơ hồ: **0**.
 
 ## Production gate
 
-Chưa đánh production PASS vì chưa có live runtime/media verification cho final HEAD. Production PASS cần đủ:
+Chưa đánh production PASS nếu chưa có live runtime/media verification cho final HEAD. Production PASS cần đủ:
 
 1. Deploy Bridge `deployed_sha` khớp final HEAD đã PASS CI.
 2. Runtime status báo article sync `10/10`, `error_count=0`.
@@ -93,10 +91,6 @@ Không thêm cGMP/ISO/FDA không có hồ sơ hiện hành, số liệu công su
 
 **SOURCE CONTENT: 10/10 KNOWLEDGE ARTICLES PUBLISH-READY.**
 
-**MARKDOWN METADATA SYNC: 4/10 CONFIRMED.**
+**MARKDOWN METADATA SYNC: 10/10 CONFIRMED.**
 
-**THIS ROUND: PRIVATE-LABEL DEVELOPMENT ARTICLE SOURCE STATE ALIGNED WITH REGISTRY.**
-
-**CI FOR CONTENT SHA: PASS.**
-
-**PRODUCTION ARTICLE/MEDIA QA: CHƯA XÁC MINH LIVE.**
+**PENDING: FINAL CI + PRODUCTION ARTICLE/MEDIA QA.**
