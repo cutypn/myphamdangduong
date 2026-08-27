@@ -1,34 +1,30 @@
 # DDG Product Recovery — latest
 
-## P0 conclusion
+## Current verdict
 
-Root cause of the empty product catalog was an architectural route collision, not evidence that the WooCommerce product rows were deleted.
+**SOURCE / CI: PASS**
 
-`Bizrise Core` registered the internal Product Truth CPT `bizrise_product` as public with `has_archive=true` and rewrite slug `san-pham`. The production storefront is WooCommerce and also uses `/san-pham/` for the public `product` catalog. Product Truth records created by `ProductImporter` are intentionally draft, so the competing CPT archive could resolve the shop URL to an archive with no public posts.
+**CONTROLLED 44-SKU MEDIA: PASS by last verified production evidence**
 
-## Route recovery fix
+**PRODUCTION ON CURRENT HEAD: CHƯA XÁC MINH**
 
-Commit: `b2590075243f0b9544e203c9aed87ba10c3f2982`
+The public storefront remains WooCommerce `post_type=product`. Internal Product Truth `bizrise_product` is non-public/non-queryable and must not own `/san-pham/`.
 
-File: `apps/bizrise-core/src/ContentTypes/Product.php`
+## Current Git / CI
 
-Changes:
+- Branch: `codex/rebuild-v2`
+- Current HEAD observed: `cee2cbede39d82aa7ebe23bc9e1d0af05cddb2a7`
+- Commit: `chore(migrator): bump storefront audit fix version`
+- Validate Bizrise DDG V2 run `33044609799`: **SUCCESS**
+- Build Bizrise DDG V2 Release run `33044609789`: **SUCCESS**
+- Migrator version: `0.4.1`
+- `MediaInventory` is loaded and registered in the migrator source.
 
-- Keep `bizrise_product` data intact as an internal Product Truth workspace.
-- Set the CPT non-public and non-queryable.
-- Remove public archive and rewrite rules.
-- Remove it from search/nav menus.
-- Keep admin UI and REST access for controlled Product Truth editing/migration.
-- Add a versioned one-time rewrite flush so Bridge deployments remove the stale `/san-pham/` rewrite.
-- WooCommerce `product` remains the only public catalog route/source for `/san-pham/`.
+## Last verified production evidence
 
-No legacy WooCommerce product row or Product Truth record was deleted.
+The last production runtime payload supplied from production reported deployed SHA `1349bdfdb2860820945d27149f0632eff9f482fc` with Bridge status `up_to_date` at that time.
 
-## Runtime evidence after production deployment
-
-Production runtime at deployed SHA `1349bdfdb2860820945d27149f0632eff9f482fc` reported:
-
-| Metric | Value |
+| Metric | Last verified value |
 |---|---:|
 | Woo/public legacy audit total | 59 |
 | Controlled manifest | 44 |
@@ -43,97 +39,96 @@ Production runtime at deployed SHA `1349bdfdb2860820945d27149f0632eff9f482fc` re
 | Errors | 0 |
 | Global public missing featured | 22 |
 
-The 44 controlled rows are deterministic and have no unresolved/wrong Featured Image in the manifest audit. Therefore the 22 image-less public records are not evidence of a failed 44-SKU mapping. They are unmanaged/legacy storefront rows unless a later deterministic audit proves otherwise.
+This proves the deterministic 44-row media manifest was fully matched and had no wrong Featured Image at that verified runtime. The 22 missing-image public rows therefore remain unmanaged/legacy candidates until deterministic evidence proves otherwise.
 
-## Runtime audit bug found and fixed
+## Current storefront audit design
 
-`ProductMediaRepair::audit_public_products()` uses the combined post-type list `bizrise_product`, `ddg_product`, and `product`. That global audit is useful as a legacy warning but is too broad to be the clean gate for the controlled 44-row manifest. It caused the runtime repair to retry indefinitely even when all 44 controlled rows were exact-clean.
+`StorefrontProductAudit` now separates controlled media integrity from unmanaged WooCommerce storefront warnings:
 
-New source changes:
+- storefront source: WooCommerce `post_type=product` only;
+- controlled clean gate: 44 manifest rows, 44 matched, no errors/not-found/ambiguity/poster/wrong-featured problems;
+- unmanaged missing Featured Image rows are reported separately;
+- internal/legacy `bizrise_product` / `ddg_product` public counts are reported separately and do not pollute Woo storefront totals;
+- no fuzzy mapping, guessed poster assignment, mass drafting or destructive cleanup is allowed.
 
-- `apps/bizrise-ddg-migrator/src/StorefrontProductAudit.php`
-  - separates controlled 44-row media integrity from unmanaged storefront media gaps;
-  - queries WooCommerce `post_type=product` as the storefront source;
-  - exposes missing-record details: ID, title, slug, brand evidence, `product_cat`, deterministic source filename, thumbnail ID and manifest marker;
-  - exposes legacy public counts for `bizrise_product` / `ddg_product` without mixing them into Woo storefront totals.
-- `apps/bizrise-ddg-migrator/bizrise-ddg-migrator.php`
-  - version `0.3.8` → `0.3.9`;
-  - runtime retry now stops when the controlled 44-row repair is clean;
-  - unmanaged/legacy media gaps remain a separate warning and are not auto-drafted or given guessed posters.
-- `apps/bizrise-ddg-migrator/src/RuntimeStatus.php`
-  - adds `storefront_audit`;
-  - status becomes `repair_clean_unmanaged_media_gap` when the controlled manifest is clean but unmanaged public products still lack Featured Images;
-  - preserves article runtime status added by the content workflow.
+## Media inventory endpoint
 
-Current code HEAD for this change: `88c3c876f5b38608043cd30f3b3245a2b9f38736`.
+Source provides public read-only endpoint:
 
-## Deterministic handling policy for the 22 missing-image IDs
+`/wp-json/bizrise-ddg/v1/media-inventory`
 
-Do not fuzzy-map and do not assign a poster based only on title similarity.
+Required product audit call after deployment:
 
-For each missing WooCommerce product after the new runtime audit deploys:
+`?scope=products&per_page=100`
 
-1. Read ID, slug, exact title, brand evidence, `product_cat`, source filename and manifest marker.
-2. If exact source metadata or canonical Product Truth mapping proves it is one of the 44 controlled SKUs, reconcile to that canonical row and exact poster.
-3. If it is an exact duplicate/legacy row of a controlled SKU, keep the record for rollback/history but remove duplicate storefront exposure only after deterministic canonical proof.
-4. If it is outside the 44 manifest, leave content/status unchanged until source evidence determines whether it is active, obsolete, retired or still valid.
-5. Never auto-draft an unmanaged product merely because it lacks an image.
-6. Never fabricate regulatory eligibility or marketing claims.
+For every public WooCommerce product the endpoint exposes:
 
-## Product Truth publication audit
+- ID, slug, title, URL;
+- `product_cat` labels;
+- Featured Image attachment ID;
+- filename and public URL;
+- ALT;
+- width / height / MIME;
+- `missing_featured` flag.
 
-Current Product Truth seed contains 26 verification records. Seed policy says supplied notification images establish identity/pack facts only and do not establish currently active regulatory status.
+Summary also exposes public product count, product missing-featured IDs, duplicate Featured Image usage, library image count and orphan image count.
+
+## Deterministic policy for unmanaged / legacy rows
+
+For each public product outside the controlled 44-SKU manifest:
+
+1. Read exact ID, slug, title, brand/category/source metadata and Featured Image.
+2. If deterministic metadata proves it maps to a controlled SKU, reconcile only to the exact canonical record/poster.
+3. If deterministic metadata proves it is an exact duplicate/legacy row, preserve the record for history/rollback and remove duplicate storefront exposure only through an approved non-destructive status change.
+4. If it is outside the manifest, do not invent mapping, poster, regulatory eligibility or marketing claims.
+5. Missing image alone is not evidence that a WooCommerce product should be drafted.
+6. Never delete legacy data as part of recovery.
+
+## Product Truth publication policy
+
+The current Product Truth verification seed contains 26 records and does not establish current publish eligibility for any record:
 
 - `publish_allowed=true`: **0**
 - `publish_allowed=false`: **26**
-- Explicit `regulatory_status=hold`: **1** (`havigold-serum-nam-trang-da-18g`)
-- Remaining **25**: unknown / partial regulatory verification.
+- explicit regulatory HOLD: **1** (`havigold-serum-nam-trang-da-18g`)
+- remaining 25: unknown / partial verification
 
-Product Truth is therefore not used to mass-draft existing WooCommerce storefront rows until deterministic mapping and an approved publication policy exist.
+Therefore Product Truth must not mass-draft or mass-publish the existing WooCommerce catalog until deterministic Woo mapping and an approved publication policy exist.
 
-## Architecture decision
+## Before / after
 
-- Public storefront source: WooCommerce `post_type=product`.
-- Internal canonical verification workspace: `post_type=bizrise_product`.
-- Product Truth must not own or shadow storefront rewrite routes.
-- PublicationGate applies to the internal Product Truth CPT and must not silently draft WooCommerce products without deterministic mapping.
-- Product Media Repair owns exact poster integrity for the 44 controlled manifest.
-- Storefront Product Audit owns unmanaged/legacy visibility and media-gap reporting.
+| Check | Before recovery | Current source / last verified evidence |
+|---|---|---|
+| `/san-pham/` ownership | route collision possible with internal Product Truth CPT | WooCommerce is the only intended public catalog route |
+| Controlled manifest mapping | incident state unclear | **44 / 44 matched** |
+| Controlled wrong Featured Image | unresolved incident | **0** |
+| Product/poster ambiguity | unresolved incident | **0** |
+| Product/poster missing in controlled manifest | unresolved incident | **0** |
+| Unmanaged public missing Featured Image | mixed into global repair gate | reported separately; last known candidate count **22** |
+| Product media inventory | unavailable | source endpoint implemented and registered |
+| Current HEAD CI | previous report stale/running | **Validate PASS + Release PASS** on `cee2cbede…` |
+| Current HEAD production deploy | unknown | **CHƯA XÁC MINH** |
 
-## Current counts / state
+## Production verification gate
 
-| Item | Current evidence |
-|---|---:|
-| Total Woo/public rows reported before audit split | 59 |
-| Controlled manifest | 44 |
-| Controlled matched | 44 |
-| Controlled public media problems | 0 |
-| Unmanaged/legacy missing Featured Image candidates | 22 |
-| Duplicate count | pending new production `storefront_audit` |
-| Controlled public count | pending new production `storefront_audit` / canonical-state audit |
-| Draft / HOLD | Product Truth: 26 not publish-allowed, including 1 explicit HOLD; not applied blindly to Woo rows |
+Do not mark this recovery fully complete until production confirms the current HEAD or a validated descendant via both:
 
-## QA / deploy gate
+- `/wp-json/bizrise-deploy/v1/status`
+- `/wp-json/bizrise-ddg/v1/runtime-status`
 
-Exact source HEAD `88c3c876f5b38608043cd30f3b3245a2b9f38736` has Validate + Release workflows running. Do not call production fixed until both pass and Deploy Bridge reports this SHA or a descendant.
+and media inventory can be read from:
 
-After deployment, required endpoint evidence:
+- `/wp-json/bizrise-ddg/v1/media-inventory?scope=products&per_page=100`
 
-- `release.sha` = deployed HEAD/descendant;
+Required PASS evidence:
+
+- `deployed_sha` equals current validated HEAD/descendant;
 - `repair.controlled_media_clean=true`;
-- `status=repair_clean` or `repair_clean_unmanaged_media_gap`;
-- `storefront_audit.storefront_public_total` from WooCommerce only;
-- `storefront_audit.unmanaged_public_missing_featured` contains deterministic details for each remaining unmanaged row;
-- `storefront_audit.controlled_public_media_problem_ids=[]`.
+- `storefront_audit.controlled_public_media_problem_ids=[]`;
+- 44 controlled SKU mapping remains exact;
+- no Product Truth HOLD/draft record is newly exposed by recovery;
+- every remaining unmanaged missing-image row is reported with deterministic metadata before any status/media change.
 
-## Status
+## Blocker this run
 
-**ROUTE RECOVERY: PASS**
-
-**CONTROLLED 44 MEDIA: PASS by current production evidence**
-
-**UNMANAGED / LEGACY 22: now explicitly audited, no destructive action without deterministic evidence**
-
-**LATEST SOURCE CI: RUNNING**
-
-**LATEST PRODUCTION DEPLOY: pending Bridge after CI**
+The QA environment cannot resolve/fetch the production REST endpoints reliably, so current deployed SHA and live media-inventory rows are **CHƯA XÁC MINH** here. No destructive product status or media mutation is justified without that production evidence.
