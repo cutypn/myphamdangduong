@@ -7,7 +7,7 @@ use RuntimeException;
 defined( 'ABSPATH' ) || exit;
 
 final class ProductMediaRepair {
-    private const VERSION = '1.1.1';
+    private const VERSION = '1.1.2';
     private const OPTION_VERSION = 'bizrise_ddg_product_media_repair_version';
     private const OPTION_REPORT = 'bizrise_ddg_product_media_repair_report';
     private const PRODUCT_SOURCE_KEYS = array(
@@ -113,11 +113,18 @@ final class ProductMediaRepair {
         $report = self::run( $apply );
         \WP_CLI::line( wp_json_encode( $report, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ) );
         if ( $apply && ! self::is_clean_report( $report ) ) {
-            \WP_CLI::warning( 'Product media repair completed with unresolved or mismatched items.' );
+            \WP_CLI::warning( 'Product media repair completed with unresolved or mismatched controlled items.' );
         }
     }
 
     public static function is_clean_report( array $report ): bool {
+        /*
+         * The 44-row manifest is the controlled catalog boundary. Legacy or
+         * unmanaged public products can legitimately remain without a Featured
+         * Image while they are being classified. They must stay observable in
+         * public_missing_featured, but they must not force the deterministic
+         * controlled repair to rerun on every admin_init.
+         */
         return 44 === (int) ( $report['manifest_total'] ?? 0 )
             && 44 === (int) ( $report['matched_products'] ?? 0 )
             && empty( $report['errors'] )
@@ -126,7 +133,6 @@ final class ProductMediaRepair {
             && empty( $report['poster_missing'] )
             && empty( $report['poster_ambiguous'] )
             && empty( $report['wrong_featured'] )
-            && empty( $report['public_missing_featured'] )
             && empty( $report['public_wrong_featured'] );
     }
 
