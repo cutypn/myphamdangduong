@@ -10,14 +10,14 @@ Core-page source trong `apps/bizrise-ddg-theme/inc/editorial-content.php` tiếp
 
 ## Cải thiện source vòng này
 
-Phát hiện một khoảng trống giữa metadata và body ở bài `nghien-cuu-cong-thuc-my-pham.md`: front matter đã khai báo 3 `internal_links` và CTA, nhưng body chưa có cụm điều hướng tương ứng.
+Phát hiện khoảng trống giữa metadata và body ở bài `thiet-ke-bao-bi-my-pham.md`: front matter đã khai báo 3 `internal_links` và CTA, nhưng body chưa có cụm điều hướng và CTA tương ứng.
 
-Đã sửa deterministic ở commit `e8aef2abca2b0917bc61458fc4a49f351eaec4f6`:
+Đã sửa ở commit `514b79f413b9698c4889bece18e521cb1dbb87f6`:
 
-- thêm mục **Đọc tiếp theo đúng hành trình phát triển**;
-- liên kết exact-slug tới `/rd-my-pham-la-gi/`, `/lam-mau-my-pham-can-luu-y-gi/`, `/quy-trinh-gia-cong-my-pham/`;
+- thêm mục **Đọc tiếp theo hành trình triển khai**;
+- liên kết exact-slug tới `/quy-trinh-gia-cong-my-pham/`, `/cac-buoc-phat-trien-my-pham-thuong-hieu-rieng/`, `/cach-lua-chon-nha-may-gia-cong-my-pham/`;
 - thêm CTA cuối bài bám đúng `cta` metadata;
-- không thêm claim, certification, capacity, named partner hoặc product detail copy.
+- không thêm claim, certification, capacity, named partner, contact fact hoặc product detail copy.
 
 ## Knowledge articles
 
@@ -56,17 +56,17 @@ Endpoint source:
 
 Endpoint có thể audit Featured Image ID/file/URL/ALT/kích thước, missing featured và duplicate attachment cho bài public.
 
-Counts source vòng này:
+Counts vòng này:
 
 - article source before: **10 publish-ready / 10 metadata synchronized**;
 - article source after: **10 publish-ready / 10 metadata synchronized**;
-- internal-navigation gap before: **1 confirmed on formulation guide**;
-- internal-navigation gap after: **0 for that article**;
+- packaging article navigation gap before: **1**;
+- packaging article navigation gap after: **0**;
 - article runtime media before: **CHƯA XÁC MINH**;
 - article runtime media after: **CHƯA XÁC MINH**;
 - media mapping tự tạo/gán mơ hồ: **0**.
 
-Production endpoint hiện không đọc được từ môi trường kiểm tra này do external fetch/DNS restriction, nên không suy diễn Featured Image/ALT/missing/duplicate counts.
+Production endpoint và `/kien-thuc/` vẫn không đọc được từ môi trường kiểm tra này do DNS/external fetch restriction, nên không suy diễn Featured Image/ALT/missing/duplicate counts hay trạng thái live render.
 
 ## Production gate
 
@@ -88,6 +88,6 @@ Không thêm cGMP/ISO/FDA không có hồ sơ hiện hành, số liệu công su
 
 **MARKDOWN METADATA SYNC: 10/10 CONFIRMED.**
 
-**LATEST CONTENT FIX: INTERNAL NAVIGATION + CTA ADDED TO FORMULATION GUIDE.**
+**LATEST CONTENT FIX: PACKAGING ARTICLE INTERNAL NAVIGATION + CTA ADDED.**
 
 **PENDING: FINAL CI + PRODUCTION ARTICLE/MEDIA QA.**
