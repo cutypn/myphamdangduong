@@ -38,3 +38,21 @@ button,input,select,textarea{font:inherit}
 @media (max-width:782px){
   .admin-bar .t2-header{top:46px}
 }
+
+/* Mobile-first accessibility: text CTAs and footer navigation need real finger-sized targets, not text-height hit areas. */
+@media (max-width:520px){
+  .t2-product-single__brand-link,
+  .t2-section-heading--split>.t2-text-link,
+  .t2-footer-cta__link,
+  .t2-footer__company-link,
+  .t2-footer__nav a,
+  .t2-footer__legal a,
+  .t2-footer__facts a{
+    min-height:44px;
+    display:inline-flex;
+    align-items:center;
+  }
+  .t2-footer__nav a{width:100%}
+  .t2-footer__legal{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px}
+  .t2-footer__legal>a{flex:0 0 auto}
+}
