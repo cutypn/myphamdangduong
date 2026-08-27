@@ -81,6 +81,20 @@ return array(
             'content' => '<p>Thông tin điểm bán được cập nhật theo dữ liệu hiện hành. Nếu chưa thấy khu vực phù hợp, vui lòng liên hệ Đăng Dương Group để được hướng dẫn kênh mua phù hợp.</p>',
         ),
     ),
-    'primary_menu' => array( 'about', 'capability', 'brands', 'products', 'knowledge', 'partners' ),
-    'footer_menu'  => array( 'about', 'knowledge', 'partners', 'contact' ),
+    'primary_menu' => array(
+        'about',
+        array(
+            'key' => 'capability',
+            'children' => array( 'rnd', 'factory', 'oem' ),
+        ),
+        'brands',
+        array(
+            'key' => 'products',
+            'children' => array( 'stores' ),
+        ),
+        'knowledge',
+        'partners',
+        'contact',
+    ),
+    'footer_menu'  => array( 'about', 'capability', 'knowledge', 'partners', 'stores', 'contact' ),
 );
