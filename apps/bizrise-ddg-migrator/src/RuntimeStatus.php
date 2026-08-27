@@ -43,10 +43,22 @@ final class RuntimeStatus {
         $article_eligible = (int) ( $article_report['eligible'] ?? 0 );
         $article_synced = (int) ( $article_report['created'] ?? 0 ) + (int) ( $article_report['updated'] ?? 0 );
 
+        $storefront = StorefrontProductAudit::summary( $report );
+        $controlled_clean = StorefrontProductAudit::controlled_media_clean( $report );
+        $unmanaged_gap = (int) ( $storefront['unmanaged_public_missing_featured_count'] ?? 0 );
+
+        if ( empty( $report ) ) {
+            $repair_status = 'not_run';
+        } elseif ( ! $controlled_clean ) {
+            $repair_status = 'repair_incomplete';
+        } elseif ( $unmanaged_gap > 0 ) {
+            $repair_status = 'repair_clean_unmanaged_media_gap';
+        } else {
+            $repair_status = 'repair_clean';
+        }
+
         $payload = array(
-            'status' => empty( $report )
-                ? 'not_run'
-                : ( ProductMediaRepair::is_clean_report( $report ) ? 'repair_clean' : 'repair_incomplete' ),
+            'status' => $repair_status,
             'release' => self::release_marker(),
             'repair_version' => (string) get_option( self::VERSION_OPTION, '' ),
             'repair' => array(
@@ -56,8 +68,8 @@ final class RuntimeStatus {
                 'matched_products' => (int) ( $report['matched_products'] ?? 0 ),
                 'already_valid' => (int) ( $report['already_valid'] ?? 0 ),
                 'featured_repaired' => (int) ( $report['repaired'] ?? 0 ),
-                'public_products' => (int) ( $report['public_products'] ?? 0 ),
-                'public_missing_featured' => self::safe_product_ids( $report['public_missing_featured'] ?? array() ),
+                'public_products_legacy_report' => (int) ( $report['public_products'] ?? 0 ),
+                'public_missing_featured_legacy_report' => self::safe_product_ids( $report['public_missing_featured'] ?? array() ),
                 'public_wrong_featured' => self::safe_product_ids( $report['public_wrong_featured'] ?? array() ),
                 'wrong_featured_count' => is_array( $report['wrong_featured'] ?? null ) ? count( $report['wrong_featured'] ) : 0,
                 'product_not_found_count' => is_array( $report['product_not_found'] ?? null ) ? count( $report['product_not_found'] ) : 0,
@@ -65,7 +77,9 @@ final class RuntimeStatus {
                 'poster_missing_count' => is_array( $report['poster_missing'] ?? null ) ? count( $report['poster_missing'] ) : 0,
                 'poster_ambiguous_count' => is_array( $report['poster_ambiguous'] ?? null ) ? count( $report['poster_ambiguous'] ) : 0,
                 'error_count' => is_array( $report['errors'] ?? null ) ? count( $report['errors'] ) : 0,
+                'controlled_media_clean' => $controlled_clean,
             ),
+            'storefront_audit' => $storefront,
             'articles' => array(
                 'status' => empty( $article_report )
                     ? 'not_run'
