@@ -9,7 +9,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('BIZRISE_DDG_THEME_VERSION', '2.1.6');
+define('BIZRISE_DDG_THEME_VERSION', '2.1.7');
 
 add_action('after_setup_theme', static function (): void {
     add_theme_support('title-tag');
