@@ -1,6 +1,15 @@
 <?php
 /** Site header — Theme 2.1.4. @package Bizrise_DDG */
 if (!defined('ABSPATH')) { exit; }
+
+/* Canonical phone safeguards intentionally live in the theme (not a plugin
+ * override) and load after the main Theme 2 cascade on every public page. */
+wp_enqueue_style(
+    'bizrise-ddg-mobile-p0',
+    get_template_directory_uri() . '/assets/css/mobile-p0.css',
+    ['bizrise-ddg-theme213'],
+    '2026.08.28.1'
+);
 ?><!doctype html>
 <html <?php language_attributes(); ?>>
 <head>
