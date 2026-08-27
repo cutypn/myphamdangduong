@@ -22,6 +22,12 @@ if (!defined('ABSPATH')) { exit; }
   .t2-article-card{grid-template-columns:minmax(104px,32%) minmax(0,1fr)!important}
   .t2-article-card__copy{min-width:0}
 }
+/* In-page product navigation must land below the sticky header instead of
+ * hiding the target heading under it. Desktop keeps the larger header offset;
+ * canonical phones use the 64px header plus breathing room. */
+#mo-ta,#cong-bo{scroll-margin-top:112px}
+@media (max-width:980px){#mo-ta,#cong-bo{scroll-margin-top:96px}}
+@media (max-width:520px){#mo-ta,#cong-bo{scroll-margin-top:80px}}
 </style>
 </head>
 <body <?php body_class('t2-site'); ?>>
