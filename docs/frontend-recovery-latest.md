@@ -9,90 +9,82 @@ Latest Product/Data Recovery state read before this frontend change:
 - controlled manifest: **44**;
 - controlled matched: **44**;
 - last verified controlled wrong Featured Image: **0**;
-- unmanaged/legacy missing-media rows remain separate for deterministic classification;
-- production on current HEAD remains **CHƯA XÁC MINH**.
+- public legal HOLD exclusion: **PASS source + CI**;
+- production on current HEAD: **CHƯA XÁC MINH**.
 
 ## P0 frontend audit / fix this run
 
-Static mobile interaction audit re-checked the current deterministic 8-branch header after the latest navigation change. Product grid, mobile dimensions, CTA/tap targets and WooCommerce catalog routing remain intact in source.
+A real logged-in mobile sticky-header regression remained in the CSS cascade. WordPress uses a 46px admin bar below 783px, but at `<=600px` core changes `#wpadminbar` from fixed to absolute. The theme still forced `.admin-bar .t2-header{top:46px}` and an admin-bar-adjusted fixed-nav top, so after the admin bar scrolled away the theme header/menu could retain a false 46px gap on phone widths.
 
-A real accessibility/state bug remained in the mobile hamburger/submenu interaction: visual and `aria-expanded` state changed, but assistive labels still always announced “Mở menu” / “Mở menu con” even while those controls were already open.
+Fix applied in `apps/bizrise-ddg-theme/header.php` as the final theme-side mobile guard after `wp_head()`:
 
-Fix applied in `apps/bizrise-ddg-theme/assets/js/theme2.js`:
+- `<=600px`: logged-in sticky header returns to `top:0` after the absolute WP admin bar scrolls away;
+- `521–600px`: logged-in fixed nav aligns to the 72px theme header and uses `100dvh - 72px`;
+- `<=520px`: logged-in fixed nav aligns to the canonical 64px phone header and uses `100dvh - 64px`;
+- existing article overflow guard is retained;
+- 601–782px keeps the 46px offset required while the WordPress admin bar is fixed;
+- no Product Truth, SKU, media, publish status or WooCommerce visibility rule changed.
 
-- hamburger label now switches between `Mở menu` and `Đóng menu` in sync with `aria-expanded`;
-- screen-reader text and `aria-label` stay synchronized;
-- each submenu toggle stores its parent label and switches between `Mở menu con: …` and `Đóng menu con: …`;
-- closing by Escape, link navigation or desktop viewport reset restores the closed labels;
-- no Product Truth, SKU, media assignment, publish status or WooCommerce visibility rule changed.
+Exact frontend code SHA: `da9e8207322501e35e9ebe8ecc24d26b6d4de2c6`.
 
-Exact frontend code SHA for this fix: `7dce80097091c8faa6b6d6df4fc35ef0b5dcc3ec`.
+CI for that exact code SHA:
+
+- Validate Bizrise DDG V2 run `33103325112`: **SUCCESS**;
+- Build Bizrise DDG V2 Release run `33103325195`: **SUCCESS**.
 
 ## Mobile checklist
 
 | Check | 360 | 390 | 430 |
 |---|---|---|---|
 | Sticky header source geometry | PASS source | PASS source | PASS source |
-| Logged-in WP admin-bar offset | PASS source | PASS source | PASS source |
+| Logged-in WP admin-bar scroll geometry | PASS source | PASS source | PASS source |
 | Logo/hamburger fit | PASS source | PASS source | PASS source |
 | Hamburger target >=44px | PASS source | PASS source | PASS source |
-| Hamburger accessible label follows state | PASS source | PASS source | PASS source |
-| Parent menu links remain navigable | PASS source | PASS source | PASS source |
-| Submenu toggle target 44×44px | PASS source | PASS source | PASS source |
-| Submenu explicit open/close state | PASS source | PASS source | PASS source |
-| Submenu accessible label follows state | PASS source | PASS source | PASS source |
-| Escape closes submenu then menu | PASS source | PASS source | PASS source |
-| Resize/orientation clears scroll lock/state | PASS source | PASS source | PASS source |
-| Product search control >=48px | PASS source | PASS source | PASS source |
+| Hamburger/submenu accessible state | PASS source | PASS source | PASS source |
+| Submenu target 44×44px | PASS source | PASS source | PASS source |
+| Escape/resize state reset | PASS source | PASS source | PASS source |
+| No known horizontal overflow in theme guards | PASS source | PASS source | PASS source |
+| Product search >=48px | PASS source | PASS source | PASS source |
 | Product filter pills >=44px | PASS source | PASS source | PASS source |
 | Product-card CTA >=44px | PASS source | PASS source | PASS source |
-| Product grid stays 2 columns | PASS source | PASS source | PASS source |
-| Product media stays portrait 9:16 | PASS source | PASS source | PASS source |
-| Product images use `object-fit:contain` | PASS source | PASS source | PASS source |
-| Filter pills horizontal-scroll | PASS source | PASS source | PASS source |
-| Sort select >=44px | PASS source | PASS source | PASS source |
+| Product grid 2 columns | PASS source | PASS source | PASS source |
+| Product media portrait 9:16 | PASS source | PASS source | PASS source |
+| Product images `object-fit:contain` | PASS source | PASS source | PASS source |
 | Single product image contained | PASS source | PASS source | PASS source |
-| H1/hero scale moderated | PASS source | PASS source | PASS source |
-| Article-card overflow guard | PASS source | PASS source | PASS source |
-| Article body/type scale readable | PASS source | PASS source | PASS source |
-| Tables scroll instead of breaking viewport | PASS source | PASS source | PASS source |
+| Article card/body responsive | PASS source | PASS source | PASS source |
+| Tables scroll instead of viewport break | PASS source | PASS source | PASS source |
 | Form controls avoid phone auto-zoom | PASS source | PASS source | PASS source |
-| Footer nav/contact/legal targets >=44px | PASS source | PASS source | PASS source |
-| Footer compact | PASS source | PASS source | PASS source |
+| Footer targets >=44px / compact | PASS source | PASS source | PASS source |
 
-`PASS source` means static source/cascade/interaction inspection, not live screenshot verification.
+`PASS source` means static source/cascade/interaction inspection plus CI, not live screenshot verification.
 
 ## Product / tablet / desktop guards retained
 
 - `/san-pham/` remains WooCommerce-backed; fallback page queries public WooCommerce `product`, not Product Truth.
-- Fallback catalog search passes the sanitized `s` keyword into the WooCommerce product query and preserves it through pagination.
-- Product filter taxonomy row wraps at tablet/desktop widths and horizontal-scrolls on phone.
+- Fallback catalog retains Woo `exclude-from-catalog` and explicit legal-HOLD exclusions from Product/Data Recovery.
 - Product grid remains 2 columns on canonical phone widths, 3 columns at tablet, 4 columns on larger desktop.
 - Product cards remain portrait 9:16 with `object-fit:contain`, avoiding image crop.
-- Related-product query retains canonical WooCommerce `exclude-from-catalog` exclusion from Product/Data Recovery.
+- Filter pills horizontal-scroll on phone and wrap at wider widths.
 
 ## Production / browser verification
 
-Live production/browser retrieval remains unavailable from this execution environment, so no screenshot-based production claim is made.
+Direct retrieval of `dangduonggroup.com` remains unavailable from this execution environment, so no screenshot/browser-production claim is made.
 
 Required production PASS evidence remains:
 
 1. deployed SHA equals current validated HEAD or descendant;
 2. `/san-pham/` at 360, 390, 430 and desktop >=1180;
-3. representative `product_cat` archive;
-4. representative product singles across brands;
-5. homepage/core pages;
-6. `/kien-thuc/` plus representative article pages;
-7. hamburger + submenu interaction including state labels, Escape and viewport transition;
-8. zero horizontal overflow at 360/390/430;
-9. primary/secondary CTA and footer targets render at ~44px minimum height;
-10. visual polish of product 9:16 cards, spacing, hero height, typography, CTA visibility and footer.
+3. representative `product_cat` archive and product singles;
+4. homepage/core pages and `/kien-thuc/` article views;
+5. logged-in phone scroll test proving no 46px stale gap after WP admin bar scrolls away;
+6. hamburger/submenu interaction and zero horizontal overflow;
+7. visual polish of 9:16 cards, spacing, hero height, typography, CTA visibility and footer.
 
 ## Status
 
 **MOBILE SOURCE: PASS**
 
-**MOBILE MENU STATE LABELS: PASS SOURCE**
+**EXACT CODE CI: PASS**
 
 **PRODUCTION DEPLOY: CHƯA XÁC MINH**
 
