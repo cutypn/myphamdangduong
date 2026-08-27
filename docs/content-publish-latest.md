@@ -10,13 +10,14 @@ Core-page source trong `apps/bizrise-ddg-theme/inc/editorial-content.php` tiếp
 
 ## Cải thiện source vòng này
 
-Phát hiện khoảng trống giữa metadata và body ở bài `lam-mau-my-pham-can-luu-y-gi.md`: front matter đã khai báo 3 `internal_links` và CTA nhưng body chưa có cụm điều hướng/CTA tương ứng.
+Phát hiện gap ở `oem-va-odm-my-pham-khac-nhau-the-nao.md`: front matter đã khai báo CTA nhưng body chưa render bước tiếp theo tương ứng.
 
-Đã sửa ở commit `72211c4ad6414f7d0a0bdd8e07efa129fa7f6e2f`:
+Đã sửa ở commit `c8ad2e98d4988572853687087b5cd863efaeb763`:
 
-- thêm mục **Đọc tiếp theo hành trình phát triển**;
-- liên kết exact-slug tới `/rd-my-pham-la-gi/`, `/nghien-cuu-cong-thuc-my-pham/`, `/quy-trinh-gia-cong-my-pham/`;
-- thêm CTA cuối bài bám đúng metadata;
+- thêm mục **Bước tiếp theo** sau cụm internal links;
+- CTA bám đúng metadata: chọn mô hình theo mức độ sẵn sàng của brief và năng lực nội bộ;
+- bổ sung hướng hành động an toàn: nếu brief còn ở mức concept, hoàn thiện business brief trước khi so proposal;
+- giữ nguyên 3 exact internal links hiện có;
 - không thêm claim, certification, capacity, named partner, contact fact hoặc product detail copy.
 
 ## Knowledge articles
@@ -28,7 +29,7 @@ Phát hiện khoảng trống giữa metadata và body ở bài `lam-mau-my-pham
 - Markdown reviewer pending: **0**
 - deterministic importer: **CÓ**
 - exact-slug/idempotent publication path: **CÓ**
-- body/internal-navigation gap phát hiện/sửa vòng này: **1**
+- article CTA/body gap phát hiện/sửa vòng này: **1**
 
 ## Core pages source
 
@@ -60,8 +61,8 @@ Counts vòng này:
 
 - article source before: **10 publish-ready / 10 metadata synchronized**;
 - article source after: **10 publish-ready / 10 metadata synchronized**;
-- sampling article navigation gap before: **1**;
-- sampling article navigation gap after: **0**;
+- OEM/ODM comparison CTA/body gap before: **1**;
+- OEM/ODM comparison CTA/body gap after: **0**;
 - article runtime media before: **CHƯA XÁC MINH**;
 - article runtime media after: **CHƯA XÁC MINH**;
 - media mapping tự tạo/gán mơ hồ: **0**.
@@ -88,6 +89,6 @@ Không thêm cGMP/ISO/FDA không có hồ sơ hiện hành, số liệu công su
 
 **MARKDOWN METADATA SYNC: 10/10 CONFIRMED.**
 
-**LATEST CONTENT FIX: SAMPLING ARTICLE INTERNAL NAVIGATION + CTA ADDED.**
+**LATEST CONTENT FIX: OEM/ODM COMPARISON CTA RENDERED IN BODY.**
 
 **PENDING: FINAL CI + PRODUCTION ARTICLE/MEDIA QA.**
