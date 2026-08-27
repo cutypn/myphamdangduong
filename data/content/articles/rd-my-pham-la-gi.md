@@ -96,6 +96,14 @@ Một quy trình tốt không nhất thiết có thật nhiều vòng mẫu. Nó
 4. Điều gì còn mở trước khi sản xuất?
 5. Dữ liệu nào sẽ được bàn giao cho các bộ phận sau?
 
+## Đọc tiếp theo hành trình phát triển
+
+- [Nghiên cứu công thức mỹ phẩm: cách biến brief thành tiêu chí có thể kiểm tra](/nghien-cuu-cong-thuc-my-pham/)
+- [Làm mẫu mỹ phẩm cần lưu ý gì? Cách feedback để giảm vòng chỉnh sửa](/lam-mau-my-pham-can-luu-y-gi/)
+- [Quy trình gia công mỹ phẩm: từ brief đến sản phẩm sẵn sàng ra thị trường](/quy-trinh-gia-cong-my-pham/)
+
 ## Kết luận
 
 R&D mỹ phẩm hiệu quả là quá trình giảm mơ hồ. Nó biến ý tưởng thành tiêu chí, biến feedback thành quyết định và biến mẫu thử thành dữ liệu có thể tiếp tục được sử dụng ở sản xuất, thương hiệu và thương mại.
+
+**Bước tiếp theo:** dùng R&D để biến mong muốn thành tiêu chí có thể đánh giá; không dùng quá trình phát triển mẫu để hợp thức hóa claim chưa được chứng minh.
