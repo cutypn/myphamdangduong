@@ -13,11 +13,11 @@ The public storefront remains WooCommerce `post_type=product`. Internal Product 
 ## Current Git / CI
 
 - Branch: `codex/rebuild-v2`
-- Current HEAD observed before this report refresh: `4eebed008e6d2ae608dcd9104d6d3088522bb836`
-- Commit: `content: align factory selection article publication metadata`
-- Current HEAD does not change WooCommerce product mapping, Product Truth publication policy, or product media repair behavior.
-- Validate Bizrise DDG V2 run `33061113536`: **SUCCESS**.
-- Build Bizrise DDG V2 Release run `33061113534`: **SUCCESS**.
+- Current HEAD observed before this report refresh: `d668a84eedc7039b6dd96c7435fb630ab6a9b68d`
+- Commit: `fix(theme): align fallback navigation with managed site architecture`
+- Current HEAD changes fallback navigation only; it does not change WooCommerce product mapping, Product Truth publication policy, product media repair behavior, or product status.
+- Validate Bizrise DDG V2 run `33065487139`: **SUCCESS**.
+- Build Bizrise DDG V2 Release run `33065487036`: **SUCCESS**.
 - `MediaInventory` remains implemented and registered in migrator source.
 
 ## Last verified production evidence
@@ -80,7 +80,7 @@ Therefore Product Truth must not mass-draft or mass-publish the existing WooComm
 | Product/poster missing in controlled manifest | unresolved | **0** |
 | Unmanaged public missing Featured Image | mixed into global repair gate | separated; last known **22** |
 | Product media inventory | unavailable | endpoint implemented and registered |
-| Current HEAD CI | stale | **Validate PASS + Release PASS** on `4eebed00…` |
+| Current HEAD CI | stale | **Validate PASS + Release PASS** on `d668a84e…` |
 | Current HEAD production deploy | unknown | **CHƯA XÁC MINH** |
 
 ## Production verification gate
@@ -102,6 +102,6 @@ Required PASS evidence:
 
 ## Blocker this run
 
-This execution environment still cannot resolve/fetch `dangduonggroup.com` production REST directly. Web retrieval also cannot open the production REST endpoints without a discoverable source URL, so current deployed SHA and live product inventory remain **CHƯA XÁC MINH** here.
+The execution environment still cannot resolve/fetch `dangduonggroup.com` production REST directly. Web retrieval cannot open the production REST endpoints without a discoverable source URL, so current deployed SHA and live product inventory remain **CHƯA XÁC MINH** here.
 
 No fuzzy mapping, guessed image assignment, mass draft or deletion was performed. The next safe action is to read the live product inventory once production REST is reachable, classify unmanaged rows deterministically, then apply only exact non-destructive fixes.
