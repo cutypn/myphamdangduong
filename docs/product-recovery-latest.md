@@ -6,26 +6,25 @@
 - **CATALOG VISIBILITY SAFETY: PASS in source + CI**
 - **PUBLIC HOLD EXCLUSION: PASS in source + CI**
 - **CONTROLLED 44-SKU MEDIA: PASS by last verified production evidence**
-- **LIVE CATALOG RUNTIME COUNTERS: implemented + CI PASS**
+- **LIVE PRODUCT INVENTORY: CHƯA XÁC MINH trong run này do DNS production không resolve**
 - **PRODUCTION ON CURRENT HEAD: CHƯA XÁC MINH**
 
-The public storefront remains WooCommerce `post_type=product`. Internal Product Truth `bizrise_product` stays non-public/non-queryable and must not own `/san-pham/`.
+Public storefront remains WooCommerce `post_type=product`. Internal Product Truth `bizrise_product` remains non-public/non-queryable and must not own `/san-pham/`.
 
 ## Current Git / CI
 
 - Branch: `codex/rebuild-v2`
-- Current HEAD observed before this report refresh: `b22a9faadd2be593bd5e0d8d0b21e9f88e0a6827`
-- Commit: `fix(catalog): enforce legal HOLD exclusion in fallback query`
-- Product-impact assessment: **positive P0 storefront safety fix** — fallback `/san-pham/` now excludes Woo rows carrying `_bizrise_legal_hold=1`; no Product Truth publication, media reassignment, deletion or fuzzy mapping is introduced.
-- Validate Bizrise DDG V2 run `33101670801`: **SUCCESS**.
-- Build Bizrise DDG V2 Release run `33101670715`: **SUCCESS**.
-- Existing canonical Woo `exclude-from-catalog` fallback handling, related-product visibility fix and storefront-wide direct single-product HOLD protection remain in validated source.
-- `MediaInventory` remains implemented and registered in migrator source.
-- `RuntimeStatus` remains implemented with `catalog_runtime` for published/visible/HOLD/excluded/shop-page counters.
+- Current HEAD: `bedbb38c0cf805b3909e87acf287989bf6e685cf`
+- Commit: `docs: record core content expansion and media QA state`
+- Product-impact assessment: **none** — current HEAD is documentation/content-state only and does not alter WooCommerce mapping, Product Truth, media assignment, HOLD rules, visibility gates or publication state.
+- Validate Bizrise DDG V2 run `33104026646`: **SUCCESS**.
+- Build Bizrise DDG V2 Release run `33104026648`: **SUCCESS**.
+- `MediaInventory` remains implemented and registered.
+- `RuntimeStatus` remains implemented with `catalog_runtime` counters.
 
 ## Last verified production evidence
 
-The last production payload supplied from production reported deployed SHA `1349bdfdb2860820945d27149f0632eff9f482fc` at that time.
+Last verified production payload reported deployed SHA `1349bdfdb2860820945d27149f0632eff9f482fc` at that time.
 
 | Metric | Last verified value |
 |---|---:|
@@ -44,19 +43,13 @@ The last production payload supplied from production reported deployed SHA `1349
 
 The deterministic 44-row media manifest was fully matched and had no wrong Featured Image at the last verified runtime. The 22 missing-image public rows remain unmanaged/legacy candidates until deterministic live inventory proves otherwise.
 
-## Current media-inventory capability
+## Media inventory / runtime endpoints
 
-Public read-only endpoint in source:
+- `/wp-json/bizrise-ddg/v1/media-inventory?scope=products&per_page=100`
+- `/wp-json/bizrise-ddg/v1/runtime-status`
+- `/wp-json/bizrise-deploy/v1/status`
 
-`/wp-json/bizrise-ddg/v1/media-inventory?scope=products&per_page=100`
-
-For every public WooCommerce product it returns ID, slug, title, URL, `product_cat`, Featured Image attachment ID, filename, URL, ALT, width, height, MIME and `missing_featured`. Summary also reports public-product count, missing-featured IDs, duplicate Featured Image usage, library image count and orphan image count.
-
-Runtime triage endpoint in source:
-
-`/wp-json/bizrise-ddg/v1/runtime-status`
-
-The runtime payload exposes live Woo catalog counts so recovery can distinguish total published Woo rows, actually catalog-visible rows, explicit legal HOLD rows, Woo `exclude-from-catalog` rows and shop-page route state.
+The product inventory returns public WooCommerce product ID, slug, title, URL, product categories and Featured Image metadata including attachment ID, filename, URL, ALT, width, height, MIME and missing-featured state; summary includes missing IDs and duplicate Featured Image usage.
 
 ## Product Truth publication policy
 
@@ -74,45 +67,33 @@ No Product Truth HOLD/unknown/unverified record should be newly exposed. No fuzz
 | Check | Before recovery | Current source / last verified evidence |
 |---|---|---|
 | `/san-pham/` ownership | route collision possible | WooCommerce intended as only public catalog route |
-| Woo `exclude-from-catalog` handling in fallback | localized/name lookup could silently fail | canonical slug lookup; CI PASS |
-| Legal HOLD handling in fallback | HOLD row could remain visible if fallback query bypassed main Woo query gates | explicit `_bizrise_legal_hold != 1` exclusion; CI PASS |
-| Related-product visibility on single product | custom query could re-show excluded products | canonical `exclude-from-catalog` exclusion; CI PASS |
+| Woo `exclude-from-catalog` handling | custom/fallback leakage possible | canonical exclusion in fallback + related products; CI PASS |
+| Legal HOLD public exposure | incomplete protection possible | archive/search/direct single/fallback protection; CI PASS |
 | Controlled manifest mapping | unresolved | **44 / 44 matched** |
 | Controlled wrong Featured Image | unresolved | **0** |
 | Product/poster ambiguity | unresolved | **0** |
 | Product/poster missing in controlled manifest | unresolved | **0** |
 | Unmanaged public missing Featured Image | mixed into global repair gate | separated; last known **22** |
 | Product media inventory | unavailable | endpoint implemented and registered |
-| Runtime catalog observability | no direct Woo catalog-health counters | **`catalog_runtime` implemented; CI PASS** |
-| Public legal HOLD exclusion | incomplete fallback protection | archive/search/direct single/fallback protection in source + CI |
-| Current HEAD CI | stale | **Validate PASS + Release PASS** on `b22a9faa…` |
+| Runtime catalog observability | no direct counters | `catalog_runtime` implemented; CI PASS |
+| Current HEAD CI | unknown | **Validate PASS + Release PASS** on `bedbb38c…` |
 | Current HEAD production deploy | unknown | **CHƯA XÁC MINH** |
 
-## Production verification gate
+## Production verification attempt — 2026-08-28
 
-Do not mark recovery complete until production confirms current validated HEAD or descendant via:
+This run attempted all three live endpoints from two independent execution paths. Production DNS failed to resolve (`Temporary failure in name resolution`), so no fresh production payload could be obtained.
 
-- `/wp-json/bizrise-deploy/v1/status`
-- `/wp-json/bizrise-ddg/v1/runtime-status`
-- `/wp-json/bizrise-ddg/v1/media-inventory?scope=products&per_page=100`
+Therefore the following remain **CHƯA XÁC MINH** on current HEAD:
 
-Required PASS evidence:
+- deployed SHA;
+- live `catalog_runtime` counters;
+- full public Woo product inventory;
+- current missing Featured Image IDs;
+- duplicate Featured Image groups;
+- exact state of the 22 unmanaged/legacy missing-image candidates.
 
-- deployed SHA equals current validated HEAD/descendant;
-- `repair.controlled_media_clean=true`;
-- controlled public media problem IDs are empty;
-- 44 controlled SKU mapping remains exact;
-- `catalog_runtime.available=true`;
-- `catalog_runtime.public_catalog_visible` is consistent with live catalog and excludes legal HOLD / Woo hidden rows;
-- no Product Truth HOLD/draft record is newly exposed;
-- WooCommerce products marked `exclude-from-catalog` are absent from fallback `/san-pham/` and custom related-product cards;
-- Woo rows with `_bizrise_legal_hold=1` are absent from archive/search/fallback and not publicly reachable as direct product pages;
-- every unmanaged missing-image row is classified with deterministic metadata before any status/media change.
+No destructive or guessed recovery action was taken.
 
-## Blocker this run
+## Next safe action
 
-Production verification remains blocked from this execution environment. Direct retrieval of `dangduonggroup.com` and its REST endpoints could not be established, so current deployed SHA, live `catalog_runtime`, live product inventory, duplicate Featured Image groups, current missing-image IDs and storefront counts remain **CHƯA XÁC MINH**.
-
-No destructive or guessed recovery action was taken in this run.
-
-Next safe action: read live production deploy/runtime/media inventory when reachable, classify unmanaged rows deterministically, then apply only exact non-destructive fixes.
+When production DNS is reachable, read deploy status + runtime + product inventory, confirm the validated SHA/descendant is deployed, classify every unmanaged missing-image row deterministically, and apply only exact non-destructive fixes. Do not fuzzy-map or publish Product Truth records without verified eligibility.
