@@ -1,0 +1,7 @@
+/* Mobile P0 fixes that must load after the main Theme 2 styles. */
+@media (max-width: 782px) {
+  /* WordPress admin bar is 46px tall on phone/tablet widths. */
+  .admin-bar .t2-header {
+    top: 46px;
+  }
+}
