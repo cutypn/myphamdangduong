@@ -46,6 +46,13 @@ $query_args = [
     'ignore_sticky_posts' => true,
     'orderby'             => ['menu_order' => 'ASC', 'date' => 'DESC'],
 ];
+
+// Keep the safety rule inside this fallback query as well as the global
+// pre_get_posts gate. This prevents an explicitly legal-HOLD product from ever
+// entering /san-pham/ if another plugin changes query hooks/order at runtime.
+if (function_exists('ddg_theme2_public_product_meta_query')) {
+    $query_args['meta_query'] = ddg_theme2_public_product_meta_query([]);
+}
 if ($search !== '') {
     $query_args['s'] = $search;
 }
