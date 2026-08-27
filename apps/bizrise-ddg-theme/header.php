@@ -36,38 +36,33 @@ if (!defined('ABSPATH')) { exit; }
     </button>
 
     <nav id="t2-primary-nav" class="t2-nav" data-t2-nav aria-label="<?php esc_attr_e('Điều hướng chính', 'bizrise-ddg'); ?>">
-      <?php if (has_nav_menu('primary')) : ?>
-        <?php wp_nav_menu([
-          'theme_location' => 'primary',
-          'container' => false,
-          'fallback_cb' => false,
-          'depth' => 2,
-        ]); ?>
-      <?php else : ?>
-        <?php /* Keep the no-menu fallback aligned with the approved site architecture. */ ?>
-        <ul>
-          <li><a href="<?php echo esc_url(home_url('/')); ?>">Trang chủ</a></li>
-          <li><a href="<?php echo esc_url(ddg_theme2_url('ve-dang-duong')); ?>">Về Đăng Dương Group</a></li>
-          <li class="menu-item-has-children">
-            <a href="<?php echo esc_url(ddg_theme2_url('nang-luc')); ?>">Năng lực</a>
-            <ul class="sub-menu">
-              <li><a href="<?php echo esc_url(ddg_theme2_url('nghien-cuu-phat-trien')); ?>">Nghiên cứu &amp; Phát triển</a></li>
-              <li><a href="<?php echo esc_url(ddg_theme2_url('nha-may-san-xuat-my-pham')); ?>">Năng lực sản xuất</a></li>
-              <li><a href="<?php echo esc_url(ddg_theme2_url('oem-odm-my-pham')); ?>">OEM / ODM mỹ phẩm</a></li>
-            </ul>
-          </li>
-          <li><a href="<?php echo esc_url(ddg_theme2_url('thuong-hieu')); ?>">Thương hiệu</a></li>
-          <li class="menu-item-has-children">
-            <a href="<?php echo esc_url(ddg_theme2_url('san-pham')); ?>">Sản phẩm &amp; Routine</a>
-            <ul class="sub-menu">
-              <li><a href="<?php echo esc_url(ddg_theme2_url('tim-diem-ban')); ?>">Tìm điểm bán</a></li>
-            </ul>
-          </li>
-          <li><a href="<?php echo esc_url(ddg_theme2_url('kien-thuc')); ?>">Kiến thức</a></li>
-          <li><a href="<?php echo esc_url(ddg_theme2_url('doi-tac')); ?>">Đối tác</a></li>
-          <li><a href="<?php echo esc_url(ddg_theme2_url('lien-he')); ?>">Liên hệ</a></li>
-        </ul>
-      <?php endif; ?>
+      <?php /*
+       * The public primary navigation is intentionally deterministic.
+       * Do not delegate this architecture to a stale wp_nav_menu assignment:
+       * Release/QA treats this exact tree as the approved site mindmap.
+       */ ?>
+      <ul>
+        <li><a href="<?php echo esc_url(home_url('/')); ?>">Trang chủ</a></li>
+        <li><a href="<?php echo esc_url(ddg_theme2_url('ve-dang-duong')); ?>">Về Đăng Dương Group</a></li>
+        <li class="menu-item-has-children">
+          <a href="<?php echo esc_url(ddg_theme2_url('nang-luc')); ?>">Năng lực</a>
+          <ul class="sub-menu">
+            <li><a href="<?php echo esc_url(ddg_theme2_url('nghien-cuu-phat-trien')); ?>">Nghiên cứu &amp; Phát triển</a></li>
+            <li><a href="<?php echo esc_url(ddg_theme2_url('nha-may-san-xuat-my-pham')); ?>">Năng lực sản xuất</a></li>
+            <li><a href="<?php echo esc_url(ddg_theme2_url('oem-odm-my-pham')); ?>">OEM / ODM mỹ phẩm</a></li>
+          </ul>
+        </li>
+        <li><a href="<?php echo esc_url(ddg_theme2_url('thuong-hieu')); ?>">Thương hiệu</a></li>
+        <li class="menu-item-has-children">
+          <a href="<?php echo esc_url(ddg_theme2_url('san-pham')); ?>">Sản phẩm &amp; Routine</a>
+          <ul class="sub-menu">
+            <li><a href="<?php echo esc_url(ddg_theme2_url('tim-diem-ban')); ?>">Tìm điểm bán</a></li>
+          </ul>
+        </li>
+        <li><a href="<?php echo esc_url(ddg_theme2_url('kien-thuc')); ?>">Kiến thức</a></li>
+        <li><a href="<?php echo esc_url(ddg_theme2_url('doi-tac')); ?>">Đối tác</a></li>
+        <li><a href="<?php echo esc_url(ddg_theme2_url('lien-he')); ?>">Liên hệ</a></li>
+      </ul>
     </nav>
 
     <a class="t2-header-cta" href="<?php echo esc_url(ddg_theme2_url('san-pham')); ?>">Khám phá <span aria-hidden="true">→</span></a>
