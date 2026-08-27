@@ -14,23 +14,34 @@ Latest Product/Data Recovery state read before this frontend change:
 
 ## P0 frontend audit / fix this run
 
-A sticky-header navigation defect remained on the single-product page. The in-page product navigation links to `#mo-ta` and `#cong-bo`, but neither target had `scroll-margin-top`. On 360/390/430px a tap on “Mô tả” or “Phiếu công bố” could therefore land the target heading under the sticky header even though the page itself had no layout overflow.
+The product mockup was structurally mobile-safe but its phone typography had become too small to read comfortably in the approved two-column layout. At `<=720px`, product-card brand/kicker/title/CTA text had values as low as `0.49rem–0.69rem` (roughly 8–11px at a 16px root). That preserves layout but fails the mobile-first readability goal at 360/390/430px.
 
-Fix applied in `apps/bizrise-ddg-theme/header.php` as the final theme-side guard after `wp_head()`:
+Fix applied in `apps/bizrise-ddg-theme/assets/css/product-mockup.css`:
 
-- `#mo-ta` and `#cong-bo` now reserve **112px** scroll margin on large screens;
-- tablet / compact layouts use **96px**;
-- canonical phone widths `<=520px` use **80px**, covering the 64px phone header plus breathing room;
-- the prior logged-in WordPress admin-bar geometry guards remain unchanged;
-- the prior article overflow guard remains unchanged;
-- no Product Truth, SKU, media, publish status or WooCommerce visibility rule changed.
+- mockup asset bumped **2.2.2 → 2.2.3**;
+- mobile media-brand increased to `0.62rem` with safer line-height;
+- media title increased to `0.68rem` and pack text to `0.62rem`;
+- card kicker increased to `0.62rem`;
+- product title increased to `0.78rem` (`0.76rem` guard at <=380px);
+- CTA increased to `0.68rem` while retaining a **44px minimum tap target**;
+- filter chips increased to `0.72rem` while retaining **44px minimum height**;
+- copy block height was slightly increased so the larger type does not collide or squeeze the CTA;
+- product grid remains **2 columns** on canonical phone widths;
+- product media remains portrait **9:16** with the existing `object-fit:contain` cascade;
+- both WooCommerce archive and `/san-pham/` fallback now request asset version **2.2.3** to avoid stale phone CSS.
 
-Exact frontend code SHA: `ad51ff88f8d8d737316f15cbe4b5f97f27a8983e`.
+Files changed:
+
+- `apps/bizrise-ddg-theme/assets/css/product-mockup.css`
+- `apps/bizrise-ddg-theme/woocommerce/archive-product.php`
+- `apps/bizrise-ddg-theme/page-product-catalog.php`
+
+Exact frontend code SHA after the asset/version changes: `0b6cfee33716577c8d3abbabfef3b298ca2db2bf`.
 
 CI for that exact code SHA:
 
-- Validate Bizrise DDG V2 run `33107990781`: **SUCCESS**;
-- Build Bizrise DDG V2 Release run `33107990765`: **SUCCESS**.
+- Validate Bizrise DDG V2 run `33112705646`: **SUCCESS**;
+- Build Bizrise DDG V2 Release run `33112705609`: **SUCCESS**.
 
 ## Mobile checklist
 
@@ -48,6 +59,7 @@ CI for that exact code SHA:
 | Product search >=48px | PASS source | PASS source | PASS source |
 | Product filter pills >=44px | PASS source | PASS source | PASS source |
 | Product-card CTA >=44px | PASS source | PASS source | PASS source |
+| Product card typography readable | PASS source | PASS source | PASS source |
 | Product grid 2 columns | PASS source | PASS source | PASS source |
 | Product media portrait 9:16 | PASS source | PASS source | PASS source |
 | Product images `object-fit:contain` | PASS source | PASS source | PASS source |
@@ -69,7 +81,7 @@ CI for that exact code SHA:
 
 ## Production / browser verification
 
-Direct retrieval of `dangduonggroup.com` remains unavailable from this execution environment, so no screenshot/browser-production claim is made.
+Direct retrieval of `dangduonggroup.com` is still unavailable from this execution environment, so no screenshot/browser-production claim is made.
 
 Required production PASS evidence remains:
 
@@ -77,10 +89,11 @@ Required production PASS evidence remains:
 2. `/san-pham/` at 360, 390, 430 and desktop >=1180;
 3. representative `product_cat` archive and product singles;
 4. homepage/core pages and `/kien-thuc/` article views;
-5. single-product taps on `#mo-ta` and `#cong-bo` proving target headings remain visible below the sticky header;
-6. logged-in phone scroll test proving no stale admin-bar gap;
-7. hamburger/submenu interaction and zero horizontal overflow;
-8. visual polish of 9:16 cards, spacing, hero height, typography, CTA visibility and footer.
+5. mobile visual confirmation that larger product-card typography remains balanced in two columns;
+6. single-product taps on `#mo-ta` and `#cong-bo` proving target headings remain visible below the sticky header;
+7. logged-in phone scroll test proving no stale admin-bar gap;
+8. hamburger/submenu interaction and zero horizontal overflow;
+9. visual polish of 9:16 cards, spacing, hero height, typography, CTA visibility and footer.
 
 ## Status
 
