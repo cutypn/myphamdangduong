@@ -2,17 +2,18 @@
 
 ## Kết luận
 
-Vòng 2026-08-27 đã tháo blocker editorial rõ nhất cho knowledge content: 10/10 bài trong `data/content/article-registry.json` đã có full rewrite và hiện được đánh dấu `publish_ready` thay vì `editorial_review`.
+Knowledge content hiện có 10/10 bài trong `data/content/article-registry.json` ở trạng thái `publish_ready`. Runtime importer deterministic đã tồn tại trong `apps/bizrise-ddg-migrator/src/ArticleContentImporter.php`: chỉ đọc bài `publish_ready`, exact-slug upsert, `post_status=publish`, gán category `kien-thuc`, chạy idempotent theo content fingerprint và lưu report runtime.
 
-Core-page source trong `apps/bizrise-ddg-theme/inc/editorial-content.php` hiện có curated source-safe copy cho các trang chính. Nội dung cố ý không công bố cGMP/ISO/FDA/công suất/đối tác hoặc claim y tế khi chưa có hồ sơ xác minh.
+Core-page source trong `apps/bizrise-ddg-theme/inc/editorial-content.php` tiếp tục dùng curated source-safe copy, không công bố cGMP/ISO/FDA/công suất/đối tác hoặc claim y tế khi chưa có hồ sơ xác minh.
 
 ## Knowledge articles
 
-- total: 10
-- publish_ready: 10
-- editorial_review: 0
-- blocked_by_missing_copy: 0
-- runtime_live_verified: CHƯA XÁC MINH
+- total: **10**
+- publish_ready: **10**
+- editorial_review trong registry: **0**
+- deterministic importer: **CÓ**
+- exact-slug/idempotent publication path: **CÓ**
+- runtime live verified: **CHƯA XÁC MINH trong môi trường fetch hiện tại**
 
 Các slug publish-ready:
 
@@ -29,7 +30,7 @@ Các slug publish-ready:
 
 ## Core pages source
 
-Các slug được Theme 2 quản lý bằng curated editorial content:
+Theme 2 quản lý curated editorial content cho:
 
 - `/ve-dang-duong/`
 - `/nang-luc/`
@@ -43,33 +44,58 @@ Các slug được Theme 2 quản lý bằng curated editorial content:
 - `/lien-he/`
 - `/tim-diem-ban/`
 
-Homepage được quản lý trong `front-page.php` và cần tiếp tục rà ở vòng sau cùng với production render.
+Homepage tiếp tục được quản lý trong `front-page.php`.
 
-## Thay đổi vòng này
+## Cải thiện source vòng này
 
-- `data/content/article-registry.json`
-  - version → `2026-08-27`
-  - policy cập nhật để phân biệt `publish_ready` source với trạng thái live WordPress.
-  - 10/10 article `editorial_review` → `publish_ready`.
-  - notes cập nhật approval source ngày 2026-08-27.
+Commit code: `b9f78bb26b5d639a0a72d2bb99bc07c6fedd26d6`
 
-Commit thay đổi registry: `d291efb0d4fcc22408dd8dad24f0c3eb150008a1`.
+File: `apps/bizrise-ddg-theme/single.php`
 
-## Runtime publication blocker
+Thay đổi:
 
-Trong source đã rà ở vòng này chưa tìm thấy đường deterministic rõ ràng đọc `article-registry.json` + Markdown rồi `wp_insert_post`/sync bài viết vào WordPress. Vì vậy `publish_ready` hiện là trạng thái nguồn, KHÔNG được coi là bằng chứng bài đã live production.
+- Excerpt/meta description của bài được đưa thành lead ngay dưới H1, tạo direct-answer layer rõ ràng cho người đọc và AEO.
+- Dòng metadata hero chỉ còn ngày đăng, không lặp lại excerpt lần thứ hai.
+- Giữ nguyên H1 duy nhất, body, related articles, CTA về `/kien-thuc/` và `/san-pham/`.
+- Không thêm claim, certification, capacity, partner fact hoặc product claim mới.
 
-PASS production bắt buộc ở vòng tiếp theo:
+## Article media inventory
 
-1. Xác định hoặc bổ sung importer/sync deterministic cho 10 bài, map theo exact slug; không fuzzy-map.
-2. Chỉ publish các file có registry `status=publish_ready`.
-3. Preserve exact slug/title/body; update idempotent nếu post đã tồn tại.
-4. Kiểm `/kien-thuc/` + 10 article URL live, HTTP/render/H1/internal links/CTA.
-5. Đọc deployed SHA từ Deploy Bridge/runtime status và đối chiếu HEAD đã PASS CI.
+Source endpoint đã có trong migrator 0.4.0:
+
+`/wp-json/bizrise-ddg/v1/media-inventory?scope=articles&per_page=100`
+
+Media inventory source có thể audit Featured Image ID/file/URL/ALT/kích thước, missing featured và duplicate attachment cho bài public. Tuy nhiên môi trường fetch của vòng này không đọc được endpoint production trực tiếp, nên không tự suy diễn media live.
+
+Counts vòng này:
+
+- article source before: **10 publish-ready**
+- article source after: **10 publish-ready**
+- article runtime media before: **CHƯA XÁC MINH**
+- article runtime media after: **CHƯA XÁC MINH**
+- media mapping tự tạo/gán mơ hồ: **0**
+
+Không tự gán Featured Image khi chưa có mapping deterministic giữa bài và attachment.
+
+## Source consistency cần tiếp tục
+
+Một số Markdown front matter vẫn còn `review_status: editorial_review` / `reviewer: pending` dù registry hiện là nguồn publication authority và đã đánh dấu `publish_ready`. Đây là inconsistency editorial cần được đồng bộ dần ở các vòng tiếp theo; importer hiện chỉ dùng registry `status=publish_ready` làm gate nên không làm phát sinh publish sai.
+
+## CI / production gate
+
+Exact code SHA `b9f78bb26b5d639a0a72d2bb99bc07c6fedd26d6` đã kích hoạt cả Validate và Release workflow. Tại thời điểm report được cập nhật, workflow còn queued/in-progress nên chưa được ghi nhận là CI PASS.
+
+Production PASS cần đủ:
+
+1. Final HEAD PASS cả Validate + Release.
+2. Deploy Bridge `deployed_sha` khớp final HEAD.
+3. Runtime status báo article sync `10/10`, `error_count=0`.
+4. `/kien-thuc/` và 10 article URL render đúng H1/direct answer/body/CTA.
+5. Media inventory xác minh article Featured Image/ALT và missing/duplicate counts.
 
 ## An toàn nội dung
 
-Không thêm trong vòng này:
+Không thêm:
 
 - cGMP / ISO / FDA không có hồ sơ hiện hành;
 - số liệu công suất hoặc năng lực chưa xác minh;
@@ -81,4 +107,6 @@ Không thêm trong vòng này:
 
 **SOURCE CONTENT: 10/10 KNOWLEDGE ARTICLES PUBLISH-READY.**
 
-**PRODUCTION ARTICLES: CHƯA XÁC MINH LIVE — cần runtime importer/sync + production QA.**
+**ARTICLE TEMPLATE: DIRECT-ANSWER HERO IMPROVED.**
+
+**PRODUCTION ARTICLE/MEDIA QA: CHƯA XÁC MINH LIVE.**
