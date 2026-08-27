@@ -154,6 +154,10 @@ Có thể, nếu đối tác cung cấp nhiều scope khác nhau. Điều cần 
 - [ODM mỹ phẩm là gì?](/odm-my-pham-la-gi/)
 - [Quy trình gia công mỹ phẩm](/quy-trinh-gia-cong-my-pham/)
 
+## Bước tiếp theo
+
+Chọn mô hình theo mức độ sẵn sàng của brief và năng lực nội bộ, không chọn chỉ theo tên OEM/ODM. Nếu brief còn ở mức concept, hãy hoàn thiện business brief trước khi so sánh proposal để các đối tác đang được đánh giá trên cùng một scope.
+
 ## Nguồn tham khảo
 
 1. Chính phủ — **Nghị định 93/2016/NĐ-CP về điều kiện sản xuất mỹ phẩm**.
