@@ -33,3 +33,8 @@ body{margin:0;background:var(--t2-white);color:var(--t2-ink);font-family:var(--t
 a{color:inherit}
 img{max-width:100%;height:auto}
 button,input,select,textarea{font:inherit}
+
+/* WordPress uses a 46px admin bar below 783px; keep the sticky theme header fully below it. */
+@media (max-width:782px){
+  .admin-bar .t2-header{top:46px}
+}
