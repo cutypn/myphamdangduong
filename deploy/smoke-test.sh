@@ -49,17 +49,26 @@ fi
 if [[ "${DDG_SMOKE_ACTIVE:-0}" == "1" ]]; then
   BASE_URL="${DDG_SMOKE_BASE_URL:?DDG_SMOKE_BASE_URL is required when DDG_SMOKE_ACTIVE=1}"
   CURL_TIMEOUT="${DDG_SMOKE_HTTP_TIMEOUT:-15}"
+
+  # These paths mirror the deterministic public navigation in the V2 theme.
+  # Keep this list on canonical current routes only: obsolete legacy routes such
+  # as /gioi-thieu/ and /he-thong-phan-phoi/ can legitimately 404 and must not
+  # block an otherwise valid release.
   urls=(
     "/"
-    "/gioi-thieu/"
+    "/ve-dang-duong/"
+    "/nang-luc/"
     "/nghien-cuu-phat-trien/"
+    "/nha-may-san-xuat-my-pham/"
     "/oem-odm-my-pham/"
     "/thuong-hieu/"
     "/san-pham/"
     "/kien-thuc/"
-    "/he-thong-phan-phoi/"
+    "/doi-tac/"
     "/lien-he/"
+    "/tim-diem-ban/"
   )
+
   for path in "${urls[@]}"; do
     code="$(curl --connect-timeout 5 --max-time "$CURL_TIMEOUT" -L -sS -o /dev/null -w '%{http_code}' "${BASE_URL%/}${path}")"
     if [[ "$code" != "200" ]]; then
@@ -67,6 +76,21 @@ if [[ "${DDG_SMOKE_ACTIVE:-0}" == "1" ]]; then
       exit 1
     fi
   done
+
+  # Runtime observability is required for release verification. If the endpoints
+  # exist, they must answer successfully. A 404 is tolerated for installations
+  # where the Deploy Bridge is not present yet; transport/5xx failures are not.
+  runtime_paths=(
+    "/wp-json/bizrise-ddg/v1/runtime-status"
+    "/wp-json/bizrise-ddg/v1/media-inventory?scope=products&per_page=1"
+  )
+  for path in "${runtime_paths[@]}"; do
+    code="$(curl --connect-timeout 5 --max-time "$CURL_TIMEOUT" -L -sS -o /dev/null -w '%{http_code}' "${BASE_URL%/}${path}")"
+    if [[ "$code" != "200" && "$code" != "404" ]]; then
+      echo "[smoke] runtime endpoint HTTP $code: $path" >&2
+      exit 1
+    fi
+  done
 fi
 
-echo "[smoke] filesystem and PHP checks passed"
+echo "[smoke] filesystem, PHP and configured active checks passed"
