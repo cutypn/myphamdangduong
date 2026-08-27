@@ -53,10 +53,28 @@ while (have_posts()) : the_post();
   <?php endif; ?>
 
   <?php
-  $related = new WP_Query([
+  $related_tax_query = [];
+  if (taxonomy_exists('product_visibility')) {
+    $exclude_from_catalog = get_term_by('slug', 'exclude-from-catalog', 'product_visibility');
+    if ($exclude_from_catalog instanceof WP_Term) {
+      $related_tax_query[] = [
+        'taxonomy' => 'product_visibility',
+        'field'    => 'term_id',
+        'terms'    => [(int)$exclude_from_catalog->term_id],
+        'operator' => 'NOT IN',
+      ];
+    }
+  }
+
+  $related_args = [
     'post_type'=>'product','post_status'=>'publish','posts_per_page'=>4,'post__not_in'=>[$product_id],
     'orderby'=>'date','order'=>'DESC','no_found_rows'=>true,
-  ]);
+  ];
+  if ($related_tax_query) {
+    $related_args['tax_query'] = $related_tax_query;
+  }
+
+  $related = new WP_Query($related_args);
   if ($related->have_posts()) : ?>
     <section class="t2-section t2-section--ivory"><div class="t2-shell"><div class="t2-section-heading t2-section-heading--split"><div><p class="t2-eyebrow">SẢN PHẨM KHÁC</p><h2>Khám phá thêm</h2></div><a class="t2-text-link" href="<?php echo esc_url(ddg_theme2_url('san-pham')); ?>">Xem tất cả →</a></div><div class="t2-product-grid t2-product-grid--related"><?php while ($related->have_posts()) : $related->the_post(); ddg_theme2_card_product(get_the_ID()); endwhile; wp_reset_postdata(); ?></div></div></section>
   <?php endif; ?>
