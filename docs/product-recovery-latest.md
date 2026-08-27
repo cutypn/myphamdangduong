@@ -13,12 +13,13 @@ The public storefront remains WooCommerce `post_type=product`. Internal Product 
 ## Current Git / CI
 
 - Branch: `codex/rebuild-v2`
-- Current HEAD observed: `cee2cbede39d82aa7ebe23bc9e1d0af05cddb2a7`
-- Commit: `chore(migrator): bump storefront audit fix version`
-- Validate Bizrise DDG V2 run `33044609799`: **SUCCESS**
-- Build Bizrise DDG V2 Release run `33044609789`: **SUCCESS**
-- Migrator version: `0.4.1`
-- `MediaInventory` is loaded and registered in the migrator source.
+- Current HEAD observed: `727f8f26c3642f18a53afe45b2ebb58f0291c9c3`
+- Commit: `chore(migrator): trigger site architecture import`
+- Change scope: migrator version bump `0.4.1` → `0.4.2` only; no product mapping, publication status or media mutation in this HEAD.
+- Validate Bizrise DDG V2 run `33048457572`: **SUCCESS**.
+- Build Bizrise DDG V2 Release run `33048457610`: **SUCCESS**.
+- Migrator version: `0.4.2`.
+- `MediaInventory` remains loaded and registered in the migrator source.
 
 ## Last verified production evidence
 
@@ -43,7 +44,7 @@ This proves the deterministic 44-row media manifest was fully matched and had no
 
 ## Current storefront audit design
 
-`StorefrontProductAudit` now separates controlled media integrity from unmanaged WooCommerce storefront warnings:
+`StorefrontProductAudit` separates controlled media integrity from unmanaged WooCommerce storefront warnings:
 
 - storefront source: WooCommerce `post_type=product` only;
 - controlled clean gate: 44 manifest rows, 44 matched, no errors/not-found/ambiguity/poster/wrong-featured problems;
@@ -106,7 +107,8 @@ Therefore Product Truth must not mass-draft or mass-publish the existing WooComm
 | Product/poster missing in controlled manifest | unresolved incident | **0** |
 | Unmanaged public missing Featured Image | mixed into global repair gate | reported separately; last known candidate count **22** |
 | Product media inventory | unavailable | source endpoint implemented and registered |
-| Current HEAD CI | previous report stale/running | **Validate PASS + Release PASS** on `cee2cbede…` |
+| Current HEAD CI | previous report stale | **Validate PASS + Release PASS** on `727f8f26…` |
+| Current HEAD product mutation | unknown | **none in HEAD; version bump only** |
 | Current HEAD production deploy | unknown | **CHƯA XÁC MINH** |
 
 ## Production verification gate
@@ -131,4 +133,6 @@ Required PASS evidence:
 
 ## Blocker this run
 
-The QA environment cannot resolve/fetch the production REST endpoints reliably, so current deployed SHA and live media-inventory rows are **CHƯA XÁC MINH** here. No destructive product status or media mutation is justified without that production evidence.
+The QA environment still cannot resolve/fetch the production REST endpoints reliably (`dangduonggroup.com` DNS resolution fails from this runtime; web fetch also cannot open unindexed REST URLs). Therefore current deployed SHA and live media-inventory rows are **CHƯA XÁC MINH** here.
+
+No destructive product status or media mutation is justified without that production evidence. The correct next action remains: read the live media inventory after Bridge deploy, classify every unmanaged row deterministically, then only apply exact non-destructive fixes backed by evidence.
