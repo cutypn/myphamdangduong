@@ -1,4 +1,4 @@
-/* DDG Product Mockup 2.2.1 — mobile-first storefront */
+/* DDG Product Mockup 2.2.2 — mobile-first storefront */
 .t2-product-archive{background:#fbfaf7;color:#16233d}
 .t2-product-archive .t2-index-hero--product{padding:0;background:linear-gradient(135deg,#071b35 0%,#0d294b 58%,#12385f 100%);color:#fff;border-bottom:1px solid rgba(255,255,255,.08)}
 .t2-product-archive .t2-index-hero__grid{min-height:310px;display:grid;grid-template-columns:minmax(0,1.3fr) minmax(280px,.7fr);gap:48px;align-items:end;padding-top:70px;padding-bottom:54px}
@@ -15,7 +15,7 @@
 .t2-product-search__field:focus{border-color:#b78533;box-shadow:0 0 0 3px rgba(183,133,51,.12)}
 .t2-product-search__button{min-height:52px;padding:0 22px;border:0;border-radius:14px;background:#c89437;color:#fff;font-weight:800;cursor:pointer}
 .t2-product-search__button:hover{background:#ad7620}
-.t2-product-archive .t2-filter-pills{display:flex;gap:9px;margin:14px 0 0;padding:0;list-style:none}
+.t2-product-archive .t2-filter-pills{display:flex;flex-wrap:wrap;min-width:0;gap:9px;margin:14px 0 0;padding:0;list-style:none}
 .t2-product-archive .t2-filter-pills a{min-height:44px;display:inline-flex;align-items:center;padding:0 15px;border:1px solid #e1ddd6;border-radius:999px;background:#f7f6f3;color:#4b5565;text-decoration:none;font-size:.74rem;font-weight:700;transition:.2s ease}
 .t2-product-archive .t2-filter-pills a:hover,.t2-product-archive .t2-filter-pills a[aria-current="page"],.t2-product-archive .t2-filter-pills .current-cat a{border-color:#c89437;background:#c89437;color:#fff}
 .t2-product-toolbar{display:flex;justify-content:space-between;align-items:center;gap:16px;margin:32px 0 22px;color:#596273;font-size:.82rem}
