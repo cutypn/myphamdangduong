@@ -99,6 +99,14 @@ Không nên khóa chỉ vì “mọi người thấy ổn”. Nên có danh sác
 6. Dữ liệu cần bàn giao đã được liệt kê.
 7. Nội dung claim được tách khỏi giả định trong R&D.
 
+## Đọc tiếp theo đúng hành trình phát triển
+
+- [R&D mỹ phẩm là gì? Vai trò trong quá trình phát triển sản phẩm](/rd-my-pham-la-gi/)
+- [Làm mẫu mỹ phẩm cần lưu ý gì? Cách feedback để giảm vòng chỉnh sửa](/lam-mau-my-pham-can-luu-y-gi/)
+- [Quy trình gia công mỹ phẩm: từ brief đến sản phẩm sẵn sàng ra thị trường](/quy-trinh-gia-cong-my-pham/)
+
 ## Kết luận
 
 Nghiên cứu công thức là quá trình biến nhu cầu thành quyết định có thể kiểm tra. Khi brief và tiêu chí đủ rõ, đội phát triển giảm được vòng sửa không cần thiết và các bộ phận sau R&D cũng nhận được dữ liệu nhất quán hơn.
+
+**Bước tiếp theo:** chuyển mong muốn của thương hiệu thành tiêu chí mẫu có thể so sánh trước khi chốt công thức, rồi dùng lịch sử version để giữ quyết định nhất quán qua các vòng phát triển.
