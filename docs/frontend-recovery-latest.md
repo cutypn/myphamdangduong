@@ -1,89 +1,87 @@
 # DDG Frontend Recovery — latest
 
-## Kết luận
+## Current result
 
-Frontend source tiếp tục giữ kiến trúc storefront đúng: `/san-pham/` đọc WooCommerce `post_type=product`, không dùng internal Product Truth CPT `bizrise_product` làm catalog public.
+Mobile-first source fix completed on `codex/rebuild-v2` without changing Product Truth or publication rules.
 
-Product/Data Recovery mới nhất xác nhận root cause P0 ban đầu là route collision và controlled 44-SKU media hiện exact-clean theo evidence hiện có. Các sản phẩm public ngoài manifest/legacy có media gap được tách riêng khỏi controlled clean gate; frontend không tự ẩn, draft hay fuzzy-map các record này.
+Product/Data Recovery remains the reference for catalog data: `/san-pham/` must use WooCommerce `post_type=product`; the internal `bizrise_product` type must not own the public catalog route.
 
-## Fix vòng hiện tại
+## Mobile issue fixed
 
-Commit code: `bced4003fdf09aa8ff9f7bd5daaee349857ecb93`
+The base theme had a `<=520px` rule that collapsed product grids to one column and changed each product card into a horizontal 42/58 layout. That conflicted with the approved portrait product-card mockup.
 
-File: `apps/bizrise-ddg-theme/header.php`
+The final override now keeps product cards portrait and compact on phones.
 
-### Align fallback navigation với sitemap 8 nhánh đã chốt
+## Code
 
-Fallback header trước đây chỉ có 6 mục và thiếu `Trang chủ` + `Liên hệ`. Khi WordPress chưa có menu `primary` được gán hoặc menu bị mất binding, header vì vậy không phản ánh đầy đủ IA đã duyệt.
+- `771a47cd493d3579aac3053da775620598258c0f` — mobile CSS hardening.
+- `8842c34e22ec70b71b6a4cf19e7fb2951474ea7b` — asset cache version bump to Theme 2.1.5.
 
-Đã sửa fallback thành 8 mục theo thứ tự:
+Files:
 
-1. Trang chủ
-2. Về Đăng Dương
-3. Năng lực
-4. Thương hiệu
-5. Sản phẩm & Routine
-6. Kiến thức làm đẹp
-7. Đối tác
-8. Liên hệ
+- `apps/bizrise-ddg-theme/assets/css/theme212.css`
+- `apps/bizrise-ddg-theme/functions.php`
 
-Không thay hoặc ghi đè menu WordPress do admin quản lý: nếu `primary` menu tồn tại, theme vẫn dùng `wp_nav_menu()` như cũ.
+## Mobile checklist
 
-Header file comment được đồng bộ `Theme 2.1.4` với version runtime hiện hành.
+| Check | 360 | 390 | 430 |
+|---|---|---|---|
+| Header/logo/hamburger fit by final CSS | PASS source | PASS source | PASS source |
+| Menu links have >=44px target | PASS source | PASS source | PASS source |
+| Product grid stays 2 columns | PASS source | PASS source | PASS source |
+| Product media stays 9:16 | PASS source | PASS source | PASS source |
+| Product images use contain, not crop | PASS source | PASS source | PASS source |
+| Filter pills can horizontal-scroll | PASS source | PASS source | PASS source |
+| Sort select is phone friendly | PASS source | PASS source | PASS source |
+| Single product image is contained | PASS source | PASS source | PASS source |
+| H1/hero scale is moderated | PASS source | PASS source | PASS source |
+| Article body/type scale is readable | PASS source | PASS source | PASS source |
+| Tables scroll instead of breaking viewport | PASS source | PASS source | PASS source |
+| Form controls avoid phone auto-zoom | PASS source | PASS source | PASS source |
 
-## Audit product image rendering
+`PASS source` is a source/cascade result, not screenshot/browser evidence.
 
-Đã đối chiếu base CSS và final override:
+## Detail of fixes
 
-- Base `theme2.css` có rule cũ full-bleed `object-fit:cover`.
-- File được enqueue sau cùng `assets/css/theme212.css` override canonical product media bằng selector cụ thể hơn:
-  - card media giữ `aspect-ratio:9/16`;
-  - image stage dùng `object-fit:contain` + `object-position:center`;
-  - hover không scale/crop ảnh;
-  - single product main image cũng dùng `object-fit:contain`.
+- Phone shell reduced to 12px side gutters.
+- Header is 64px on phone; logo is limited to 156px and 142px below 375px.
+- Hamburger stays 44x44px.
+- Mobile menu uses dynamic viewport height and text can wrap.
+- Product grid stays two portrait columns down to 360px.
+- Product card spacing, title, brand and metadata are compacted for narrow widths.
+- Product image stage remains `object-fit: contain` and centered.
+- Page/article/product H1 scale is reduced on phone.
+- Single product image uses `min(88vw, 360px)` and remains portrait.
+- Article/editorial line-height and heading sizes are reduced to readable mobile values.
+- Tables become horizontally scrollable.
+- Inputs/selects/textareas use 16px font size on phone.
+- Footer spacing and logo size are reduced on phone.
 
-Vì `theme212.css` được enqueue sau `theme2.css`, source cascade hiện tại giữ ảnh sản phẩm nguyên tỷ lệ trong khung 9:16.
+## CI
 
-## Storefront/template state
+Exact mobile code SHA: `8842c34e22ec70b71b6a4cf19e7fb2951474ea7b`.
 
-Các recovery trước vẫn còn hiệu lực:
+- Validate Bizrise DDG V2 run `33045434598`: SUCCESS.
+- Build Bizrise DDG V2 Release run `33045434587`: SUCCESS.
 
-- `page-product-catalog.php`: query duy nhất WooCommerce `post_type=product`, `post_status=publish`, bỏ `exclude-from-catalog`, 16 sản phẩm/trang, pagination, `product_cat`, một H1.
-- `page-san-pham.php`: safety net cho `/san-pham/` nếu Shop Page option stale/unset.
-- `woocommerce/archive-product.php`: dùng main WooCommerce query.
-- `woocommerce/single-product.php`: một H1, CTA `/tim-diem-ban/` + `/lien-he/`, related query chỉ `product` + `publish`.
-- `functions.php`: brand resolver chỉ đọc taxonomy/meta brand hợp lệ; không còn dùng packaging label làm brand.
+## Production verification
 
-Không thay Product Truth, publish rules, taxonomy assignment, product status hoặc media mapping.
+Production is not marked PASS in this report because the current environment still cannot fetch the public deploy/runtime endpoints reliably.
 
-## Test / CI exact SHA
+Browser verification is still required for:
 
-Exact frontend code SHA: `bced4003fdf09aa8ff9f7bd5daaee349857ecb93`.
-
-- Validate Bizrise DDG V2 — run `33042023150`: **SUCCESS**.
-- Build Bizrise DDG V2 Release — run `33042023139`: **SUCCESS**.
-
-Các workflow hiện hành bao gồm PHP lint và source/data validation của release V2.
-
-## Production blocker / verification
-
-Production chỉ được đánh PASS khi Deploy Bridge/runtime xác nhận một SHA bằng `bced4003fdf09aa8ff9f7bd5daaee349857ecb93` hoặc descendant đã PASS cả Validate + Release, sau đó browser QA xác minh:
-
-1. `/san-pham/` trả WooCommerce product cards.
-2. `product_cat` archives có sản phẩm.
-3. >=8 single product representative render đúng title/brand/pack/image/CTA.
-4. Product cards giữ 9:16 + contain trên desktop >=1180 và mobile 360/390/430.
-5. Header desktop/mobile không overflow; fallback đủ 8 nhánh khi không có primary menu.
-6. Không duplicate H1 trên core pages/product/article templates.
-7. Article grid/single article/CTA không vỡ layout.
-8. Runtime controlled product media clean; unmanaged/legacy gaps chỉ được report, không bị frontend che giấu bằng mapping đoán.
-
-Môi trường web fetch hiện tại vẫn không đọc production ổn định, nên không suy diễn live PASS.
+- `/san-pham/` at 360, 390, 430 and desktop >=1180;
+- category archive;
+- representative product single pages;
+- homepage/core pages;
+- knowledge archive and article pages;
+- sticky header/menu behavior;
+- horizontal overflow and actual visual polish.
 
 ## Status
 
-**FRONTEND SOURCE: PASS**
+**MOBILE SOURCE FIX: PASS**
 
 **EXACT CI: PASS**
 
-**PRODUCTION: CHƯA XÁC MINH — chờ Deploy Bridge/runtime + browser QA.**
+**PRODUCTION / BROWSER QA: CHƯA XÁC MINH**
