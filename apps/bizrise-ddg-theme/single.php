@@ -11,7 +11,10 @@ get_header();
         <div class="t2-article-hero__copy">
           <p class="t2-eyebrow">ĐĂNG DƯƠNG JOURNAL</p>
           <h1><?php the_title(); ?></h1>
-          <p class="t2-article-meta"><?php echo esc_html(get_the_date('d.m.Y')); ?> · <?php echo esc_html(wp_trim_words(get_the_excerpt(), 22)); ?></p>
+          <?php if (has_excerpt()) : ?>
+            <p class="t2-article-hero__lead"><?php echo esc_html(get_the_excerpt()); ?></p>
+          <?php endif; ?>
+          <p class="t2-article-meta"><?php echo esc_html(get_the_date('d.m.Y')); ?></p>
         </div>
         <?php if (has_post_thumbnail()) : ?><figure class="t2-article-hero__media"><?php the_post_thumbnail('large', ['loading'=>'eager','fetchpriority'=>'high']); ?></figure><?php endif; ?>
       </div>
