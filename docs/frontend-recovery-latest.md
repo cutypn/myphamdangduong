@@ -4,81 +4,81 @@
 
 Frontend source tiếp tục giữ kiến trúc storefront đúng: `/san-pham/` đọc WooCommerce `post_type=product`, không dùng internal Product Truth CPT `bizrise_product` làm catalog public.
 
-Product/Data Recovery đã xác nhận root cause P0 ban đầu là route collision: `bizrise_product` từng dùng rewrite `/san-pham/`; Core hiện đã chuyển CPT này thành non-public/non-queryable và flush stale rewrite một lần. Theme có safety net `page-san-pham.php` → `page-product-catalog.php` để `/san-pham/` vẫn render WooCommerce catalog nếu Shop Page option bị stale/unset.
+Product/Data Recovery mới nhất xác nhận root cause P0 ban đầu là route collision và controlled 44-SKU media hiện exact-clean theo evidence hiện có. Các sản phẩm public ngoài manifest/legacy có media gap được tách riêng khỏi controlled clean gate; frontend không tự ẩn, draft hay fuzzy-map các record này.
 
-## Thay đổi frontend hiện hành
+## Fix vòng hiện tại
 
-### 1. Catalog fallback riêng cho `/san-pham/`
+Commit code: `bced4003fdf09aa8ff9f7bd5daaee349857ecb93`
 
-Commit nền: `a20bde71d6770e040c6b3c4b3e1850125ba9f6ba`
+File: `apps/bizrise-ddg-theme/header.php`
 
-File: `apps/bizrise-ddg-theme/page-product-catalog.php`
+### Align fallback navigation với sitemap 8 nhánh đã chốt
 
-- Query duy nhất WooCommerce `post_type=product`.
-- Chỉ lấy `post_status=publish`.
-- Không query `bizrise_product`.
-- Loại `product_visibility=exclude-from-catalog` khi taxonomy/term tồn tại.
-- 16 sản phẩm/trang, có pagination.
-- Danh mục lấy trực tiếp từ `product_cat` đang có product public; bỏ default Uncategorized.
-- Dùng `ddg_theme2_card_product()` để giữ visual system và Featured Image hiện hành.
-- Chỉ có một H1 trong template.
+Fallback header trước đây chỉ có 6 mục và thiếu `Trang chủ` + `Liên hệ`. Khi WordPress chưa có menu `primary` được gán hoặc menu bị mất binding, header vì vậy không phản ánh đầy đủ IA đã duyệt.
 
-### 2. Bind template theo WordPress page hierarchy
+Đã sửa fallback thành 8 mục theo thứ tự:
 
-Commit nền: `dfc65e5b04cc7578e98edd45ff879738507675c6`
+1. Trang chủ
+2. Về Đăng Dương
+3. Năng lực
+4. Thương hiệu
+5. Sản phẩm & Routine
+6. Kiến thức làm đẹp
+7. Đối tác
+8. Liên hệ
 
-File: `apps/bizrise-ddg-theme/page-san-pham.php`
+Không thay hoặc ghi đè menu WordPress do admin quản lý: nếu `primary` menu tồn tại, theme vẫn dùng `wp_nav_menu()` như cũ.
 
-- Nếu `/san-pham/` resolve thành Page bình thường: render `page-product-catalog.php`.
-- Nếu resolve đúng WooCommerce Shop Archive: `template_include` dùng `woocommerce/archive-product.php`.
-- Cả hai đường đều đọc WooCommerce public catalog.
+Header file comment được đồng bộ `Theme 2.1.4` với version runtime hiện hành.
 
-### 3. Harden product brand resolver
+## Audit product image rendering
 
-Commit: `a53a8d540e889895ac60e9274d7f4e9175b4cf6f`
+Đã đối chiếu base CSS và final override:
 
-File: `apps/bizrise-ddg-theme/functions.php`
+- Base `theme2.css` có rule cũ full-bleed `object-fit:cover`.
+- File được enqueue sau cùng `assets/css/theme212.css` override canonical product media bằng selector cụ thể hơn:
+  - card media giữ `aspect-ratio:9/16`;
+  - image stage dùng `object-fit:contain` + `object-position:center`;
+  - hover không scale/crop ảnh;
+  - single product main image cũng dùng `object-fit:contain`.
 
-Lỗi tìm thấy trong audit vòng này: helper `ddg_theme2_product_brand()` từng dùng `_bizrise_packaging_label` làm fallback thương hiệu. Điều này có thể khiến card, breadcrumb và single product hiển thị quy cách/bao bì như tên brand.
+Vì `theme212.css` được enqueue sau `theme2.css`, source cascade hiện tại giữ ảnh sản phẩm nguyên tỷ lệ trong khung 9:16.
 
-Fix:
+## Storefront/template state
 
-- Loại `_bizrise_packaging_label` khỏi brand fallback.
-- Chỉ đọc các meta key mang nghĩa brand: `_bizrise_brand_label`, `brand`, `_brand`, `brand_name`, `_brand_name`, `product_brand`, `_product_brand`, `ddg_brand`, `_ddg_brand`.
-- Bổ sung taxonomy `brand` vào danh sách taxonomy hợp lệ ngoài `product_brand`, `pwb-brand`, `yith_product_brand`, `bizrise_brand`.
-- Bump theme version `2.1.3` → `2.1.4` để asset/runtime cache theo release mới.
+Các recovery trước vẫn còn hiệu lực:
 
-Không thay Product Truth, publish rules, taxonomy assignment hoặc catalog data.
+- `page-product-catalog.php`: query duy nhất WooCommerce `post_type=product`, `post_status=publish`, bỏ `exclude-from-catalog`, 16 sản phẩm/trang, pagination, `product_cat`, một H1.
+- `page-san-pham.php`: safety net cho `/san-pham/` nếu Shop Page option stale/unset.
+- `woocommerce/archive-product.php`: dùng main WooCommerce query.
+- `woocommerce/single-product.php`: một H1, CTA `/tim-diem-ban/` + `/lien-he/`, related query chỉ `product` + `publish`.
+- `functions.php`: brand resolver chỉ đọc taxonomy/meta brand hợp lệ; không còn dùng packaging label làm brand.
 
-## Audit template hiện hữu
+Không thay Product Truth, publish rules, taxonomy assignment, product status hoặc media mapping.
 
-- `functions.php`: WooCommerce support + route product single/archive sang Theme 2.
-- `woocommerce/archive-product.php`: dùng main WooCommerce query, `product_cat`, `ddg_theme2_card_product()`.
-- `woocommerce/single-product.php`: dùng WooCommerce product post, một H1, CTA tới `/tim-diem-ban/` và `/lien-he/`, related query là `post_type=product`, `post_status=publish`.
-- `theme212.css`: product card media giữ `aspect-ratio:9/16`; ảnh dùng `object-fit:contain`, centered.
-- Header/logo CSS vẫn có breakpoint desktop/mobile hiện hành; vòng này không thêm UI override/plugin legacy.
+## Test / CI exact SHA
 
-## Test / CI
+Exact frontend code SHA: `bced4003fdf09aa8ff9f7bd5daaee349857ecb93`.
 
-Exact frontend code SHA: `a53a8d540e889895ac60e9274d7f4e9175b4cf6f`.
+- Validate Bizrise DDG V2 — run `33042023150`: **SUCCESS**.
+- Build Bizrise DDG V2 Release — run `33042023139`: **SUCCESS**.
 
-- Validate Bizrise DDG V2 — run `33039028923`: **SUCCESS**.
-- Build Bizrise DDG V2 Release — run `33039028932`: **SUCCESS**.
-
-Hai workflow gồm PHP lint Core/Theme/Migrator và source/data validation hiện hành.
+Các workflow hiện hành bao gồm PHP lint và source/data validation của release V2.
 
 ## Production blocker / verification
 
-Production chỉ được đánh PASS khi Deploy Bridge/runtime xác nhận:
+Production chỉ được đánh PASS khi Deploy Bridge/runtime xác nhận một SHA bằng `bced4003fdf09aa8ff9f7bd5daaee349857ecb93` hoặc descendant đã PASS cả Validate + Release, sau đó browser QA xác minh:
 
-1. deployed SHA là `a53a8d540e889895ac60e9274d7f4e9175b4cf6f` hoặc descendant đã PASS cả Validate + Release.
-2. `/san-pham/` thực tế trả WooCommerce product cards.
-3. `product_cat` archives có sản phẩm.
-4. >=8 single product representative render đúng title/brand/pack/image/CTA.
-5. Runtime media report exact-clean, không missing/wrong Featured Image public.
-6. Desktop >=1180 và mobile 360/390/430 browser QA PASS.
+1. `/san-pham/` trả WooCommerce product cards.
+2. `product_cat` archives có sản phẩm.
+3. >=8 single product representative render đúng title/brand/pack/image/CTA.
+4. Product cards giữ 9:16 + contain trên desktop >=1180 và mobile 360/390/430.
+5. Header desktop/mobile không overflow; fallback đủ 8 nhánh khi không có primary menu.
+6. Không duplicate H1 trên core pages/product/article templates.
+7. Article grid/single article/CTA không vỡ layout.
+8. Runtime controlled product media clean; unmanaged/legacy gaps chỉ được report, không bị frontend che giấu bằng mapping đoán.
 
-Môi trường fetch hiện tại vẫn không đọc được production ổn định (`Cache miss`), nên không suy diễn live PASS.
+Môi trường web fetch hiện tại vẫn không đọc production ổn định, nên không suy diễn live PASS.
 
 ## Status
 
@@ -86,4 +86,4 @@ Môi trường fetch hiện tại vẫn không đọc được production ổn �
 
 **EXACT CI: PASS**
 
-**PRODUCTION: CHƯA XÁC MINH — chờ Deploy Bridge + Release QA/runtime endpoint.**
+**PRODUCTION: CHƯA XÁC MINH — chờ Deploy Bridge/runtime + browser QA.**
