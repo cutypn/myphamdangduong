@@ -60,6 +60,7 @@ final class RuntimeStatus {
         $payload = array(
             'status' => $repair_status,
             'release' => self::release_marker(),
+            'catalog_runtime' => self::catalog_runtime(),
             'repair_version' => (string) get_option( self::VERSION_OPTION, '' ),
             'repair' => array(
                 'trigger' => sanitize_text_field( (string) ( $report['trigger'] ?? '' ) ),
@@ -139,6 +140,135 @@ final class RuntimeStatus {
         }
 
         return array_values( array_unique( $safe ) );
+    }
+
+    /**
+     * Read-only live catalog health for production triage.
+     *
+     * Product Truth remains internal. These counters inspect only the existing
+     * WooCommerce `product` post type and never change product status/media.
+     */
+    private static function catalog_runtime(): array {
+        if ( ! post_type_exists( 'product' ) ) {
+            return array(
+                'available' => false,
+                'published_total' => 0,
+                'public_catalog_visible' => 0,
+                'legal_hold_published' => 0,
+                'exclude_from_catalog_published' => 0,
+                'shop_page_id' => 0,
+                'shop_page_status' => '',
+                'shop_page_url' => '',
+            );
+        }
+
+        $counts = wp_count_posts( 'product' );
+        $published_total = isset( $counts->publish ) ? (int) $counts->publish : 0;
+
+        $hold_query = new \WP_Query(
+            array(
+                'post_type' => 'product',
+                'post_status' => 'publish',
+                'posts_per_page' => 1,
+                'fields' => 'ids',
+                'no_found_rows' => false,
+                'ignore_sticky_posts' => true,
+                'cache_results' => false,
+                'update_post_meta_cache' => false,
+                'update_post_term_cache' => false,
+                'meta_query' => array(
+                    array(
+                        'key' => '_bizrise_legal_hold',
+                        'value' => '1',
+                        'compare' => '=',
+                    ),
+                ),
+            )
+        );
+        $legal_hold_published = (int) $hold_query->found_posts;
+
+        $tax_query = array();
+        $excluded_published = 0;
+        if ( taxonomy_exists( 'product_visibility' ) ) {
+            $exclude_term = get_term_by( 'slug', 'exclude-from-catalog', 'product_visibility' );
+            if ( $exclude_term instanceof \WP_Term ) {
+                $excluded_query = new \WP_Query(
+                    array(
+                        'post_type' => 'product',
+                        'post_status' => 'publish',
+                        'posts_per_page' => 1,
+                        'fields' => 'ids',
+                        'no_found_rows' => false,
+                        'ignore_sticky_posts' => true,
+                        'cache_results' => false,
+                        'update_post_meta_cache' => false,
+                        'update_post_term_cache' => false,
+                        'tax_query' => array(
+                            array(
+                                'taxonomy' => 'product_visibility',
+                                'field' => 'term_id',
+                                'terms' => array( (int) $exclude_term->term_id ),
+                                'operator' => 'IN',
+                            ),
+                        ),
+                    )
+                );
+                $excluded_published = (int) $excluded_query->found_posts;
+                $tax_query[] = array(
+                    'taxonomy' => 'product_visibility',
+                    'field' => 'term_id',
+                    'terms' => array( (int) $exclude_term->term_id ),
+                    'operator' => 'NOT IN',
+                );
+            }
+        }
+
+        $visible_args = array(
+            'post_type' => 'product',
+            'post_status' => 'publish',
+            'posts_per_page' => 1,
+            'fields' => 'ids',
+            'no_found_rows' => false,
+            'ignore_sticky_posts' => true,
+            'cache_results' => false,
+            'update_post_meta_cache' => false,
+            'update_post_term_cache' => false,
+            'meta_query' => array(
+                'relation' => 'OR',
+                array(
+                    'key' => '_bizrise_legal_hold',
+                    'compare' => 'NOT EXISTS',
+                ),
+                array(
+                    'key' => '_bizrise_legal_hold',
+                    'value' => '1',
+                    'compare' => '!=',
+                ),
+            ),
+        );
+        if ( $tax_query ) {
+            $visible_args['tax_query'] = $tax_query;
+        }
+        $visible_query = new \WP_Query( $visible_args );
+
+        $shop_page_id = function_exists( 'wc_get_page_id' ) ? (int) wc_get_page_id( 'shop' ) : 0;
+        if ( $shop_page_id < 1 ) {
+            $shop_page = get_page_by_path( 'san-pham' );
+            if ( $shop_page instanceof \WP_Post ) {
+                $shop_page_id = (int) $shop_page->ID;
+            }
+        }
+
+        return array(
+            'available' => true,
+            'published_total' => $published_total,
+            'public_catalog_visible' => (int) $visible_query->found_posts,
+            'legal_hold_published' => $legal_hold_published,
+            'exclude_from_catalog_published' => $excluded_published,
+            'shop_page_id' => $shop_page_id,
+            'shop_page_status' => $shop_page_id > 0 ? sanitize_key( (string) get_post_status( $shop_page_id ) ) : '',
+            'shop_page_url' => $shop_page_id > 0 ? esc_url_raw( (string) get_permalink( $shop_page_id ) ) : '',
+        );
     }
 
     private static function release_marker(): array {
