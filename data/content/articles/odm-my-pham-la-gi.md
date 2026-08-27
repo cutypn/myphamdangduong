@@ -12,9 +12,9 @@ seo_title: "ODM mỹ phẩm là gì? Khi nào nên chọn mô hình ODM"
 meta_description: "Hiểu ODM mỹ phẩm theo góc nhìn phát triển sản phẩm: mức độ tùy biến, trách nhiệm, dữ liệu cần bàn giao và khi nào ODM phù hợp hơn OEM."
 direct_answer: "ODM mỹ phẩm thường được dùng để mô tả mô hình trong đó đối tác tham gia sâu hơn vào quá trình hình thành hoặc phát triển giải pháp sản phẩm, thay vì chỉ sản xuất theo một spec đã khóa. Mức độ tham gia thực tế vẫn phải được xác định bằng phạm vi công việc cụ thể."
 canonical_path: "/odm-my-pham-la-gi/"
-review_status: "editorial_review"
-reviewer: "pending"
-last_verified: "2026-08-21"
+review_status: "publish_ready"
+reviewer: "source-safe editorial"
+last_verified: "2026-08-27"
 source_scope: "Educational B2B article. ODM is treated as business terminology, not a legal classification."
 internal_links:
   - "/oem-my-pham-la-gi/"
@@ -139,6 +139,6 @@ Trong các nguồn quản lý mỹ phẩm được đối chiếu cho bài này,
 2. Bộ Y tế — **Thông tư 34/2025/TT-BYT** sửa đổi quy định quản lý mỹ phẩm, có hiệu lực từ 18/08/2025.
 3. ASEAN — **Guidelines for Product Information File (PIF)**.
 
-**Last verified: 21/08/2026.**
+**Last verified: 27/08/2026.**
 
 > Ghi chú: bài viết mang tính thông tin và quản trị dự án; không thay thế tư vấn pháp lý cho một sản phẩm hoặc hồ sơ cụ thể.
