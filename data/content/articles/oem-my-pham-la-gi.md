@@ -12,15 +12,15 @@ seo_title: "OEM mỹ phẩm là gì? Quy trình và checklist trước khi làm"
 meta_description: "Hiểu OEM mỹ phẩm theo góc nhìn dự án: phạm vi trách nhiệm, quy trình từ brief đến launch, dữ liệu cần khóa và checklist trước khi chọn đối tác."
 direct_answer: "OEM mỹ phẩm thường được dùng để mô tả mô hình một thương hiệu thuê đối tác sản xuất sản phẩm theo phạm vi và yêu cầu đã thống nhất. Tuy nhiên, OEM không phải là nhãn pháp lý thay thế cho các nghĩa vụ về điều kiện sản xuất, công bố sản phẩm, hồ sơ và trách nhiệm của tổ chức đưa mỹ phẩm ra thị trường."
 canonical_path: "/oem-my-pham-la-gi/"
-review_status: "editorial_review"
-reviewer: "pending"
-last_verified: "2026-08-21"
+review_status: "publish_ready"
+reviewer: "source-safe editorial"
+last_verified: "2026-08-27"
 source_scope: "Educational B2B article. No unverified DDG factory, certification, capacity, MOQ or product-efficacy claims."
 internal_links:
   - "/odm-my-pham-la-gi/"
   - "/oem-va-odm-my-pham-khac-nhau-the-nao/"
   - "/quy-trinh-gia-cong-my-pham/"
-  - "/checklist-brief-oem-odm-my-pham/"
+  - "/oem-odm-my-pham/"
 cta: "Chuẩn bị product brief trước khi trao đổi với đối tác sản xuất."
 sources:
   - title: "Nghị định 93/2016/NĐ-CP về điều kiện sản xuất mỹ phẩm"
@@ -204,7 +204,7 @@ Nếu thương hiệu chưa có dữ liệu thị trường, mở ít SKU hơn t
 - [ODM mỹ phẩm là gì?](/odm-my-pham-la-gi/)
 - [OEM và ODM mỹ phẩm khác nhau thế nào?](/oem-va-odm-my-pham-khac-nhau-the-nao/)
 - [Quy trình gia công mỹ phẩm](/quy-trinh-gia-cong-my-pham/)
-- [Checklist brief OEM/ODM mỹ phẩm](/checklist-brief-oem-odm-my-pham/)
+- [Tổng quan OEM / ODM mỹ phẩm](/oem-odm-my-pham/)
 
 ## Nguồn tham khảo
 
@@ -213,6 +213,6 @@ Nếu thương hiệu chưa có dữ liệu thị trường, mở ít SKU hơn t
 3. Bộ Y tế — thông tin về **cách lập Phiếu công bố sản phẩm mỹ phẩm** theo Thông tư 34/2025/TT-BYT.
 4. ASEAN — **Guidelines for Product Information File (PIF)** trong khuôn khổ ASEAN Cosmetic Directive.
 
-**Last verified: 21/08/2026.**
+**Last verified: 27/08/2026.**
 
 > Ghi chú: bài viết mang tính thông tin/định hướng quản trị dự án, không thay thế tư vấn pháp lý cho một hồ sơ hoặc sản phẩm cụ thể.
