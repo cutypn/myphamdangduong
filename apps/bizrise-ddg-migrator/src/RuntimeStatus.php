@@ -9,6 +9,8 @@ final class RuntimeStatus {
     private const ROUTE_PATH = '/runtime-status';
     private const REPORT_OPTION = 'bizrise_ddg_product_media_repair_report';
     private const VERSION_OPTION = 'bizrise_ddg_product_media_repair_version';
+    private const ARTICLE_REPORT_OPTION = 'bizrise_ddg_article_importer_report';
+    private const ARTICLE_VERSION_OPTION = 'bizrise_ddg_article_importer_version';
 
     public static function register_hooks(): void {
         add_action( 'rest_api_init', array( self::class, 'register_route' ) );
@@ -32,6 +34,15 @@ final class RuntimeStatus {
             $report = array();
         }
 
+        $article_report = get_option( self::ARTICLE_REPORT_OPTION, array() );
+        if ( ! is_array( $article_report ) ) {
+            $article_report = array();
+        }
+
+        $article_errors = is_array( $article_report['errors'] ?? null ) ? $article_report['errors'] : array();
+        $article_eligible = (int) ( $article_report['eligible'] ?? 0 );
+        $article_synced = (int) ( $article_report['created'] ?? 0 ) + (int) ( $article_report['updated'] ?? 0 );
+
         $payload = array(
             'status' => empty( $report )
                 ? 'not_run'
@@ -54,6 +65,21 @@ final class RuntimeStatus {
                 'poster_missing_count' => is_array( $report['poster_missing'] ?? null ) ? count( $report['poster_missing'] ) : 0,
                 'poster_ambiguous_count' => is_array( $report['poster_ambiguous'] ?? null ) ? count( $report['poster_ambiguous'] ) : 0,
                 'error_count' => is_array( $report['errors'] ?? null ) ? count( $report['errors'] ) : 0,
+            ),
+            'articles' => array(
+                'status' => empty( $article_report )
+                    ? 'not_run'
+                    : ( empty( $article_errors ) && $article_eligible > 0 && $article_synced === $article_eligible ? 'sync_clean' : 'sync_incomplete' ),
+                'source_version' => sanitize_text_field( (string) ( $article_report['source_version'] ?? '' ) ),
+                'fingerprint' => sanitize_text_field( (string) get_option( self::ARTICLE_VERSION_OPTION, '' ) ),
+                'ran_at' => sanitize_text_field( (string) ( $article_report['ran_at'] ?? '' ) ),
+                'eligible' => $article_eligible,
+                'created' => (int) ( $article_report['created'] ?? 0 ),
+                'updated' => (int) ( $article_report['updated'] ?? 0 ),
+                'skipped' => (int) ( $article_report['skipped'] ?? 0 ),
+                'synced' => $article_synced,
+                'error_count' => count( $article_errors ),
+                'slugs' => self::safe_article_slugs( $article_report['articles'] ?? array() ),
             ),
             'checked_at' => gmdate( 'c' ),
         );
@@ -81,6 +107,23 @@ final class RuntimeStatus {
                 $safe[] = $id;
             }
         }
+        return array_values( array_unique( $safe ) );
+    }
+
+    private static function safe_article_slugs( $value ): array {
+        if ( ! is_array( $value ) ) {
+            return array();
+        }
+
+        $safe = array();
+        foreach ( $value as $key => $item ) {
+            $candidate = is_string( $key ) ? $key : ( is_array( $item ) ? (string) ( $item['slug'] ?? '' ) : '' );
+            $slug = sanitize_title( $candidate );
+            if ( '' !== $slug ) {
+                $safe[] = $slug;
+            }
+        }
+
         return array_values( array_unique( $safe ) );
     }
 
