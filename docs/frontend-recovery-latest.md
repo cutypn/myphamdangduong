@@ -12,32 +12,21 @@ Latest Product/Data Recovery state read before this frontend change:
 - unmanaged/legacy missing-media rows remain separate for deterministic classification;
 - production on current HEAD remains **CHƯA XÁC MINH**.
 
-## P0 frontend fix this run
+## P0 frontend audit / fix this run
 
-Static mobile interaction audit found a real navigation regression: submenu parents existed in the header, but the JS only toggled the whole hamburger menu and closed it on every link click. There was no dedicated mobile control for expanding/collapsing submenu branches such as `Năng lực` and `Sản phẩm & Routine`.
+Static mobile interaction audit re-checked the current deterministic 8-branch header after the latest navigation change. Product grid, mobile dimensions, CTA/tap targets and WooCommerce catalog routing remain intact in source.
 
-Fix applied:
+A real accessibility/state bug remained in the mobile hamburger/submenu interaction: visual and `aria-expanded` state changed, but assistive labels still always announced “Mở menu” / “Mở menu con” even while those controls were already open.
 
-- create a dedicated submenu toggle button for every `.menu-item-has-children` item;
-- submenu toggle is independent from the parent link, so the parent page remains directly navigable;
-- toggle exposes `aria-expanded` + `aria-controls` and a localized accessible label;
-- button target is **44×44px** on mobile/tablet;
-- only one submenu stays open at a time;
-- Escape closes an open submenu first and restores focus to its toggle; a second Escape closes the main mobile menu and restores focus to the hamburger;
-- viewport transition to desktop clears mobile menu/submenu state;
-- submenu is explicit `display:none` / `display:block` below 981px rather than depending on hover/focus behavior;
-- fallback menu regression was repaired by restoring `Trang chủ` before the approved site branches;
-- no Product Truth, SKU mapping, publication status or WooCommerce visibility rule changed.
+Fix applied in `apps/bizrise-ddg-theme/assets/js/theme2.js`:
 
-Files changed:
+- hamburger label now switches between `Mở menu` and `Đóng menu` in sync with `aria-expanded`;
+- screen-reader text and `aria-label` stay synchronized;
+- each submenu toggle stores its parent label and switches between `Mở menu con: …` and `Đóng menu con: …`;
+- closing by Escape, link navigation or desktop viewport reset restores the closed labels;
+- no Product Truth, SKU, media assignment, publish status or WooCommerce visibility rule changed.
 
-- `apps/bizrise-ddg-theme/assets/js/theme2.js`
-- `apps/bizrise-ddg-theme/style.css`
-- `apps/bizrise-ddg-theme/header.php`
-
-Frontend exact SHA after the fix:
-
-- `fc61a9941caf3856f86b9a87baa10c141e37635f`
+Exact frontend code SHA for this fix: `7dce80097091c8faa6b6d6df4fc35ef0b5dcc3ec`.
 
 ## Mobile checklist
 
@@ -47,10 +36,11 @@ Frontend exact SHA after the fix:
 | Logged-in WP admin-bar offset | PASS source | PASS source | PASS source |
 | Logo/hamburger fit | PASS source | PASS source | PASS source |
 | Hamburger target >=44px | PASS source | PASS source | PASS source |
+| Hamburger accessible label follows state | PASS source | PASS source | PASS source |
 | Parent menu links remain navigable | PASS source | PASS source | PASS source |
 | Submenu toggle target 44×44px | PASS source | PASS source | PASS source |
 | Submenu explicit open/close state | PASS source | PASS source | PASS source |
-| Submenu ARIA state | PASS source | PASS source | PASS source |
+| Submenu accessible label follows state | PASS source | PASS source | PASS source |
 | Escape closes submenu then menu | PASS source | PASS source | PASS source |
 | Resize/orientation clears scroll lock/state | PASS source | PASS source | PASS source |
 | Product search control >=48px | PASS source | PASS source | PASS source |
@@ -75,43 +65,34 @@ Frontend exact SHA after the fix:
 ## Product / tablet / desktop guards retained
 
 - `/san-pham/` remains WooCommerce-backed; fallback page queries public WooCommerce `product`, not Product Truth.
+- Fallback catalog search passes the sanitized `s` keyword into the WooCommerce product query and preserves it through pagination.
 - Product filter taxonomy row wraps at tablet/desktop widths and horizontal-scrolls on phone.
 - Product grid remains 2 columns on canonical phone widths, 3 columns at tablet, 4 columns on larger desktop.
 - Product cards remain portrait 9:16 with `object-fit:contain`, avoiding image crop.
-- Related-product query retains canonical WooCommerce `exclude-from-catalog` exclusion from Product/Data recovery.
-- Desktop >=981px keeps existing hover/focus submenu behavior; the new submenu buttons are hidden there.
-
-## CI
-
-Exact frontend SHA `fc61a9941caf3856f86b9a87baa10c141e37635f`:
-
-- Validate Bizrise DDG V2 run `33093030727`: **SUCCESS**.
-- Build Bizrise DDG V2 Release run `33093030658`: **SUCCESS**.
+- Related-product query retains canonical WooCommerce `exclude-from-catalog` exclusion from Product/Data Recovery.
 
 ## Production / browser verification
 
-Live production/browser verification is still unavailable from this execution environment, so no screenshot-based production claim is made.
+Live production/browser retrieval remains unavailable from this execution environment, so no screenshot-based production claim is made.
 
 Required production PASS evidence remains:
 
-1. deployed SHA equals `fc61a9941caf3856f86b9a87baa10c141e37635f` or validated descendant;
+1. deployed SHA equals current validated HEAD or descendant;
 2. `/san-pham/` at 360, 390, 430 and desktop >=1180;
 3. representative `product_cat` archive;
-4. >=8 product singles across brands;
+4. representative product singles across brands;
 5. homepage/core pages;
 6. `/kien-thuc/` plus representative article pages;
-7. hamburger + submenu interaction including 44px toggles, parent navigation, Escape and orientation/viewport transition;
+7. hamburger + submenu interaction including state labels, Escape and viewport transition;
 8. zero horizontal overflow at 360/390/430;
-9. all primary/secondary CTA and footer navigation/contact/legal targets render at ~44px minimum height;
+9. primary/secondary CTA and footer targets render at ~44px minimum height;
 10. visual polish of product 9:16 cards, spacing, hero height, typography, CTA visibility and footer.
 
 ## Status
 
 **MOBILE SOURCE: PASS**
 
-**MOBILE SUBMENU SOURCE: PASS**
-
-**EXACT FRONTEND CI: PASS**
+**MOBILE MENU STATE LABELS: PASS SOURCE**
 
 **PRODUCTION DEPLOY: CHƯA XÁC MINH**
 
