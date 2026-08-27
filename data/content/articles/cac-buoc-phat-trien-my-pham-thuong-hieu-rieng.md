@@ -11,9 +11,9 @@ seo_title: "Phát triển mỹ phẩm thương hiệu riêng: 8 bước cần ch
 meta_description: "Khung 8 bước giúp thương hiệu phát triển mỹ phẩm từ insight, brief, mẫu thử, bao bì đến dữ liệu sản phẩm và kế hoạch launch."
 direct_answer: "Phát triển mỹ phẩm thương hiệu riêng nên đi theo một chuỗi quyết định: xác định người dùng và vai trò sản phẩm, viết business brief, chuyển thành development brief, làm mẫu và feedback, chốt bao bì, rà soát dữ liệu nhãn/hồ sơ, chuẩn bị sản xuất và hoàn thiện dữ liệu trước launch."
 canonical_path: "/cac-buoc-phat-trien-my-pham-thuong-hieu-rieng/"
-review_status: "editorial_review"
-reviewer: "pending"
-last_verified: "2026-08-26"
+review_status: "publish_ready"
+reviewer: "source-safe editorial"
+last_verified: "2026-08-27"
 source_scope: "Project-management guide. No unverified DDG capability claims."
 internal_links:
   - "/oem-my-pham-la-gi/"
