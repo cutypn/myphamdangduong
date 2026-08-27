@@ -6,29 +6,25 @@ Mobile-first recovery continues on `codex/rebuild-v2` without changing Product T
 
 ## P0 frontend fix this run
 
-Static cascade audit found a real responsive regression in Product Mockup 2.2.1: category filter pills only switched to horizontal scrolling at `<=720px`. Between **721px and 980px** the filter remained a single non-wrapping flex row, so a larger WooCommerce product taxonomy could push beyond the content width and create horizontal overflow on tablets/small laptops.
+Static mobile interaction audit found several text links whose clickable area was only the line box rather than a finger-sized control. This affected the single-product brand link, section-level “Xem tất cả” CTA, footer secondary CTA, footer company/contact links, footer navigation and footer legal links. These are important mobile navigation/action surfaces and were below the target ~44px hit height even though primary buttons, product-card CTA and menu links had already been hardened.
 
-Fixes applied:
+Fix applied in theme core CSS:
 
-- product mockup stylesheet updated to **2.2.2**;
-- base product filter row now uses `flex-wrap:wrap` plus `min-width:0`, preventing the taxonomy row from widening its container on desktop/tablet;
-- phone breakpoint `<=720px` intentionally overrides back to `flex-wrap:nowrap` + `overflow-x:auto`, preserving the approved horizontal-chip mobile interaction;
-- filter pills retain `min-height:44px` and product-card CTA retains `min-height:44px` on phone;
-- Woo archive and `/san-pham/` fallback both bump the product mockup asset from `2.2.1` to `2.2.2` to invalidate browser/CDN cache;
-- product layout remains two columns on phone, portrait 9:16 media, source image `object-fit:contain`;
-- no Product Truth or publication-rule changes.
+- add `min-height:44px` + inline-flex alignment for single-product brand CTA;
+- add `min-height:44px` for split-section text CTA such as “Xem tất cả”;
+- add `min-height:44px` for footer secondary CTA, company link, navigation links, legal links and contact links;
+- footer navigation links use full available width on phone for easier tapping;
+- footer legal row wraps safely with gaps to avoid narrow-screen collision;
+- existing WordPress mobile admin-bar sticky-header offset remains intact;
+- no Product Truth, SKU mapping, publication status or WooCommerce visibility rule changed.
 
-Frontend code commits this run:
+Frontend code SHA:
 
-- `ae7846622ea00d0a457ba64352fdb7ee59939406` — prevent product filter overflow on tablet;
-- `5d53d29dc9c0cf33cb592e216403b8c5b0c6aa8f` — bump Woo archive asset to 2.2.2;
-- `9284d7db87a47cce39b95ed21d848fee82536923` — bump `/san-pham/` fallback asset to 2.2.2.
+- `60be5679ed1c4b401de8c28ad0b64c34c1cc2a0f` — `fix(theme): harden mobile touch targets across site`
 
-Files:
+File:
 
-- `apps/bizrise-ddg-theme/assets/css/product-mockup.css`
-- `apps/bizrise-ddg-theme/woocommerce/archive-product.php`
-- `apps/bizrise-ddg-theme/page-product-catalog.php`
+- `apps/bizrise-ddg-theme/style.css`
 
 ## Mobile checklist
 
@@ -43,7 +39,8 @@ Files:
 | Resize/orientation clears scroll lock | PASS source | PASS source | PASS source |
 | Product search control >=48px | PASS source | PASS source | PASS source |
 | Product filter pills >=44px | PASS source | PASS source | PASS source |
-| Product CTA >=44px | PASS source | PASS source | PASS source |
+| Product-card CTA >=44px | PASS source | PASS source | PASS source |
+| Single-product secondary/text CTA >=44px | PASS source | PASS source | PASS source |
 | Product grid stays 2 columns | PASS source | PASS source | PASS source |
 | Product media stays portrait 9:16 | PASS source | PASS source | PASS source |
 | Product images use `object-fit:contain` | PASS source | PASS source | PASS source |
@@ -55,46 +52,49 @@ Files:
 | Article body/type scale readable | PASS source | PASS source | PASS source |
 | Tables scroll instead of breaking viewport | PASS source | PASS source | PASS source |
 | Form controls avoid phone auto-zoom | PASS source | PASS source | PASS source |
+| Footer nav/contact/legal targets >=44px | PASS source | PASS source | PASS source |
+| Footer legal row wraps safely | PASS source | PASS source | PASS source |
 | Footer compact | PASS source | PASS source | PASS source |
 
 `PASS source` means static source/cascade/interaction inspection, not live screenshot verification.
 
-## Tablet / desktop overflow guard
+## Product / tablet / desktop guards retained
 
-- Product filter taxonomy row: **PASS source** at 721–980px via wrapping.
-- Product filter taxonomy row: **PASS source** at >=981px via wrapping.
-- Product grid: 3 columns at <=980px, 4 columns on larger desktop.
-- Phone filter chips remain horizontal-scroll instead of wrapping into tall multi-row controls.
+- `/san-pham/` remains WooCommerce-backed; fallback page queries public WooCommerce `product`, not Product Truth.
+- Product filter taxonomy row wraps at tablet/desktop widths and horizontal-scrolls on phone.
+- Product grid: 2 columns on canonical phone widths, 3 columns at tablet, 4 columns on larger desktop.
+- Product cards remain portrait 9:16 with `object-fit:contain`, avoiding image crop.
+- Related-product query retains canonical WooCommerce `exclude-from-catalog` exclusion from latest Product/Data recovery.
 
 ## CI
 
-Exact frontend code SHA: `9284d7db87a47cce39b95ed21d848fee82536923`.
+Exact frontend code SHA: `60be5679ed1c4b401de8c28ad0b64c34c1cc2a0f`.
 
-- Validate Bizrise DDG V2 run `33081915749`: **SUCCESS**.
-- Build Bizrise DDG V2 Release run `33081915775`: **SUCCESS**.
+- Validate Bizrise DDG V2 run `33087077723`: **SUCCESS**.
+- Build Bizrise DDG V2 Release run `33087077658`: **SUCCESS**.
 
 ## Production / browser verification
 
-Live production verification remains unavailable from this execution environment, so no production visual claim is made.
+Live production/browser verification is still unavailable from this execution environment, so no screenshot-based production claim is made.
 
 Required production PASS evidence remains:
 
-1. deployed SHA equals `9284d7db87a47cce39b95ed21d848fee82536923` or validated descendant;
+1. deployed SHA equals `60be5679ed1c4b401de8c28ad0b64c34c1cc2a0f` or validated descendant;
 2. `/san-pham/` at 360, 390, 430 and desktop >=1180;
 3. representative `product_cat` archive;
 4. >=8 product singles across brands;
 5. homepage/core pages;
 6. `/kien-thuc/` plus representative article pages;
 7. sticky header/menu/submenu interaction including Escape and orientation/viewport transition;
-8. zero horizontal overflow at 360/390/430 and no category-pill overflow at 721–980;
-9. product filter chips and card CTA render with >=44px touch height;
+8. zero horizontal overflow at 360/390/430;
+9. all primary/secondary CTA and footer navigation/contact/legal targets render at ~44px minimum height;
 10. visual polish of product 9:16 cards, spacing, hero height, typography, CTA visibility and footer.
 
 ## Status
 
 **MOBILE SOURCE: PASS**
 
-**TABLET FILTER OVERFLOW SOURCE: PASS**
+**TOUCH TARGET SOURCE: PASS**
 
 **EXACT FRONTEND CI: PASS**
 
