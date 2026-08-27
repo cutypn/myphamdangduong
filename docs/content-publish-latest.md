@@ -6,18 +6,21 @@ Knowledge content hiện có **10/10** bài trong `data/content/article-registry
 
 Runtime importer deterministic tồn tại trong `apps/bizrise-ddg-migrator/src/ArticleContentImporter.php`: exact-slug upsert, `post_status=publish`, category `kien-thuc`, idempotent content fingerprint và bỏ H1 trong Markdown khi render để theme sở hữu H1 duy nhất.
 
-Core-page source trong `apps/bizrise-ddg-theme/inc/editorial-content.php` tiếp tục dùng curated source-safe copy, không công bố cGMP/ISO/FDA/công suất/đối tác hoặc claim y tế khi chưa có hồ sơ xác minh.
+Core-page source trong `apps/bizrise-ddg-migrator/data/site-content.php` tiếp tục dùng source-safe copy, không công bố cGMP/ISO/FDA/công suất/đối tác hoặc claim y tế khi chưa có hồ sơ xác minh.
 
 ## Cải thiện source vòng này
 
-Phát hiện gap ở `cac-buoc-phat-trien-my-pham-thuong-hieu-rieng.md`: front matter đã khai báo 4 internal links và CTA nhưng phần body kết thúc ngay sau kết luận, chưa render cụm điều hướng hoặc bước tiếp theo.
+Phát hiện ba trang lõi còn quá mỏng: `/nghien-cuu-phat-trien/`, `/nha-may-san-xuat-my-pham/`, `/oem-odm-my-pham/`. Các trang có direct answer cơ bản nhưng chưa đủ hành trình đọc, internal link và bước tiếp theo.
 
-Đã sửa ở commit `6d5745058bdf691fe5376f38c1b52468aa9c4542`:
+Đã sửa ở commit `79bd792278c6cd4a2ccfbdd2b9c7b862eb857105`:
 
-- thêm mục **Đọc tiếp theo hành trình phát triển**;
-- render exact links tới OEM, ODM, quy trình gia công và R&D;
-- thêm CTA cuối bài bám đúng metadata;
-- không thêm claim, certification, capacity, named partner, contact fact hoặc product detail copy.
+- mở rộng trang R&D với flow nhu cầu → brief → tiêu chí → vòng đánh giá;
+- thêm internal links tới các bài R&D/công thức/làm mẫu đã có trong registry;
+- mở rộng trang năng lực sản xuất theo hướng dữ liệu đầu vào, điểm bàn giao, kiểm soát và hồ sơ; không gắn chứng nhận/công suất chưa xác minh;
+- thêm links tới checklist chọn nhà máy và quy trình gia công;
+- mở rộng OEM/ODM với giải thích phạm vi, khi nào cân nhắc mỗi mô hình, cấu trúc brief và cách so proposal;
+- thêm links tới ba bài OEM/ODM exact-slug và CTA chuẩn bị brief;
+- không sửa product detail copy.
 
 ## Knowledge articles
 
@@ -28,12 +31,10 @@ Phát hiện gap ở `cac-buoc-phat-trien-my-pham-thuong-hieu-rieng.md`: front m
 - Markdown reviewer pending: **0**
 - deterministic importer: **CÓ**
 - exact-slug/idempotent publication path: **CÓ**
-- private-label guide internal-link/CTA body gap before: **1**
-- private-label guide internal-link/CTA body gap after: **0**
 
 ## Core pages source
 
-Curated editorial content tiếp tục bao phủ:
+Curated/source-safe content bao phủ:
 
 - `/ve-dang-duong/`
 - `/nang-luc/`
@@ -49,6 +50,11 @@ Curated editorial content tiếp tục bao phủ:
 
 Homepage nằm trong `front-page.php`.
 
+Core-page thin-content gaps targeted this round:
+
+- before: **3** (`R&D`, `factory`, `OEM/ODM`)
+- after: **0** cho ba trang đã nhắm mục tiêu trong vòng này
+
 ## Article media inventory
 
 Endpoint source:
@@ -61,13 +67,13 @@ Counts vòng này:
 
 - article source before: **10 publish-ready / 10 metadata synchronized**;
 - article source after: **10 publish-ready / 10 metadata synchronized**;
-- private-label guide internal-link/CTA body gap before: **1**;
-- private-label guide internal-link/CTA body gap after: **0**;
+- core-page targeted thin gaps before: **3**;
+- core-page targeted thin gaps after: **0**;
 - article runtime media before: **CHƯA XÁC MINH**;
 - article runtime media after: **CHƯA XÁC MINH**;
 - media mapping tự tạo/gán mơ hồ: **0**.
 
-Production endpoint chưa đọc được từ runtime kiểm tra hiện tại; search public không index REST inventory và direct open bị giới hạn bởi safe-URL policy. Vì vậy không suy diễn Featured Image/ALT/missing/duplicate counts, article sync runtime hay trạng thái live render.
+Production endpoint chưa đọc được từ runtime kiểm tra hiện tại; public search không index REST inventory và direct open bị safe-URL policy chặn. Vì vậy không suy diễn Featured Image/ALT/missing/duplicate counts, article sync runtime hay trạng thái live render.
 
 ## Production gate
 
@@ -89,6 +95,6 @@ Không thêm cGMP/ISO/FDA không có hồ sơ hiện hành, số liệu công su
 
 **MARKDOWN METADATA SYNC: 10/10 CONFIRMED.**
 
-**LATEST CONTENT FIX: PRIVATE-LABEL DEVELOPMENT GUIDE INTERNAL LINKS + CTA RENDERED IN BODY.**
+**CORE CONTENT FIX: R&D + FACTORY + OEM/ODM EXPANDED WITH SOURCE-SAFE FLOW, INTERNAL LINKS AND CTA.**
 
-**PENDING: FINAL CI + PRODUCTION ARTICLE/MEDIA QA.**
+**PENDING: CI FOR FINAL HEAD + PRODUCTION ARTICLE/MEDIA QA.**
