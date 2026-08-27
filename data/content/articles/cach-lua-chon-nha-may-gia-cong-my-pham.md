@@ -12,14 +12,14 @@ seo_title: "Cách lựa chọn nhà máy gia công mỹ phẩm: checklist thực
 meta_description: "Checklist chọn đối tác gia công mỹ phẩm theo scope, hồ sơ, quy trình mẫu, dữ liệu bàn giao, change control và khả năng phối hợp — không chỉ theo giá."
 direct_answer: "Để lựa chọn nhà máy gia công mỹ phẩm, thương hiệu nên so sánh các đối tác trên cùng một brief và cùng phạm vi công việc; đồng thời kiểm tra hồ sơ phù hợp với phạm vi sản xuất, cách quản lý mẫu/thay đổi, dữ liệu được bàn giao và cơ chế phối hợp sau launch. Không nên chọn chỉ dựa trên báo giá hoặc nội dung quảng cáo."
 canonical_path: "/cach-lua-chon-nha-may-gia-cong-my-pham/"
-review_status: "editorial_review"
-reviewer: "pending"
-last_verified: "2026-08-21"
+review_status: "publish_ready"
+reviewer: "source-safe editorial"
+last_verified: "2026-08-27"
 source_scope: "Generic buyer-side evaluation guide. Does not claim DDG owns a factory, certifications, capacity, MOQ or turnaround time."
 internal_links:
   - "/oem-my-pham-la-gi/"
   - "/quy-trinh-gia-cong-my-pham/"
-  - "/checklist-brief-oem-odm-my-pham/"
+  - "/cac-buoc-phat-trien-my-pham-thuong-hieu-rieng/"
 cta: "Mang cùng một product brief đến nhiều đối tác để so sánh cùng scope."
 sources:
   - title: "Nghị định 93/2016/NĐ-CP về điều kiện sản xuất mỹ phẩm"
@@ -208,7 +208,7 @@ Việc khảo sát trực tiếp có thể hữu ích tùy quy mô và mức đ�
 
 - [OEM mỹ phẩm là gì?](/oem-my-pham-la-gi/)
 - [Quy trình gia công mỹ phẩm](/quy-trinh-gia-cong-my-pham/)
-- [Checklist brief OEM/ODM mỹ phẩm](/checklist-brief-oem-odm-my-pham/)
+- [Các bước phát triển mỹ phẩm thương hiệu riêng](/cac-buoc-phat-trien-my-pham-thuong-hieu-rieng/)
 
 ## Nguồn tham khảo
 
@@ -216,6 +216,6 @@ Việc khảo sát trực tiếp có thể hữu ích tùy quy mô và mức đ�
 2. Bộ Y tế — **Thông tư 34/2025/TT-BYT** sửa đổi quy định quản lý mỹ phẩm; hiệu lực từ 18/08/2025.
 3. ASEAN — **Guidelines for Product Information File (PIF)**.
 
-**Last verified: 21/08/2026.**
+**Last verified: 27/08/2026.**
 
 > Ghi chú: bài viết là checklist hỗ trợ đánh giá đối tác, không phải xác nhận năng lực/pháp lý của một doanh nghiệp cụ thể và không thay thế thẩm định pháp lý khi cần.
