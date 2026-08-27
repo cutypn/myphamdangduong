@@ -2,33 +2,33 @@
 
 ## Kết luận
 
-Knowledge content vẫn có **10/10** bài trong `data/content/article-registry.json` ở trạng thái `publish_ready`. Runtime importer deterministic đã tồn tại trong `apps/bizrise-ddg-migrator/src/ArticleContentImporter.php`: exact-slug upsert, `post_status=publish`, category `kien-thuc`, idempotent content fingerprint và bỏ H1 trong Markdown khi render để theme sở hữu H1 duy nhất.
+Knowledge content vẫn có **10/10** bài trong `data/content/article-registry.json` ở trạng thái `publish_ready`. Runtime importer deterministic tồn tại trong `apps/bizrise-ddg-migrator/src/ArticleContentImporter.php`: exact-slug upsert, `post_status=publish`, category `kien-thuc`, idempotent content fingerprint và bỏ H1 trong Markdown khi render để theme sở hữu H1 duy nhất.
 
 Core-page source trong `apps/bizrise-ddg-theme/inc/editorial-content.php` tiếp tục dùng curated source-safe copy, không công bố cGMP/ISO/FDA/công suất/đối tác hoặc claim y tế khi chưa có hồ sơ xác minh.
 
 ## Cải thiện source vòng này
 
-Commit content: `66faef53844e8d45d2a3f2c4ac4d3e590eab25c7`
+Commit content: `c32088d7db052416b838c4b9500a6682f558ac12`
 
-File: `data/content/articles/rd-my-pham-la-gi.md`
+File: `data/content/articles/cac-buoc-phat-trien-my-pham-thuong-hieu-rieng.md`
 
 Đã sửa:
 
 - đồng bộ front matter `review_status` từ `editorial_review` sang `publish_ready`;
 - đổi reviewer từ `pending` sang `source-safe editorial`;
 - cập nhật `last_verified` sang `2026-08-27`;
-- giữ nguyên 3 internal links vì đều trỏ tới slug có trong article registry;
-- không thay đổi claim, chứng nhận, công suất, đối tác hoặc product detail copy.
+- giữ nguyên 4 internal links vì đều trỏ tới slug có trong article registry;
+- không thêm claim, chứng nhận, công suất, đối tác hoặc product detail copy.
 
-Đây là fix source consistency để registry và Markdown không tự mâu thuẫn khi QA/importer kiểm tra publication state.
+Đây là fix source consistency để registry và Markdown không tự mâu thuẫn khi importer/QA kiểm publication state.
 
 ## Knowledge articles
 
 - total registry: **10**
 - publish_ready registry: **10**
 - editorial_review registry: **0**
-- Markdown front matter đã đồng bộ publish-ready xác nhận: **3/10** (`oem-my-pham-la-gi`, `odm-my-pham-la-gi`, `rd-my-pham-la-gi`)
-- Markdown còn lại cần tiếp tục rà front matter/link consistency: **7**
+- Markdown front matter đã đồng bộ publish-ready xác nhận: **4/10** (`oem-my-pham-la-gi`, `odm-my-pham-la-gi`, `rd-my-pham-la-gi`, `cac-buoc-phat-trien-my-pham-thuong-hieu-rieng`)
+- Markdown còn lại cần tiếp tục rà front matter/link consistency: **6**
 - deterministic importer: **CÓ**
 - importer bỏ Markdown H1 khỏi `post_content`: **CÓ**
 - exact-slug/idempotent publication path: **CÓ**
@@ -57,12 +57,12 @@ Endpoint source:
 
 `/wp-json/bizrise-ddg/v1/media-inventory?scope=articles&per_page=100`
 
-Endpoint này có thể audit Featured Image ID/file/URL/ALT/kích thước, missing featured và duplicate attachment cho bài public. Môi trường kiểm tra hiện tại chưa đọc production endpoint trực tiếp một cách đáng tin cậy, vì vậy không tự suy diễn media live.
+Endpoint này có thể audit Featured Image ID/file/URL/ALT/kích thước, missing featured và duplicate attachment cho bài public. Lần kiểm tra production trong vòng này bị giới hạn bởi môi trường fetch (không mở được URL endpoint trực tiếp), nên không tự suy diễn media live.
 
 Counts:
 
-- article source before: **10 publish-ready registry / 2 Markdown metadata synced**
-- article source after: **10 publish-ready registry / 3 Markdown metadata synced**
+- article source before: **10 publish-ready registry / 3 Markdown metadata synced**
+- article source after: **10 publish-ready registry / 4 Markdown metadata synced**
 - internal links mới phát hiện sai vòng này: **0**
 - article runtime media before: **CHƯA XÁC MINH**
 - article runtime media after: **CHƯA XÁC MINH**
@@ -70,7 +70,7 @@ Counts:
 
 ## CI
 
-Exact content SHA `66faef53844e8d45d2a3f2c4ac4d3e590eab25c7`:
+Exact content SHA `c32088d7db052416b838c4b9500a6682f558ac12`:
 
 - Validate Bizrise DDG V2: **SUCCESS**
 - Build Bizrise DDG V2 Release: **SUCCESS**
@@ -93,9 +93,9 @@ Không thêm cGMP/ISO/FDA không có hồ sơ hiện hành, số liệu công su
 
 **SOURCE CONTENT: 10/10 KNOWLEDGE ARTICLES PUBLISH-READY.**
 
-**MARKDOWN METADATA SYNC: 3/10 CONFIRMED.**
+**MARKDOWN METADATA SYNC: 4/10 CONFIRMED.**
 
-**THIS ROUND: R&D ARTICLE SOURCE STATE ALIGNED WITH REGISTRY.**
+**THIS ROUND: PRIVATE-LABEL DEVELOPMENT ARTICLE SOURCE STATE ALIGNED WITH REGISTRY.**
 
 **CI FOR CONTENT SHA: PASS.**
 
