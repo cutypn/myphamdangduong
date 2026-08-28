@@ -2,14 +2,14 @@
 /**
  * Plugin Name: Bizrise DDG Migrator
  * Description: Controlled, idempotent migration, media and site-import tools for the Đăng Dương Group V2 rebuild.
- * Version: 0.4.5
+ * Version: 0.4.6
  * Requires PHP: 8.2
  * Text Domain: bizrise-ddg-migrator
  */
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'BIZRISE_DDG_MIGRATOR_VERSION', '0.4.5' );
+define( 'BIZRISE_DDG_MIGRATOR_VERSION', '0.4.6' );
 define( 'BIZRISE_DDG_MIGRATOR_PATH', plugin_dir_path( __FILE__ ) );
 
 require_once BIZRISE_DDG_MIGRATOR_PATH . 'src/ProductImporter.php';

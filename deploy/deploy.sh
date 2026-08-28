@@ -17,6 +17,8 @@ CORE_DST="$WP_ROOT/wp-content/plugins/bizrise-core"
 THEME_DST="$WP_ROOT/wp-content/themes/bizrise-ddg"
 MIGRATOR_DST="$WP_ROOT/wp-content/plugins/bizrise-ddg-migrator"
 CONTENT_DST="$MIGRATOR_DST/data/content"
+THEMES_DIR="$WP_ROOT/wp-content/themes"
+PLUGINS_DIR="$WP_ROOT/wp-content/plugins"
 
 required=(
   "$CORE_SRC/bizrise-core.php"
@@ -71,12 +73,57 @@ for target in "$CORE_DST" "$THEME_DST" "$MIGRATOR_DST"; do
 done
 
 mkdir -p "$CORE_DST" "$THEME_DST" "$MIGRATOR_DST"
-
 rsync -a --delete --exclude='tests/' "$CORE_SRC/" "$CORE_DST/"
 rsync -a --delete --exclude='tests/' "$THEME_SRC/" "$THEME_DST/"
 rsync -a --delete --exclude='tests/' "$MIGRATOR_SRC/" "$MIGRATOR_DST/"
 mkdir -p "$CONTENT_DST"
 rsync -a --delete "$CONTENT_SRC/" "$CONTENT_DST/"
+
+# Ensure the single retained DDG theme is active before removing legacy themes.
+DDG_WP_ROOT="$WP_ROOT" php <<'PHP'
+<?php
+$root = (string) getenv('DDG_WP_ROOT');
+define('WP_USE_THEMES', false);
+require rtrim($root, '/') . '/wp-load.php';
+if (function_exists('switch_theme')) {
+    switch_theme('bizrise-ddg');
+}
+PHP
+
+mkdir -p "$BACKUP_DIR/legacy/themes" "$BACKUP_DIR/legacy/plugins"
+
+# User-approved cleanup: keep exactly one WordPress theme, bizrise-ddg.
+if [[ -d "$THEMES_DIR" ]]; then
+  shopt -s nullglob
+  for dir in "$THEMES_DIR"/*; do
+    [[ -d "$dir" ]] || continue
+    name="$(basename "$dir")"
+    [[ "$name" == "bizrise-ddg" ]] && continue
+    mkdir -p "$BACKUP_DIR/legacy/themes/$name"
+    rsync -a "$dir/" "$BACKUP_DIR/legacy/themes/$name/"
+    rm -rf -- "$dir"
+    echo "[deploy] removed legacy theme: $name"
+  done
+  shopt -u nullglob
+fi
+
+# Remove only DDG legacy plugins/tools replaced by the V2 runtime.
+legacy_plugins=(
+  bizrise-ddg-experience
+  bizrise-ddg-media-hotfix
+  bizrise-ddg-media-importer
+  bizrise-ddg-product-sync
+  bizrise-ddg-site-pages
+  ddg-product-catalog-repair
+)
+for name in "${legacy_plugins[@]}"; do
+  dir="$PLUGINS_DIR/$name"
+  [[ -d "$dir" ]] || continue
+  mkdir -p "$BACKUP_DIR/legacy/plugins/$name"
+  rsync -a "$dir/" "$BACKUP_DIR/legacy/plugins/$name/"
+  rm -rf -- "$dir"
+  echo "[deploy] removed legacy plugin/tool: $name"
+done
 
 cat > "$WP_ROOT/wp-content/.bizrise-ddg-release" <<EOF
 branch=codex/rebuild-v2
@@ -91,4 +138,5 @@ echo "[deploy] V2 source deployed successfully"
 echo "[deploy] release: $RELEASE_SHA"
 echo "[deploy] backup: $BACKUP_DIR"
 echo "[deploy] approved article sources synced into migrator runtime data"
-echo "[deploy] theme/plugins were NOT activated automatically"
+echo "[deploy] retained theme: bizrise-ddg"
+echo "[deploy] DDG legacy theme/plugins cleaned after backup"
