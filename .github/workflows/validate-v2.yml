@@ -38,6 +38,56 @@ jobs:
       - name: Validate Product Truth seed
         run: python3 tests/smoke/validate_product_seed.py
 
+      - name: Validate controlled 44-SKU media manifest
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 - <<'PY'
+          import csv
+          from pathlib import Path
+
+          path = Path('apps/bizrise-ddg-migrator/data/product-media-manifest.csv')
+          required = {
+              'key', 'source_filename', 'brand', 'product_name', 'pack_size',
+              'poster_filename', 'status', 'categories'
+          }
+          rows = list(csv.DictReader(path.open(encoding='utf-8-sig', newline='')))
+          if len(rows) != 44:
+              raise SystemExit(f'controlled media manifest must contain exactly 44 rows, got {len(rows)}')
+
+          missing_headers = required.difference(rows[0].keys() if rows else ())
+          if missing_headers:
+              raise SystemExit(f'manifest missing required headers: {sorted(missing_headers)}')
+
+          def clean(value):
+              return (value or '').strip()
+
+          for index, row in enumerate(rows, start=2):
+              missing = [name for name in required if not clean(row.get(name))]
+              if missing:
+                  raise SystemExit(f'manifest row {index} missing required values: {missing}')
+              if not clean(row['source_filename']).lower().endswith(('.jpg', '.jpeg', '.png', '.webp')):
+                  raise SystemExit(f'manifest row {index} has invalid source filename: {row["source_filename"]!r}')
+              if not clean(row['poster_filename']).lower().endswith(('.jpg', '.jpeg', '.png', '.webp')):
+                  raise SystemExit(f'manifest row {index} has invalid poster filename: {row["poster_filename"]!r}')
+
+          for field in ('key', 'source_filename', 'poster_filename'):
+              values = [clean(row[field]).casefold() for row in rows]
+              duplicates = sorted({value for value in values if values.count(value) > 1})
+              if duplicates:
+                  raise SystemExit(f'manifest contains duplicate {field}: {duplicates}')
+
+          identity = [
+              (clean(row['brand']).casefold(), clean(row['product_name']).casefold(), clean(row['pack_size']).casefold())
+              for row in rows
+          ]
+          duplicate_identity = sorted({value for value in identity if identity.count(value) > 1})
+          if duplicate_identity:
+              raise SystemExit(f'manifest contains duplicate brand/product/pack identity: {duplicate_identity}')
+
+          print('validated deterministic 44-SKU media manifest: 44 unique keys, sources, posters and identities')
+          PY
+
       - name: Validate JSON and publish-ready article data
         shell: bash
         run: |
