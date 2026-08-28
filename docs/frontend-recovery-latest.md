@@ -4,45 +4,36 @@
 
 Mobile-first recovery continues on `codex/rebuild-v2` without changing Product Truth, publication rules, WooCommerce mapping or media assignments. Product/Data Recovery remains authoritative: public catalog = WooCommerce `post_type=product`; internal `bizrise_product` remains non-public/non-queryable and must not own `/san-pham/`.
 
-Latest Product/Data Recovery state read before this frontend change:
+Latest Product/Data Recovery read before this frontend change:
 
 - controlled manifest: **44**;
 - controlled matched: **44**;
 - last verified controlled wrong Featured Image: **0**;
 - public legal HOLD exclusion: **PASS source + CI**;
-- approved mindmap structure: **PASS source + CI**;
-- production on current HEAD: **CHƯA XÁC MINH**;
-- product cleanup remains blocked-safe with **0** product state changes while live inventory is unavailable.
+- product cleanup: **BLOCKED-SAFE / 0 product state changes** while live deterministic inventory is unavailable;
+- production on current HEAD: **CHƯA XÁC MINH**.
 
-## P0 frontend audit / fix this run
+## P0/P1 audit and fix this run
 
-The approved mindmap expanded the header to eight top-level navigation items plus logo and CTA. Theme 2 still switched to hamburger only at `<=980px`, leaving the 981–1180px range vulnerable to a crowded or overflowing desktop navigation row.
+`docs/post-deploy-test-latest.md` remains blocked because production deploy/runtime/frontend cannot currently be reached from the tester, so no live screenshot or deployed-SHA evidence exists yet.
 
-Fix applied in the existing theme stylesheet layer (`mobile-p0.css`), not a plugin override:
+Source audit found one responsive navigation mismatch:
 
-- touch navigation now activates at `<=1180px`;
-- hamburger remains **44×44px**;
-- expanded navigation uses a fixed scrollable panel with `overflow-x:hidden` and `overscroll-behavior:contain`;
-- top-level and submenu links keep minimum **44px** touch height and allow wrapping;
-- admin-bar offsets are retained per breakpoint;
-- canonical 360/390/430 header geometry remains 64px on `<=520px` and 68px through the wider phone breakpoint;
-- the mobile product typography/card rules from the prior pass are retained unchanged;
-- desktop navigation remains the full horizontal row only above 1180px;
-- cache version for `mobile-p0.css` bumped to `2026.08.28.4`.
+- CSS intentionally uses hamburger/touch navigation through **1180px** because the approved mindmap has eight top-level items plus logo/CTA.
+- `assets/js/theme2.js` still treated **981px** as the desktop transition.
+- Crossing 981px could therefore reset the open menu/submenu state while the UI was still in hamburger mode between 981–1180px.
+
+Fix:
+
+- aligned JS desktop media query to `min-width: 1181px`;
+- Escape/submenu/focus behavior otherwise unchanged;
+- no Product Truth, WooCommerce, HOLD, media mapping or publication rule changed.
+
+Exact frontend code commit: `f0f18faa2df555e0e62641aeefaee376bf31f1d2`.
 
 Files changed:
 
-- `apps/bizrise-ddg-theme/assets/css/mobile-p0.css`
-- `apps/bizrise-ddg-theme/header.php`
-
-Exact frontend code HEAD: `475253b49e2566cb88391d8a8f416a6f3fbe7149`.
-
-CI for exact HEAD:
-
-- Validate Bizrise DDG V2 run `33135472264`: **SUCCESS**;
-- Build Bizrise DDG V2 Release run `33135472214`: **SUCCESS**.
-
-No JS file changed in this run. Existing menu/submenu JS behavior is unchanged.
+- `apps/bizrise-ddg-theme/assets/js/theme2.js`
 
 ## Mobile checklist
 
@@ -55,48 +46,63 @@ No JS file changed in this run. Existing menu/submenu JS behavior is unchanged.
 | Product search >=48px | PASS source | PASS source | PASS source |
 | Product filter pills >=44px | PASS source | PASS source | PASS source |
 | Product-card CTA >=44px | PASS source | PASS source | PASS source |
-| Product-card typography readable | PASS source | PASS source | PASS source |
 | Product grid 2 columns | PASS source | PASS source | PASS source |
-| Product media portrait 9:16 | PASS source | PASS source | PASS source |
-| Product images `object-fit:contain` | PASS source | PASS source | PASS source |
+| Product media portrait 9:16 / contain | PASS source | PASS source | PASS source |
 | Single product image contained | PASS source | PASS source | PASS source |
 | Article card/body responsive | PASS source | PASS source | PASS source |
-| Article aside tap targets >=44px | PASS source | PASS source | PASS source |
-| Tables scroll instead of viewport break | PASS source | PASS source | PASS source |
-| Form controls avoid phone auto-zoom | PASS source | PASS source | PASS source |
-| Footer targets >=44px / compact | PASS source | PASS source | PASS source |
+| Tables/form/footer responsive | PASS source | PASS source | PASS source |
 
-`PASS source` means static source/cascade/interaction inspection plus CI, not live screenshot verification.
+`PASS source` means static source/cascade/interaction inspection, not live production screenshot verification.
 
 ## Wider viewport guard
 
-The expanded mindmap now uses the touch navigation through 1180px, preventing the new eight-item sitemap from competing for a single crowded row in the 981–1180 range. Desktop >=1181px keeps the canonical full navigation row.
+- `<=1180px`: touch navigation/hamburger.
+- `>=1181px`: full desktop navigation and JS state reset.
+- JS and CSS responsive ownership are now aligned.
 
-## Product / catalog guards retained
+## CRO / tracking audit
 
-- `/san-pham/` remains WooCommerce-backed; fallback page queries public WooCommerce `product`, not Product Truth.
-- Product grid remains 2 columns on canonical phone widths, 3 columns at tablet and 4 columns on larger desktop.
-- Product cards remain portrait 9:16 with `object-fit:contain` in the final cascade.
-- No Product Truth/HOLD/publication/media mapping rule changed.
+Theme source does **not** currently contain a GA4/GTM vendor ID or a `dataLayer`/`gtag` integration. No fake vendor key was added.
 
-## Production / browser verification
+Current state:
 
-Product/Data Recovery attempted production access at **2026-08-28 09:10 ICT** and DNS did not resolve. This frontend run also found no searchable production result for `dangduonggroup.com`, so no fresh deployed SHA, screenshot or browser evidence is available.
+- native page rendering/navigation: present;
+- `page_view`: depends on external analytics integration, **CHƯA XÁC MINH**;
+- `scroll`: **CHƯA XÁC MINH**;
+- `form_start` / `form_submit`: **CHƯA XÁC MINH**;
+- `ClickCTA` / `ClickPhone` / `ClickZalo`: **CHƯA XÁC MINH**;
+- UTM preservation: no theme-level rewriting that intentionally strips query parameters was identified in this audit.
 
-Required production PASS evidence remains:
+Tracking should only be wired once the real GA4/GTM container/property is known; no vendor ID is inferred.
 
-1. deployed SHA equals current validated HEAD or descendant;
-2. `/san-pham/` at 360, 390, 430 and desktop >=1180;
-3. homepage/related product cards at 360/390/430;
-4. representative category and product single;
-5. article body/aside, footer and form interaction;
-6. hamburger/submenu interaction at 360/390/430 and 981–1180, with zero horizontal overflow.
+## Performance evidence
+
+FCP, LCP, CLS and PageSpeed mobile are **CHƯA XÁC MINH** because production cannot currently be rendered/tested from the available environment. No synthetic numbers are reported.
+
+## CI / deploy state
+
+For code commit `f0f18faa2df555e0e62641aeefaee376bf31f1d2` at report time:
+
+- Validate Bizrise DDG V2: queued/running;
+- Build Bizrise DDG V2 Release: running;
+- production deployed SHA: **CHƯA XÁC MINH**.
+
+## Production PASS evidence still required
+
+1. `deployed_sha` equals a validated/released current HEAD or descendant;
+2. `/`, `/san-pham/`, representative category/single product, brand, article, contact/store locator render successfully;
+3. 360/390/430 browser QA: hamburger/submenu, no horizontal overflow, 2-column product grid, hero/CTA/typography/footer;
+4. desktop >=1181px full nav does not break;
+5. catalog remains non-empty and WooCommerce-owned;
+6. performance/tracking evidence where instrumentation is actually available.
 
 ## Status
 
 **MOBILE SOURCE: PASS**
 
-**EXACT HEAD CI: PASS**
+**RESPONSIVE NAV JS/CSS ALIGNMENT: FIXED**
+
+**EXACT CODE CI: RUNNING**
 
 **PRODUCTION DEPLOY: CHƯA XÁC MINH**
 
