@@ -1,30 +1,43 @@
 # DDG content publish report — latest
 
-## Source status
+## Scope status
 
-- Article registry: **10 total / 10 publish_ready / 0 editorial_review**.
-- Markdown front matter: **10/10 publish_ready**, reviewer pending: **0**.
-- Product detail copy: **not modified in this run**.
-- Product Marketing Context was read before editing; public copy continues to avoid unverified certifications, capacity, partners, contact facts and medical/product efficacy claims.
+- Known indexable target scope: **93 URLs** = 39 corporate/hub/subpage URLs + 10 Knowledge articles + 44 product detail URLs.
+- Knowledge registry: **10 total / 10 publish_ready / 0 editorial_review**.
+- Product detail copy changed in this run: **0/44**. Product Truth and product media mapping were not modified.
+- Structural publication path: **unblocked in source**. `SiteStructureImporter` schema `1.2.0` updates title + excerpt + body for existing managed pages.
+- Full-site final/pending/blocked count remains **not claimed as production-final** until deploy + URL smoke-test evidence exists.
 
-## Improvement in this run
+## Content written in this run
 
-Updated `data/content/articles/nghien-cuu-cong-thuc-my-pham.md` in commit `aa5b01ddc01eae21165a1147726d6f3e53f31df3`.
+Materially rewrote `data/content/articles/rd-my-pham-la-gi.md` and synchronized `data/content/article-registry.json`.
 
-The article received a full public-language pass rather than a report-only audit. Internal/technical wording such as `product role`, `SKU`, `brief`, `ingredient trend`, `routine`, `version`, `feedback` and `claim` was replaced with clearer Vietnamese. The SEO title/meta, direct answer and `last_verified` were synchronized to the rewritten body.
+The R&D article now follows a clearer public journey: user need → measurable sample criteria → controlled sample feedback → implementation readiness → handoff data → next action. It adds a useful FAQ, stronger internal links, clearer CTA and `last_verified: 2026-08-28`, while removing avoidable internal wording such as brief/SKU/routine/artwork/claim from reader-facing copy where Vietnamese wording is clearer.
 
-The body was strengthened around four practical decisions: define the product role before formulation work, turn wishes into observable sample criteria, consolidate sample feedback through one owner, and separate formulation objectives from market-facing claims.
+No DDG factory ownership, certification, capacity, partner, medical efficacy or other unsupported claim was introduced.
 
 Counts before/after:
 
-- publish-ready articles: **10 → 10**
-- synchronized article metadata: **10/10 → 10/10**
-- articles materially rewritten this run: **0 → 1**
-- product detail copy changed: **0**
+- Knowledge publish-ready: **10 → 10**
+- Registry metadata synchronized: **10/10 → 10/10**
+- Articles materially rewritten this run: **0 → 1**
+- Product detail copy changed: **0 → 0**
 
-## Structural-page finding
+Content commit: `96b297d75500ec2740b3c0dd430463b021587ac9`  
+Registry sync commit: `f248aa495016d0462de9036e9cb94493f5378a4a`
 
-`SiteStructureImporter` currently updates titles for existing structural pages but skips their excerpt/body content after first creation. This means later source rewrites for brand/routine/subpages can remain stale in WordPress even when `data/site-structure.php` is improved. This is a publication-path blocker for finishing thin structural pages and should be fixed by the build/orchestration agent before those rewrites are counted as deployed content.
+## Validation
+
+Exact registry HEAD `f248aa495016d0462de9036e9cb94493f5378a4a` passed both required workflows:
+
+- Validate Bizrise DDG V2: **PASS** — PHP syntax, shell syntax, Product Truth seed, controlled 44-SKU media manifest, JSON and publish-ready article data all passed.
+- Build Bizrise DDG V2 Release: **PASS** — validation, release build and artifact upload all passed.
+
+## Facts missing / publication constraints
+
+Still do not publish or infer facts that are absent from verified sources, including: cGMP/ISO/FDA or other certifications, production capacity, named partners, unverified contact/address details, medical effects, product efficacy beyond approved Product Truth, or unsupported suitability/safety claims.
+
+Product detail expansion remains conditional on verified Product Truth/provenance for each field. No product image remapping is allowed from content work.
 
 ## Article media inventory
 
@@ -32,30 +45,37 @@ Target endpoint:
 
 `/wp-json/bizrise-ddg/v1/media-inventory?scope=articles&per_page=100`
 
-Runtime media before: **NOT VERIFIED**.
+Production media before: **NOT VERIFIED**.  
+Production media after: **NOT VERIFIED**.
 
-Runtime media after: **NOT VERIFIED**.
+Missing featured-image count: **NOT VERIFIED**.  
+Duplicate attachment count: **NOT VERIFIED**.  
+ALT/dimensions completeness: **NOT VERIFIED**.
 
-No live counts are inferred for article ID/slug/title/category, Featured Image ID/file/URL/ALT/dimensions, missing featured or duplicate attachment until the production endpoint is reachable.
+The production host/endpoint could not be retrieved from the current external runtime, so no media count is inferred.
 
-## Production gate
+## Production verification
 
-Production is not marked complete until the final CI-passing SHA is deployed and smoke-tested. Required evidence remains:
+**NOT COMPLETE.** Source/CI PASS is not production proof.
 
-1. deployed SHA matches the validated HEAD;
-2. article sync reports 10/10 with zero errors;
-3. `/kien-thuc/` and all 10 public article URLs render correctly;
-4. article media inventory returns complete featured-image and duplicate data;
-5. structural-page content synchronization is confirmed for managed subpages.
+Required production evidence remains:
+
+1. deployed SHA matches the final CI-passing branch SHA;
+2. managed structural pages show the latest synchronized body/excerpt;
+3. `/kien-thuc/` plus all 10 registry article URLs smoke-test successfully;
+4. media inventory returns complete ID/slug/title/category + Featured Image ID/file/URL/ALT/dimensions and missing/duplicate counts;
+5. representative brand/routine/corporate/product URLs pass browser smoke tests.
 
 ## Current state
 
-**SOURCE: 10/10 KNOWLEDGE ARTICLES PUBLISH-READY.**
+**SOURCE CHANGE THIS RUN: 1 KNOWLEDGE ARTICLE MATERIALLY DEEPENED + REGISTRY SYNCED.**
 
-**CONTENT CHANGE THIS RUN: 1 ARTICLE MATERIALLY REWRITTEN.**
+**KNOWLEDGE: 10/10 PUBLISH-READY.**
 
-**PRODUCT DETAIL COPY: UNCHANGED.**
+**STRUCTURAL IMPORTER BODY SYNC: FIXED IN SOURCE.**
 
-**BLOCKER FOUND: EXISTING STRUCTURAL PAGE BODY CONTENT IS NOT UPDATED BY `SiteStructureImporter`.**
+**CI FOR `f248aa495016d0462de9036e9cb94493f5378a4a`: PASS.**
 
-**PENDING: CI / DEPLOY / PRODUCTION ARTICLE-MEDIA VERIFICATION.**
+**PRODUCT DETAIL COPY / PRODUCT TRUTH / PRODUCT MEDIA MAPPING: UNCHANGED.**
+
+**PENDING: FINAL REPORT-COMMIT CI, DEPLOYMENT, PRODUCTION URL SMOKE TEST AND ARTICLE MEDIA INVENTORY.**
