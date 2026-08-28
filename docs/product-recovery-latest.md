@@ -15,12 +15,13 @@ Public storefront remains WooCommerce `post_type=product`. Internal Product Trut
 ## Current Git / CI
 
 - Branch: `codex/rebuild-v2`
-- Current HEAD before this report refresh: `3b122953c4e62c451b5c514a56e898697be221bb`
-- Commit: `docs: update content publish and media QA state`
-- Product-impact assessment: **none** — current HEAD only refreshes content/media QA documentation and does not change WooCommerce mapping, Product Truth, Featured Image assignment, HOLD handling, catalog visibility or product publish state.
-- Validate Bizrise DDG V2 run `33122718665`: **SUCCESS**.
-- Build Bizrise DDG V2 Release run `33122718730`: **SUCCESS**.
-- CI validation therefore covers the repository PHP lint / JSON / data checks configured by `validate-v2.yml` on this HEAD.
+- Current HEAD before this report refresh: `29ac9feafd0e795703d999b2b6c851fbca90cbad`
+- Commit: `ci(media): harden 44-SKU manifest integrity checks`
+- Product-impact assessment: **non-destructive CI hardening only** — no WooCommerce mapping, Product Truth, Featured Image assignment, HOLD handling, catalog visibility or product publish state was changed.
+- Validate Bizrise DDG V2 run `33128380675`: **SUCCESS**.
+- Build Bizrise DDG V2 Release run `33128380669`: **SUCCESS**.
+- New CI gate requires the controlled manifest to contain exactly 44 rows, all required fields populated, valid image filenames, unique `key`, unique source/poster filenames, and unique brand/product/pack identity.
+- CI validation still covers repository PHP lint / JSON / data checks configured by `validate-v2.yml` on this HEAD.
 - No fuzzy mapping, guessed image assignment, product deletion, mass draft or mass publish was performed.
 
 ## Last verified production evidence
@@ -77,10 +78,11 @@ No Product Truth HOLD/unknown/unverified record should be newly exposed. No fuzz
 | Unmanaged public missing Featured Image | mixed into controlled clean gate | still reported; last known **22**, but no longer retriggers controlled repair |
 | Product media inventory | unavailable | endpoint implemented; full live payload pending production reachability |
 | Runtime catalog observability | no direct counters | `catalog_runtime` implemented |
-| Current code HEAD CI | unknown | **Validate PASS + Release PASS** on `3b122953c…` |
+| Controlled manifest integrity gate | weak structural assumption | **PASS** — exactly 44 rows + required values + unique keys/source/poster/identity |
+| Current code HEAD CI | unknown | **Validate PASS + Release PASS** on `29ac9feaf…` |
 | Current HEAD production deploy | unknown | **CHƯA XÁC MINH** |
 
-## Production verification attempt — 2026-08-28 06:08 ICT
+## Production verification attempt — 2026-08-28 07:07 ICT
 
 This run attempted direct DNS/HTTP access to:
 
