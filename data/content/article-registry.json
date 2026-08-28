@@ -1,5 +1,5 @@
 {
-  "version": "2026-08-27",
+  "version": "2026-08-28",
   "policy": "Legacy knowledge-bank entries remain topic/SEO candidates only. The ten current V2 rewrites listed in this registry have completed source-safe editorial rewrites and are approved as publish-ready source content. Runtime publication still requires a deterministic importer/sync path; publish-ready does not by itself prove that a WordPress post is live.",
   "source": "legacy apps/bizrise-ddg-site-pages/bizrise-ddg-knowledge-bank-v2-1.php",
   "articles": [
@@ -64,7 +64,7 @@
       "status": "publish_ready",
       "source_file": "data/content/articles/rd-my-pham-la-gi.md",
       "priority": "P1",
-      "notes": "Full educational rewrite completed without unverified DDG capability claims; source approved as publish-ready on 2026-08-27."
+      "notes": "Educational rewrite deepened and public-language QA completed on 2026-08-28; no unverified DDG capability or efficacy claims."
     },
     {
       "slug": "nghien-cuu-cong-thuc-my-pham",
