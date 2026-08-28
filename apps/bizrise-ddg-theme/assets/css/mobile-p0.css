@@ -1,5 +1,91 @@
 /* Mobile P0 — canonical 360/390/430 safeguards loaded after Theme 2 styles. */
+
+/* Expanded approved mindmap has eight top-level items. Switch to the
+ * touch-friendly navigation before the desktop row becomes crowded. */
+@media (max-width: 1180px) {
+  .t2-header__inner {
+    grid-template-columns: auto auto auto;
+    justify-content: space-between;
+    gap: 18px;
+  }
+  .t2-menu-toggle {
+    display: block;
+    order: 3;
+  }
+  .t2-header-cta {
+    order: 2;
+  }
+  .t2-nav {
+    position: fixed;
+    inset: 82px 0 auto 0;
+    display: none;
+    justify-self: stretch;
+    max-height: calc(100dvh - 82px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+    padding: 18px 24px 30px;
+    border-top: 1px solid var(--t2-line);
+    background: #fff;
+    box-shadow: 0 26px 60px rgba(40,20,16,.12);
+  }
+  .admin-bar .t2-nav {
+    top: 128px;
+    max-height: calc(100dvh - 128px);
+  }
+  .t2-nav.is-open {
+    display: block;
+  }
+  .t2-nav ul {
+    display: block;
+  }
+  .t2-nav a,
+  .t2-nav .sub-menu a {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    padding: 10px 4px;
+    white-space: normal;
+    line-height: 1.35;
+  }
+  .t2-nav .sub-menu {
+    position: static;
+    display: block;
+    min-width: 0;
+    padding: 0 0 0 16px;
+    border: 0;
+    box-shadow: none;
+  }
+}
+
+@media (max-width: 760px) {
+  .t2-nav {
+    inset: 68px 0 auto 0;
+    max-height: calc(100dvh - 68px);
+  }
+  .admin-bar .t2-nav {
+    top: 114px;
+    max-height: calc(100dvh - 114px);
+  }
+}
+
+@media (max-width: 600px) {
+  body.admin-bar .t2-nav {
+    top: 68px;
+    max-height: calc(100dvh - 68px);
+  }
+}
+
 @media (max-width: 520px) {
+  .t2-nav {
+    inset: 64px 0 auto 0;
+    max-height: calc(100dvh - 64px);
+    padding-inline: 16px;
+  }
+  body.admin-bar .t2-nav {
+    top: 64px;
+    max-height: calc(100dvh - 64px);
+  }
   .t2-product-card__media-brand {
     font-size: .72rem;
     line-height: 1.35;
