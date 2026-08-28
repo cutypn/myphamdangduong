@@ -1,0 +1,45 @@
+<?php
+/**
+ * Canonical website information architecture based on the approved DDG mindmap.
+ * Existing managed pages keep their current source content; this file only adds
+ * missing structural pages required for navigation and future editorial work.
+ */
+
+defined( 'ABSPATH' ) || exit;
+
+return array(
+    'version' => '1.0.0',
+    'pages' => array(
+        array('slug'=>'gioi-thieu','title'=>'Giới thiệu','excerpt'=>'Tổng quan về Đăng Dương Group, định hướng và giá trị theo đuổi.','content'=>'<p>Trang Giới thiệu giúp người đọc nắm nhanh vai trò của Đăng Dương Group trong hệ sinh thái thương hiệu, sản phẩm, kiến thức và hợp tác.</p><h2>Đăng Dương Group là ai?</h2><p>Nội dung tập trung vào định hướng phát triển, cách tổ chức hệ sinh thái và nguyên tắc truyền tải thông tin rõ ràng, nhất quán.</p>'),
+        array('slug'=>'hanh-trinh-phat-trien','title'=>'Hành trình phát triển','excerpt'=>'Các giai đoạn phát triển của Đăng Dương Group được trình bày theo dòng thời gian.','content'=>'<p>Hành trình phát triển được tổ chức theo các giai đoạn và dấu mốc có thể xác minh.</p><h2>Dòng thời gian phát triển</h2><p>Các mốc thời gian cụ thể chỉ được bổ sung khi có nguồn nội bộ được duyệt để tránh công bố sai dữ liệu.</p>'),
+        array('slug'=>'ban-lanh-dao','title'=>'Ban lãnh đạo','excerpt'=>'Không gian giới thiệu đội ngũ lãnh đạo và định hướng quản trị.','content'=>'<p>Trang Ban lãnh đạo là nơi trình bày vai trò quản trị và định hướng điều hành của doanh nghiệp.</p><h2>Nguyên tắc công bố</h2><p>Tên, chức danh và thông tin cá nhân chỉ được công bố khi có dữ liệu chính thức được doanh nghiệp xác nhận.</p>'),
+        array('slug'=>'van-hoa-doanh-nghiep','title'=>'Văn hóa doanh nghiệp','excerpt'=>'Cách Đăng Dương Group xây dựng môi trường làm việc và giá trị chung.','content'=>'<p>Văn hóa doanh nghiệp được thể hiện qua cách hợp tác, chia sẻ thông tin và cùng chịu trách nhiệm với kết quả công việc.</p><h2>Giá trị trong cách làm việc</h2><p>Ưu tiên sự rõ ràng, nhất quán, tôn trọng dữ liệu và cải tiến liên tục trong từng điểm chạm.</p>'),
+        array('slug'=>'chung-nhan','title'=>'Chứng nhận','excerpt'=>'Khu vực tổng hợp chứng nhận và giấy tờ đã được xác minh.','content'=>'<p>Trang này chỉ hiển thị chứng nhận, giấy phép hoặc tài liệu khi có hồ sơ hiện hành để đối chiếu.</p><h2>Nguyên tắc xác minh</h2><p>Không sử dụng tên chứng nhận, tiêu chuẩn hoặc phạm vi áp dụng khi chưa có nguồn chính thức được duyệt.</p>'),
+        array('slug'=>'trach-nhiem-xa-hoi','title'=>'Trách nhiệm xã hội','excerpt'=>'Định hướng trách nhiệm xã hội và giá trị dành cho cộng đồng.','content'=>'<p>Trách nhiệm xã hội được nhìn từ những việc có thể thực hiện và kiểm chứng trong hoạt động doanh nghiệp.</p><h2>Ưu tiên giá trị bền vững</h2><p>Nội dung cụ thể sẽ được cập nhật theo các chương trình và hoạt động đã có bằng chứng xác minh.</p>'),
+
+        array('slug'=>'gia-cong-my-pham','title'=>'Gia công mỹ phẩm','excerpt'=>'Tổng quan hành trình gia công mỹ phẩm từ brief đến triển khai.','content'=>'<p>Gia công mỹ phẩm là một chuỗi phối hợp từ brief, phát triển phương án, chuẩn bị sản xuất đến kiểm soát thông tin sản phẩm.</p><h2>Bắt đầu từ một brief rõ ràng</h2><p>Brief nên làm rõ người dùng, nhu cầu, dạng sản phẩm, trải nghiệm mong muốn, quy cách và phạm vi hỗ trợ cần thiết.</p><p><a href="/oem-odm-my-pham/">Tìm hiểu OEM / ODM →</a></p>'),
+        array('slug'=>'kiem-soat-chat-luong','title'=>'Kiểm soát chất lượng','excerpt'=>'Cách tổ chức các điểm kiểm soát trong hành trình sản phẩm.','content'=>'<p>Kiểm soát chất lượng cần được tổ chức theo từng bước của quá trình phát triển và sản xuất, với tiêu chí và hồ sơ tương ứng.</p><h2>Thông tin cần có khả năng đối chiếu</h2><p>Website không tự suy diễn tiêu chuẩn hoặc chứng nhận; nội dung chỉ mô tả nguyên tắc kiểm soát ở mức an toàn khi chưa có hồ sơ xác minh.</p>'),
+
+        array('slug'=>'one-today','title'=>'One Today','excerpt'=>'Không gian thương hiệu One Today trong hệ sinh thái Đăng Dương Group.','content'=>'<p>Trang thương hiệu One Today tập hợp câu chuyện thương hiệu, nhóm sản phẩm và các nội dung liên quan.</p><h2>Khám phá sản phẩm</h2><p>Dữ liệu sản phẩm cụ thể được lấy từ WooCommerce và Product Truth đã được xác minh.</p><p><a href="/san-pham/">Xem danh mục sản phẩm →</a></p>'),
+        array('slug'=>'hatagold','title'=>'HataGold','excerpt'=>'Không gian thương hiệu HataGold trong hệ sinh thái Đăng Dương Group.','content'=>'<p>Trang thương hiệu HataGold giúp người dùng đi từ câu chuyện thương hiệu đến các sản phẩm đang có dữ liệu chính thức.</p><h2>Danh mục liên quan</h2><p>Thông tin sản phẩm, quy cách và hình ảnh phải bám dữ liệu nguồn đã được kiểm tra.</p><p><a href="/san-pham/">Xem danh mục sản phẩm →</a></p>'),
+        array('slug'=>'thuong-hieu-khac','title'=>'Các thương hiệu khác','excerpt'=>'Khám phá các thương hiệu khác trong hệ sinh thái Đăng Dương Group.','content'=>'<p>Khu vực này dùng để tổ chức các thương hiệu còn lại theo một hệ thống nhất quán, tránh trộn tên thương hiệu với tên sản phẩm hoặc quy cách.</p>'),
+        array('slug'=>'gia-tri-thuong-hieu','title'=>'Giá trị thương hiệu','excerpt'=>'Cách Đăng Dương Group nhìn về tính nhất quán và giá trị thương hiệu.','content'=>'<p>Giá trị thương hiệu được xây từ câu chuyện rõ ràng, nhận diện nhất quán, danh mục dễ hiểu và trải nghiệm có thể duy trì qua nhiều điểm chạm.</p>'),
+
+        array('slug'=>'routine-goi-y','title'=>'Routine gợi ý','excerpt'=>'Gợi ý cách tổ chức routine theo nhu cầu chăm sóc.','content'=>'<p>Routine gợi ý giúp người dùng hiểu thứ tự và vai trò của các bước chăm sóc trước khi đi vào từng sản phẩm cụ thể.</p><h2>Bắt đầu đơn giản</h2><p>Ưu tiên một routine đủ rõ, dễ duy trì và chỉ mở rộng khi người dùng đã hiểu vai trò của từng bước.</p>'),
+        array('slug'=>'san-pham-noi-bat','title'=>'Sản phẩm nổi bật','excerpt'=>'Khu vực giới thiệu sản phẩm nổi bật từ danh mục đang công khai.','content'=>'<p>Sản phẩm nổi bật được chọn từ catalog WooCommerce đang công khai và không thay đổi trạng thái Product Truth.</p><p><a href="/san-pham/">Xem tất cả sản phẩm →</a></p>'),
+
+        array('slug'=>'huong-dan','title'=>'Hướng dẫn','excerpt'=>'Bài hướng dẫn sử dụng và lựa chọn sản phẩm theo bối cảnh.','content'=>'<p>Khu vực Hướng dẫn tập trung vào cách đọc thông tin, xây routine và sử dụng sản phẩm theo dữ liệu chính thức.</p>'),
+        array('slug'=>'thanh-phan','title'=>'Thành phần','excerpt'=>'Kiến thức nền về vai trò của thành phần trong mỹ phẩm.','content'=>'<p>Khu vực Thành phần giải thích vai trò và bối cảnh sử dụng ở mức giáo dục, không biến thông tin thành chẩn đoán hoặc cam kết điều trị.</p>'),
+        array('slug'=>'hoi-dap','title'=>'Hỏi & Đáp','excerpt'=>'Giải đáp các câu hỏi thường gặp về sản phẩm, routine và hợp tác.','content'=>'<p>Hỏi &amp; Đáp tập hợp những câu hỏi thường gặp và dẫn người đọc đến nội dung chi tiết phù hợp.</p>'),
+        array('slug'=>'video','title'=>'Video','excerpt'=>'Thư viện video kiến thức và hướng dẫn.','content'=>'<p>Thư viện Video dùng cho nội dung kiến thức, hướng dẫn và câu chuyện thương hiệu đã được biên tập.</p>'),
+
+        array('slug'=>'doi-tac-chien-luoc','title'=>'Đối tác chiến lược','excerpt'=>'Không gian giới thiệu mô hình hợp tác chiến lược.','content'=>'<p>Trang này mô tả các nhóm nhu cầu hợp tác chiến lược. Tên đối tác cụ thể chỉ được công bố khi có xác nhận phù hợp.</p>'),
+        array('slug'=>'doi-tac-phan-phoi','title'=>'Đối tác phân phối','excerpt'=>'Thông tin dành cho đối tác phân phối và hệ thống bán hàng.','content'=>'<p>Khu vực dành cho các đơn vị quan tâm đến phân phối, khu vực kinh doanh và danh mục sản phẩm phù hợp.</p>'),
+        array('slug'=>'tro-thanh-doi-tac','title'=>'Trở thành đối tác','excerpt'=>'Quy trình bắt đầu trao đổi hợp tác với Đăng Dương Group.','content'=>'<p>Để bắt đầu, đối tác nên chuẩn bị mục tiêu, khu vực, mô hình kinh doanh hoặc brief dự án để giảm vòng trao đổi ban đầu.</p><p><a href="/lien-he/">Gửi yêu cầu hợp tác →</a></p>'),
+
+        array('slug'=>'gui-yeu-cau','title'=>'Gửi yêu cầu','excerpt'=>'Gửi nhu cầu tư vấn, hợp tác hoặc thông tin cần hỗ trợ.','content'=>'<p>Trang Gửi yêu cầu là điểm tiếp nhận nhu cầu tư vấn, hợp tác và các câu hỏi cần chuyển đến đúng bộ phận.</p>'),
+        array('slug'=>'tuyen-dung','title'=>'Tuyển dụng','excerpt'=>'Thông tin cơ hội nghề nghiệp tại Đăng Dương Group.','content'=>'<p>Cơ hội nghề nghiệp chỉ được đăng khi có vị trí và thông tin tuyển dụng đã được doanh nghiệp xác nhận.</p>'),
+        array('slug'=>'he-thong-phan-phoi','title'=>'Hệ thống phân phối','excerpt'=>'Tìm hiểu hệ thống phân phối và điểm bán.','content'=>'<p>Trang Hệ thống phân phối kết nối người dùng với thông tin điểm bán và các kênh phân phối đã được xác minh.</p><p><a href="/tim-diem-ban/">Tìm điểm bán →</a></p>'),
+        array('slug'=>'ban-do','title'=>'Bản đồ','excerpt'=>'Bản đồ điểm liên hệ và hệ thống phân phối đã xác minh.','content'=>'<p>Bản đồ chỉ hiển thị địa chỉ và điểm bán đã có dữ liệu chính thức để tránh dẫn người dùng đến thông tin sai.</p>'),
+    ),
+);
