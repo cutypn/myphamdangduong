@@ -2,14 +2,14 @@
 /**
  * Plugin Name: Bizrise DDG Migrator
  * Description: Controlled, idempotent migration, media and site-import tools for the Đăng Dương Group V2 rebuild.
- * Version: 0.4.8
+ * Version: 0.4.9
  * Requires PHP: 8.2
  * Text Domain: bizrise-ddg-migrator
  */
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'BIZRISE_DDG_MIGRATOR_VERSION', '0.4.8' );
+define( 'BIZRISE_DDG_MIGRATOR_VERSION', '0.4.9' );
 define( 'BIZRISE_DDG_MIGRATOR_PATH', plugin_dir_path( __FILE__ ) );
 
 require_once BIZRISE_DDG_MIGRATOR_PATH . 'src/ProductImporter.php';
@@ -48,184 +48,61 @@ add_action(
     }
 );
 
-/**
- * Apply managed core pages + primary/footer navigation automatically after a
- * release, without requiring an authenticated wp-admin visit.
- */
 add_action(
     'init',
     static function (): void {
         $version_option = 'bizrise_ddg_site_importer_version';
-        $report_option  = 'bizrise_ddg_site_importer_report';
-        $lock_key       = 'bizrise_ddg_site_importer_runtime_lock';
-        $retry_key      = 'bizrise_ddg_site_importer_retry_after';
-
-        if ( BIZRISE_DDG_MIGRATOR_VERSION === (string) get_option( $version_option, '' ) ) {
-            return;
-        }
-        if ( get_transient( $lock_key ) || get_transient( $retry_key ) ) {
-            return;
-        }
-
-        set_transient( $lock_key, '1', 5 * MINUTE_IN_SECONDS );
-
+        if ( BIZRISE_DDG_MIGRATOR_VERSION === (string) get_option( $version_option, '' ) ) return;
         try {
             $report = \Bizrise\DDG\Migrator\SiteContentImporter::run();
-            $report['trigger'] = 'runtime_init';
-            $report['ran_at']  = gmdate( 'c' );
-            update_option( $report_option, $report, false );
-
-            $errors = is_array( $report['errors'] ?? null ) ? $report['errors'] : array();
-            if ( empty( $errors ) ) {
-                update_option( $version_option, BIZRISE_DDG_MIGRATOR_VERSION, false );
-                delete_transient( $retry_key );
-            } else {
-                delete_option( $version_option );
-                set_transient( $retry_key, '1', 5 * MINUTE_IN_SECONDS );
-            }
+            update_option( 'bizrise_ddg_site_importer_report', $report, false );
+            if ( empty( $report['errors'] ) ) update_option( $version_option, BIZRISE_DDG_MIGRATOR_VERSION, false );
         } catch ( \Throwable $error ) {
-            delete_option( $version_option );
-            update_option(
-                $report_option,
-                array(
-                    'version' => BIZRISE_DDG_MIGRATOR_VERSION,
-                    'trigger' => 'runtime_init',
-                    'ran_at' => gmdate( 'c' ),
-                    'created' => 0,
-                    'updated' => 0,
-                    'menu_items' => 0,
-                    'front_page' => 0,
-                    'errors' => array(
-                        array( 'message' => $error->getMessage() ),
-                    ),
-                ),
-                false
-            );
-            set_transient( $retry_key, '1', 5 * MINUTE_IN_SECONDS );
-        } finally {
-            delete_transient( $lock_key );
+            update_option( 'bizrise_ddg_site_importer_report', array( 'errors' => array( array( 'message' => $error->getMessage() ) ) ), false );
         }
     },
     35
 );
 
-/**
- * Rebuild the controlled product catalogue automatically after a release.
- * ProductImporter is idempotent and creates only the records in the controlled
- * Product Truth seed. Media repair runs afterwards at priority 40.
- */
 add_action(
     'init',
     static function (): void {
         $version_option = 'bizrise_ddg_product_importer_version';
-        $report_option  = 'bizrise_ddg_product_importer_report';
-        $lock_key       = 'bizrise_ddg_product_importer_runtime_lock';
-        $retry_key      = 'bizrise_ddg_product_importer_retry_after';
-
-        if ( BIZRISE_DDG_MIGRATOR_VERSION === (string) get_option( $version_option, '' ) ) {
-            return;
-        }
-        if ( get_transient( $lock_key ) || get_transient( $retry_key ) ) {
-            return;
-        }
-
-        set_transient( $lock_key, '1', 10 * MINUTE_IN_SECONDS );
-
+        if ( BIZRISE_DDG_MIGRATOR_VERSION === (string) get_option( $version_option, '' ) ) return;
         try {
             $report = \Bizrise\DDG\Migrator\ProductImporter::run( true );
             $report['trigger'] = 'runtime_init';
-            $report['ran_at']  = gmdate( 'c' );
-            update_option( $report_option, $report, false );
-
-            $errors = is_array( $report['errors'] ?? null ) ? $report['errors'] : array();
-            if ( empty( $errors ) ) {
+            $report['ran_at'] = gmdate( 'c' );
+            update_option( 'bizrise_ddg_product_importer_report', $report, false );
+            if ( empty( $report['errors'] ) && 44 === (int) ( $report['total'] ?? 0 ) ) {
                 update_option( $version_option, BIZRISE_DDG_MIGRATOR_VERSION, false );
-                delete_transient( $retry_key );
-            } else {
-                delete_option( $version_option );
-                set_transient( $retry_key, '1', 5 * MINUTE_IN_SECONDS );
             }
         } catch ( \Throwable $error ) {
-            delete_option( $version_option );
-            update_option(
-                $report_option,
-                array(
-                    'version' => BIZRISE_DDG_MIGRATOR_VERSION,
-                    'trigger' => 'runtime_init',
-                    'ran_at'  => gmdate( 'c' ),
-                    'created' => 0,
-                    'updated' => 0,
-                    'skipped' => 0,
-                    'errors'  => array(
-                        array( 'message' => $error->getMessage() ),
-                    ),
-                ),
-                false
-            );
-            set_transient( $retry_key, '1', 5 * MINUTE_IN_SECONDS );
-        } finally {
-            delete_transient( $lock_key );
+            update_option( 'bizrise_ddg_product_importer_report', array( 'errors' => array( array( 'message' => $error->getMessage() ) ) ), false );
         }
     },
     38
 );
 
-/**
- * Complete deterministic media integrity repair automatically after deployment.
- */
 add_action(
     'init',
     static function (): void {
-        $repair_class   = \Bizrise\DDG\Migrator\ProductMediaRepair::class;
-        $audit_class    = \Bizrise\DDG\Migrator\StorefrontProductAudit::class;
+        $repair_class = \Bizrise\DDG\Migrator\ProductMediaRepair::class;
+        $audit_class = \Bizrise\DDG\Migrator\StorefrontProductAudit::class;
         $repair_version = $repair_class::version();
-        $version_option = 'bizrise_ddg_product_media_repair_version';
-        $report_option  = 'bizrise_ddg_product_media_repair_report';
-        $lock_key       = 'bizrise_ddg_product_media_repair_runtime_lock';
-        $retry_key      = 'bizrise_ddg_product_media_repair_retry_after';
-
-        $saved_report = get_option( $report_option, array() );
-        $saved_clean  = is_array( $saved_report ) && $audit_class::controlled_media_clean( $saved_report );
-
-        if ( $repair_version === (string) get_option( $version_option, '' ) && $saved_clean ) {
-            return;
-        }
-        if ( get_transient( $lock_key ) || get_transient( $retry_key ) ) {
-            return;
-        }
-
-        set_transient( $lock_key, '1', 10 * MINUTE_IN_SECONDS );
-
+        $saved_report = get_option( 'bizrise_ddg_product_media_repair_report', array() );
+        $saved_clean = is_array( $saved_report ) && $audit_class::controlled_media_clean( $saved_report );
+        if ( $repair_version === (string) get_option( 'bizrise_ddg_product_media_repair_version', '' ) && $saved_clean ) return;
         try {
             $report = $repair_class::run( true );
             $report['trigger'] = 'runtime_init';
-            $report['ran_at']  = gmdate( 'c' );
-            update_option( $report_option, $report, false );
-
+            $report['ran_at'] = gmdate( 'c' );
+            update_option( 'bizrise_ddg_product_media_repair_report', $report, false );
             if ( $audit_class::controlled_media_clean( $report ) ) {
-                update_option( $version_option, $repair_version, false );
-                delete_transient( $retry_key );
-            } else {
-                delete_option( $version_option );
-                set_transient( $retry_key, '1', 5 * MINUTE_IN_SECONDS );
+                update_option( 'bizrise_ddg_product_media_repair_version', $repair_version, false );
             }
         } catch ( \Throwable $error ) {
-            delete_option( $version_option );
-            update_option(
-                $report_option,
-                array(
-                    'version' => $repair_version,
-                    'trigger' => 'runtime_init',
-                    'ran_at'  => gmdate( 'c' ),
-                    'errors'  => array(
-                        array( 'message' => $error->getMessage() ),
-                    ),
-                ),
-                false
-            );
-            set_transient( $retry_key, '1', 5 * MINUTE_IN_SECONDS );
-        } finally {
-            delete_transient( $lock_key );
+            update_option( 'bizrise_ddg_product_media_repair_report', array( 'errors' => array( array( 'message' => $error->getMessage() ) ) ), false );
         }
     },
     40
