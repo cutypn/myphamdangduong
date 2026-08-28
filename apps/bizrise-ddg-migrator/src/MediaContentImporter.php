@@ -8,6 +8,7 @@ defined( 'ABSPATH' ) || exit;
 final class MediaContentImporter {
     private const OPTION_VERSION = 'bizrise_ddg_media_content_version';
     private const OPTION_REPORT = 'bizrise_ddg_media_content_report';
+    private const SOURCE_VERSION = 'media-library-2026-08-28-v2';
     private const ARTICLE_KEY = '_bizrise_ddg_article_key';
     private const ARTICLE_BACKUP = '_bizrise_ddg_article_backup';
     private const PAGE_KEY = '_bizrise_ddg_site_importer_key';
@@ -27,7 +28,7 @@ final class MediaContentImporter {
     }
 
     public static function maybe_auto_import(): void {
-        if ( BIZRISE_DDG_MIGRATOR_VERSION === (string) get_option( self::OPTION_VERSION, '' ) ) {
+        if ( self::SOURCE_VERSION === (string) get_option( self::OPTION_VERSION, '' ) ) {
             return;
         }
         if ( get_transient( self::LOCK_KEY ) || get_transient( self::RETRY_KEY ) ) {
@@ -37,7 +38,7 @@ final class MediaContentImporter {
         set_transient( self::LOCK_KEY, '1', 5 * MINUTE_IN_SECONDS );
         try {
             self::run_and_store();
-            if ( BIZRISE_DDG_MIGRATOR_VERSION !== (string) get_option( self::OPTION_VERSION, '' ) ) {
+            if ( self::SOURCE_VERSION !== (string) get_option( self::OPTION_VERSION, '' ) ) {
                 set_transient( self::RETRY_KEY, '1', 5 * MINUTE_IN_SECONDS );
             } else {
                 delete_transient( self::RETRY_KEY );
@@ -88,7 +89,8 @@ final class MediaContentImporter {
     public static function run(): array {
         $seed = self::load_seed();
         $report = array(
-            'version' => BIZRISE_DDG_MIGRATOR_VERSION,
+            'version' => self::SOURCE_VERSION,
+            'plugin_version' => BIZRISE_DDG_MIGRATOR_VERSION,
             'hero_mode' => 'reuse_original_attachment',
             'articles_created' => 0,
             'articles_updated' => 0,
@@ -138,14 +140,15 @@ final class MediaContentImporter {
             $report = self::run();
         } catch ( \Throwable $error ) {
             $report = array(
-                'version' => BIZRISE_DDG_MIGRATOR_VERSION,
+                'version' => self::SOURCE_VERSION,
+                'plugin_version' => BIZRISE_DDG_MIGRATOR_VERSION,
                 'hero_mode' => 'reuse_original_attachment',
                 'errors' => array( array( 'message' => $error->getMessage() ) ),
             );
         }
         update_option( self::OPTION_REPORT, $report, false );
         if ( empty( $report['errors'] ) && empty( $report['missing_media'] ) ) {
-            update_option( self::OPTION_VERSION, BIZRISE_DDG_MIGRATOR_VERSION, false );
+            update_option( self::OPTION_VERSION, self::SOURCE_VERSION, false );
         } else {
             delete_option( self::OPTION_VERSION );
         }
