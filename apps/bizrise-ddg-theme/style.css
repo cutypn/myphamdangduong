@@ -1,85 +1,33 @@
 /*
-Theme Name: Bizrise DDG Theme 2
+Theme Name: Đăng Dương Corporate
 Theme URI: https://dangduonggroup.com/
 Author: Bizrise Framework
-Description: Corporate beauty design system for Đăng Dương Group — Theme 2 master.
-Version: 2.1.3
+Description: Corporate cosmetics theme rebuilt from the approved visual reference.
+Version: 3.0.0
 Requires at least: 6.6
 Requires PHP: 8.2
 Text Domain: bizrise-ddg
 */
 
 :root{
-  --t2-wine:#7f111d;
-  --t2-wine-dark:#4c0c15;
-  --t2-red:#a11925;
-  --t2-gold:#ba8540;
-  --t2-gold-soft:#ead7b8;
-  --t2-ivory:#fbf7f0;
-  --t2-cream:#f4eadc;
-  --t2-ink:#251f1d;
-  --t2-muted:#746865;
+  --t2-blue:#1d77c8;
+  --t2-blue-dark:#0f4f8d;
+  --t2-cyan:#eaf6ff;
+  --t2-ink:#202831;
+  --t2-muted:#68727e;
+  --t2-line:#dfe7ee;
   --t2-white:#fff;
-  --t2-line:rgba(86,51,40,.13);
-  --t2-shadow:0 22px 70px rgba(68,35,28,.08);
-  --t2-radius:28px;
-  --t2-container:1240px;
+  --t2-soft:#f5f9fc;
+  --t2-container:1180px;
+  --t2-radius:18px;
+  --t2-shadow:0 18px 54px rgba(24,74,112,.12);
   --t2-sans:"Be Vietnam Pro",sans-serif;
-  --t2-serif:"Be Vietnam Pro",sans-serif;
 }
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
-body{margin:0;background:var(--t2-white);color:var(--t2-ink);font-family:var(--t2-sans);line-height:1.7}
+body{margin:0;background:#fff;color:var(--t2-ink);font-family:var(--t2-sans);line-height:1.65}
 a{color:inherit}
 img{max-width:100%;height:auto}
 button,input,select,textarea{font:inherit}
-
-/* WordPress uses a 46px admin bar below 783px; keep the sticky theme header fully below it. */
-@media (max-width:782px){
-  .admin-bar .t2-header{top:46px}
-}
-
-/* Accessible submenu control: desktop keeps hover/focus behavior; mobile gets an explicit 44px toggle. */
-.t2-submenu-toggle{display:none}
-@media (max-width:980px){
-  .t2-nav .menu-item-has-children{position:relative}
-  .t2-nav .menu-item-has-children>a{padding-right:52px}
-  .t2-submenu-toggle{
-    position:absolute;
-    top:0;
-    right:0;
-    z-index:2;
-    display:grid;
-    place-items:center;
-    width:44px;
-    height:44px;
-    padding:0;
-    border:0;
-    border-radius:12px;
-    background:transparent;
-    color:var(--t2-ink);
-    cursor:pointer;
-  }
-  .t2-submenu-toggle span{display:block;font-size:1.15rem;line-height:1;transition:transform .2s ease}
-  .t2-nav .menu-item-has-children>.sub-menu{display:none!important}
-  .t2-nav .menu-item-has-children.is-submenu-open>.sub-menu{display:block!important}
-  .t2-nav .menu-item-has-children.is-submenu-open>.t2-submenu-toggle span{transform:rotate(180deg)}
-}
-
-/* Mobile-first accessibility: text CTAs and footer navigation need real finger-sized targets, not text-height hit areas. */
-@media (max-width:520px){
-  .t2-product-single__brand-link,
-  .t2-section-heading--split>.t2-text-link,
-  .t2-footer-cta__link,
-  .t2-footer__company-link,
-  .t2-footer__nav a,
-  .t2-footer__legal a,
-  .t2-footer__facts a{
-    min-height:44px;
-    display:inline-flex;
-    align-items:center;
-  }
-  .t2-footer__nav a{width:100%}
-  .t2-footer__legal{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px}
-  .t2-footer__legal>a{flex:0 0 auto}
-}
+body.t2-menu-open{overflow:hidden}
+@media(max-width:782px){.admin-bar .t2-header{top:46px}}
