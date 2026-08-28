@@ -2,19 +2,20 @@
 /**
  * Plugin Name: Bizrise DDG Migrator
  * Description: Controlled, idempotent migration, media and site-import tools for the Đăng Dương Group V2 rebuild.
- * Version: 0.4.4
+ * Version: 0.4.5
  * Requires PHP: 8.2
  * Text Domain: bizrise-ddg-migrator
  */
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'BIZRISE_DDG_MIGRATOR_VERSION', '0.4.4' );
+define( 'BIZRISE_DDG_MIGRATOR_VERSION', '0.4.5' );
 define( 'BIZRISE_DDG_MIGRATOR_PATH', plugin_dir_path( __FILE__ ) );
 
 require_once BIZRISE_DDG_MIGRATOR_PATH . 'src/ProductImporter.php';
 require_once BIZRISE_DDG_MIGRATOR_PATH . 'src/SiteContentImporter.php';
 require_once BIZRISE_DDG_MIGRATOR_PATH . 'src/SiteStructureImporter.php';
+require_once BIZRISE_DDG_MIGRATOR_PATH . 'src/DataCleanup.php';
 require_once BIZRISE_DDG_MIGRATOR_PATH . 'src/ArticleContentImporter.php';
 require_once BIZRISE_DDG_MIGRATOR_PATH . 'src/MediaContentImporter.php';
 require_once BIZRISE_DDG_MIGRATOR_PATH . 'src/ProductMediaRepair.php';
@@ -27,6 +28,7 @@ register_activation_hook(
     static function (): void {
         \Bizrise\DDG\Migrator\SiteContentImporter::activate();
         \Bizrise\DDG\Migrator\SiteStructureImporter::run();
+        \Bizrise\DDG\Migrator\DataCleanup::run();
         \Bizrise\DDG\Migrator\MediaContentImporter::activate();
     }
 );
@@ -37,6 +39,7 @@ add_action(
         \Bizrise\DDG\Migrator\ProductImporter::register_hooks();
         \Bizrise\DDG\Migrator\SiteContentImporter::register_hooks();
         \Bizrise\DDG\Migrator\SiteStructureImporter::register_hooks();
+        \Bizrise\DDG\Migrator\DataCleanup::register_hooks();
         \Bizrise\DDG\Migrator\ArticleContentImporter::register_hooks();
         \Bizrise\DDG\Migrator\MediaContentImporter::register_hooks();
         \Bizrise\DDG\Migrator\ProductMediaRepair::register_hooks();
@@ -48,11 +51,6 @@ add_action(
 /**
  * Apply managed core pages + primary/footer navigation automatically after a
  * release, without requiring an authenticated wp-admin visit.
- *
- * SiteContentImporter itself is deterministic/idempotent. The release version
- * is only stored after a clean run; failed imports remain retryable on a later
- * request. A transient lock prevents concurrent frontend requests from running
- * the importer at the same time.
  */
 add_action(
     'init',
@@ -113,11 +111,6 @@ add_action(
 
 /**
  * Complete deterministic media integrity repair automatically after deployment.
- *
- * The controlled 44-row manifest is independent from unrelated/legacy public
- * WooCommerce rows. Unmanaged storefront media gaps are exposed separately by
- * StorefrontProductAudit and must not force a full deterministic repair every
- * five minutes after all controlled SKU media is already exact-clean.
  */
 add_action(
     'init',
