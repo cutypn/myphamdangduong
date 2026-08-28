@@ -91,7 +91,9 @@
     }
   });
 
-  const desktopQuery = window.matchMedia('(min-width: 981px)');
+  // Keep JS state aligned with the CSS breakpoint: hamburger/touch nav is used
+  // through 1180px; only wider viewports are treated as full desktop nav.
+  const desktopQuery = window.matchMedia('(min-width: 1181px)');
   const resetForDesktop = (event) => {
     if (event.matches) setMenuState(false);
   };
