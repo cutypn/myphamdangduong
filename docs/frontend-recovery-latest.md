@@ -14,30 +14,46 @@ Latest Product/Data Recovery state read before this frontend change:
 
 ## P0 frontend audit / fix this run
 
-Static mobile audit found product-card typography was still too compact for the requested 360/390/430 experience. Shared cards used secondary labels around `.58–.60rem` and titles around `.74–.76rem`, which is visually small even when the two-column layout itself does not overflow.
+Static cascade audit found a real `/san-pham/` regression: the shared `mobile-p0.css` typography fix was loaded after the product mockup stylesheet, but the product mockup selectors had higher specificity (`.t2-product-archive ...`). That meant the older, smaller mobile archive values still won at 360/390/430 even though the generic mobile guard had been updated.
 
-Fix applied:
+Fix applied in the canonical product mockup stylesheet instead of adding another override layer:
 
-- increased shared product-card mobile brand/meta/kicker/CTA typography;
-- increased mobile product title size while retaining the two-column portrait layout;
-- raised card copy minimum height slightly so larger text wraps instead of colliding with the CTA;
-- kept product CTA minimum tap target at **44px**;
-- kept article-aside links at **44px** minimum tap target;
-- bumped the theme-owned `mobile-p0.css` cache version to `2026.08.28.2`;
-- no plugin UI override was created;
+- product archive brand label: `.72rem`;
+- media title: `.72rem`;
+- media pack/meta: `.68rem`;
+- card kicker: `.68rem`;
+- card product title: `.80rem` (`.78rem` at <=380px);
+- CTA text: `.70rem`, with minimum tap target still **44px**;
+- card copy minimum height: **122px** so larger text can wrap without colliding with the CTA;
+- retained phone product grid at **2 columns**;
+- retained portrait **9:16** media frame and existing `object-fit:contain` image behavior;
+- bumped product mockup cache version from `2.2.3` to `2.2.4` in both WooCommerce archive and `/san-pham/` fallback;
+- no plugin UI override created;
 - no Product Truth, HOLD, publication, WooCommerce mapping or media assignment logic changed.
 
 Files changed:
 
-- `apps/bizrise-ddg-theme/assets/css/mobile-p0.css`
-- `apps/bizrise-ddg-theme/header.php`
+- `apps/bizrise-ddg-theme/assets/css/product-mockup.css`
+- `apps/bizrise-ddg-theme/woocommerce/archive-product.php`
+- `apps/bizrise-ddg-theme/page-product-catalog.php`
 
-Exact frontend code SHA: `0907472b23e76b2b770ca5864cedb67eb110de77`.
+Exact frontend code SHA: `259858bf63df2e5914e5833c000cd58ae8dbd85a`.
 
 CI for that exact code SHA:
 
-- Validate Bizrise DDG V2 run `33125803064`: **SUCCESS**;
-- Build Bizrise DDG V2 Release run `33125803068`: **SUCCESS**.
+- Validate Bizrise DDG V2 run `33132616378`: **SUCCESS**;
+  - PHP syntax: PASS;
+  - deployment shell syntax: PASS;
+  - Product Truth seed: PASS;
+  - controlled 44-SKU manifest: PASS;
+  - JSON/article data validation: PASS.
+- Build Bizrise DDG V2 Release run `33132616332`: **SUCCESS**;
+  - PHP/deployment validation: PASS;
+  - Product Truth/content validation: PASS;
+  - release package build: PASS;
+  - release artifact upload: PASS.
+
+No JS file changed in this run, so no JS-specific code change required a new behavior test beyond the retained source audit.
 
 ## Mobile checklist
 
@@ -50,7 +66,7 @@ CI for that exact code SHA:
 | Product search >=48px | PASS source | PASS source | PASS source |
 | Product filter pills >=44px | PASS source | PASS source | PASS source |
 | Product-card CTA >=44px | PASS source | PASS source | PASS source |
-| Product-card typography readable | PASS source | PASS source | PASS source |
+| Product-card typography readable after cascade resolution | PASS source | PASS source | PASS source |
 | Product grid 2 columns | PASS source | PASS source | PASS source |
 | Product media portrait 9:16 | PASS source | PASS source | PASS source |
 | Product images `object-fit:contain` | PASS source | PASS source | PASS source |
@@ -73,13 +89,13 @@ CI for that exact code SHA:
 
 ## Production / browser verification
 
-Product/Data Recovery attempted production access at 2026-08-28 06:08 ICT and DNS did not resolve from the execution environment. No fresh deployed SHA, screenshot or browser evidence is available in this frontend run, so production is not marked PASS.
+Product/Data Recovery attempted production access at 2026-08-28 08:06 ICT and production DNS did not resolve from the execution environment. This frontend run also could not fetch the public site, so no fresh deployed SHA, screenshot or browser evidence is available. Production is therefore not marked PASS.
 
 Required production PASS evidence remains:
 
 1. deployed SHA equals current validated HEAD or descendant;
 2. `/san-pham/` at 360, 390, 430 and desktop >=1180;
-3. homepage/related product cards at 360/390/430 to visually verify the new text scale;
+3. homepage/related product cards at 360/390/430;
 4. representative product category and product single;
 5. article body/aside, footer and form interaction;
 6. hamburger/submenu interaction and zero horizontal overflow.
