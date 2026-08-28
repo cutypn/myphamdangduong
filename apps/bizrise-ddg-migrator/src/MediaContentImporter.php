@@ -3,7 +3,6 @@
 namespace Bizrise\DDG\Migrator;
 
 use RuntimeException;
-
 defined( 'ABSPATH' ) || exit;
 
 final class MediaContentImporter {
@@ -12,9 +11,11 @@ final class MediaContentImporter {
     private const ARTICLE_KEY = '_bizrise_ddg_article_key';
     private const ARTICLE_BACKUP = '_bizrise_ddg_article_backup';
     private const PAGE_KEY = '_bizrise_ddg_site_importer_key';
+    private const LOCK_KEY = 'bizrise_ddg_media_content_runtime_lock';
+    private const RETRY_KEY = 'bizrise_ddg_media_content_retry_after';
 
     public static function register_hooks(): void {
-        add_action( 'admin_init', array( self::class, 'maybe_auto_import' ), 20 );
+        add_action( 'init', array( self::class, 'maybe_auto_import' ), 50 );
         add_action( 'admin_menu', array( self::class, 'register_admin_page' ) );
         add_action( 'admin_post_bizrise_ddg_media_content_import', array( self::class, 'handle_manual_import' ) );
     }
@@ -26,11 +27,23 @@ final class MediaContentImporter {
     }
 
     public static function maybe_auto_import(): void {
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( BIZRISE_DDG_MIGRATOR_VERSION === (string) get_option( self::OPTION_VERSION, '' ) ) {
             return;
         }
-        if ( BIZRISE_DDG_MIGRATOR_VERSION !== (string) get_option( self::OPTION_VERSION, '' ) ) {
+        if ( get_transient( self::LOCK_KEY ) || get_transient( self::RETRY_KEY ) ) {
+            return;
+        }
+
+        set_transient( self::LOCK_KEY, '1', 5 * MINUTE_IN_SECONDS );
+        try {
             self::run_and_store();
+            if ( BIZRISE_DDG_MIGRATOR_VERSION !== (string) get_option( self::OPTION_VERSION, '' ) ) {
+                set_transient( self::RETRY_KEY, '1', 5 * MINUTE_IN_SECONDS );
+            } else {
+                delete_transient( self::RETRY_KEY );
+            }
+        } finally {
+            delete_transient( self::LOCK_KEY );
         }
     }
 
@@ -50,7 +63,7 @@ final class MediaContentImporter {
         ?>
         <div class="wrap">
             <h1>DDG Media &amp; Articles</h1>
-            <p>Gán trực tiếp ảnh đã có trong Media Library làm Featured/Hero. Hero 16:9 được xử lý bằng CSS của theme, không resize/crop bằng Imagick trong lúc import.</p>
+            <p>Gán trực tiếp ảnh đã có trong Media Library làm Featured/Hero. Ảnh gốc được giữ nguyên; theme chịu trách nhiệm hiển thị responsive.</p>
             <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
                 <input type="hidden" name="action" value="bizrise_ddg_media_content_import">
                 <?php wp_nonce_field( 'bizrise_ddg_media_content_import' ); ?>
@@ -76,7 +89,7 @@ final class MediaContentImporter {
         $seed = self::load_seed();
         $report = array(
             'version' => BIZRISE_DDG_MIGRATOR_VERSION,
-            'hero_mode' => 'original_attachment_css_crop',
+            'hero_mode' => 'reuse_original_attachment',
             'articles_created' => 0,
             'articles_updated' => 0,
             'hero_created' => 0,
@@ -126,13 +139,15 @@ final class MediaContentImporter {
         } catch ( \Throwable $error ) {
             $report = array(
                 'version' => BIZRISE_DDG_MIGRATOR_VERSION,
-                'hero_mode' => 'original_attachment_css_crop',
+                'hero_mode' => 'reuse_original_attachment',
                 'errors' => array( array( 'message' => $error->getMessage() ) ),
             );
         }
         update_option( self::OPTION_REPORT, $report, false );
         if ( empty( $report['errors'] ) && empty( $report['missing_media'] ) ) {
             update_option( self::OPTION_VERSION, BIZRISE_DDG_MIGRATOR_VERSION, false );
+        } else {
+            delete_option( self::OPTION_VERSION );
         }
     }
 
