@@ -1,99 +1,60 @@
 # DDG content publish report — latest
 
-## Kết luận
+## Source status
 
-Knowledge content hiện có **10/10** bài trong `data/content/article-registry.json` ở trạng thái `publish_ready`, và **10/10 Markdown front matter** đã đồng bộ `publish_ready` với reviewer/source-safe metadata phù hợp.
+- Article registry: **10 total / 10 publish_ready / 0 editorial_review**.
+- Markdown front matter: **10/10 publish_ready**, reviewer pending: **0**.
+- Deterministic article importer: **available**, exact-slug and idempotent publication path retained.
+- Core-page curated content remains present for `/ve-dang-duong/`, `/nang-luc/`, `/nghien-cuu-phat-trien/`, `/nha-may-san-xuat-my-pham/`, `/oem-odm-my-pham/`, `/thuong-hieu/`, `/san-pham/`, `/kien-thuc/`, `/doi-tac/`, `/lien-he/`, `/tim-diem-ban/`, plus homepage.
+- Product detail copy: **not modified**.
 
-Runtime importer deterministic tồn tại trong `apps/bizrise-ddg-migrator/src/ArticleContentImporter.php`: exact-slug upsert, `post_status=publish`, category `kien-thuc`, idempotent content fingerprint và bỏ H1 trong Markdown khi render để theme sở hữu H1 duy nhất.
+## Improvement in this run
 
-Core-page source trong `apps/bizrise-ddg-migrator/data/site-content.php` tiếp tục dùng source-safe copy, không công bố cGMP/ISO/FDA/công suất/đối tác hoặc claim y tế khi chưa có hồ sơ xác minh.
+Updated `data/content/articles/odm-my-pham-la-gi.md` in commit `c204883eef12e02c8c37aac5603cc2f37927f419`.
 
-## Cải thiện source vòng này
+The ODM article now uses clearer Vietnamese wording for technical/business terms, keeps the same legal/source-safe meaning, updates `last_verified` to **2026-08-28**, and adds a clear final next-step section aligned with its CTA metadata.
 
-Đã rà bài `oem-va-odm-my-pham-khac-nhau-the-nao.md` và phát hiện nhiều jargon/tiếng Anh làm giảm độ rõ với người đọc phổ thông: `brief/spec`, `scope`, `audience`, `product role`, `owner`, `brand strategy`, `technical brief`, `trade-off`, `product architecture`, `go-to-market`, `timeline`, `ownership`, `Product Truth`, `provenance`, `hero product`, `proposal`.
+Counts before/after:
 
-Đã sửa source ở commit `8d9b4b7c3a191b3fe0f9d9ef499abfbb28fdf2c1`:
-
-- đổi `brief/spec` thành “yêu cầu sản phẩm/yêu cầu phát triển”;
-- đổi `scope` thành “phạm vi công việc”;
-- đổi `audience`, `product role`, `owner` thành “nhóm khách hàng”, “vai trò sản phẩm”, “người phụ trách/ra quyết định”;
-- đổi `technical brief`, `trade-off`, `timeline` thành cách diễn đạt tiếng Việt dễ hiểu;
-- bỏ `Product Truth/provenance` khỏi body, thay bằng “nguồn dữ liệu đã được kiểm tra và thống nhất”;
-- đổi `go-to-market`, `hero product`, `proposal` thành “cách ra thị trường”, “sản phẩm ưu tiên”, “phương án/phạm vi công việc”;
-- cập nhật meta description, direct answer, CTA và `last_verified` sang **2026-08-28**;
-- giữ nguyên trạng thái `publish_ready`, internal links và các nguồn pháp lý/ASEAN;
-- không sửa product detail copy và không thêm claim/certification/contact fact chưa xác minh.
-
-Nguồn pháp lý được kiểm lại ngày 2026-08-28 trên Cổng TTĐT Chính phủ: Nghị định 93/2016/NĐ-CP là văn bản về điều kiện sản xuất mỹ phẩm; Thông tư 34/2025/TT-BYT sửa đổi quy định quản lý mỹ phẩm và có hiệu lực từ 18/08/2025.
-
-## Knowledge articles
-
-- total registry: **10**
-- publish_ready registry: **10**
-- editorial_review registry: **0**
-- Markdown front matter publish_ready: **10/10**
-- Markdown reviewer pending: **0**
-- deterministic importer: **CÓ**
-- exact-slug/idempotent publication path: **CÓ**
-
-## Core pages source
-
-Curated/source-safe content bao phủ:
-
-- `/ve-dang-duong/`
-- `/nang-luc/`
-- `/nghien-cuu-phat-trien/`
-- `/nha-may-san-xuat-my-pham/`
-- `/oem-odm-my-pham/`
-- `/thuong-hieu/`
-- `/san-pham/`
-- `/kien-thuc/`
-- `/doi-tac/`
-- `/lien-he/`
-- `/tim-diem-ban/`
-
-Homepage nằm trong `front-page.php` và không còn fallback hard-code tên thương hiệu chưa xác minh.
+- publish-ready articles before: **10**
+- publish-ready articles after: **10**
+- metadata synchronized before: **10/10**
+- metadata synchronized after: **10/10**
+- ODM article language-cleanup items before: **1 article**
+- ODM article language-cleanup items after: **0 articles**
 
 ## Article media inventory
 
-Endpoint source:
+Target endpoint:
 
 `/wp-json/bizrise-ddg/v1/media-inventory?scope=articles&per_page=100`
 
-Endpoint có thể audit Featured Image ID/file/URL/ALT/kích thước, missing featured và duplicate attachment cho bài public.
+Runtime media before: **NOT VERIFIED**.
 
-Counts vòng này:
+Runtime media after: **NOT VERIFIED**.
 
-- article source before: **10 publish-ready / 10 metadata synchronized**;
-- article source after: **10 publish-ready / 10 metadata synchronized**;
-- bài OEM-vs-ODM còn cụm jargon cần làm sạch trước: **1**;
-- bài OEM-vs-ODM còn cụm jargon cần làm sạch sau: **0**;
-- article runtime media before: **CHƯA XÁC MINH**;
-- article runtime media after: **CHƯA XÁC MINH**;
-- media mapping tự tạo/gán mơ hồ: **0**.
-
-Production endpoint vẫn chưa đọc được từ runtime kiểm tra hiện tại: direct web open tới URL REST bị safe-URL restriction; exact URL search trên `dangduonggroup.com` không trả endpoint indexable. Vì vậy không suy diễn Featured Image ID/file/URL/ALT/kích thước, missing featured, duplicate attachment, article sync runtime hay trạng thái live render.
+The endpoint could not be read from the current verification environment: direct REST open was rejected by the safe-URL layer and exact-domain search returned no indexable endpoint. Therefore Featured Image ID/file/URL/ALT/dimensions, missing-featured counts, duplicate-attachment counts and live article-sync counts are not inferred.
 
 ## Production gate
 
-Chưa đánh production PASS nếu chưa có live runtime/media verification cho final HEAD. Production PASS cần đủ:
+Production remains pending until all of the following are verified on the final CI-passing HEAD:
 
-1. Deploy Bridge `deployed_sha` khớp final HEAD đã PASS CI.
-2. Runtime status báo article sync `10/10`, `error_count=0`.
-3. `/kien-thuc/` và 10 article URL render đúng H1/direct answer/body/CTA.
-4. Media inventory xác minh Featured Image/ALT và missing/duplicate counts.
-5. Không còn internal link 404 trong 10 bài publish-ready.
+1. deployed SHA matches final HEAD;
+2. article sync reports 10/10 with zero errors;
+3. `/kien-thuc/` and all 10 public article URLs render correctly;
+4. article media inventory returns complete featured-image and duplicate data;
+5. no broken internal links remain.
 
-## An toàn nội dung
+## Safety and scope
 
-Không thêm cGMP/ISO/FDA không có hồ sơ hiện hành, số liệu công suất chưa xác minh, tên đối tác/thương hiệu chưa được runtime xác minh, contact fact chưa có nguồn, claim y tế/hiệu quả chưa được duyệt hoặc product detail copy.
+No unverified certification, production-capacity, partner, contact, medical-effect or product-detail statements were added.
 
-## Trạng thái
+## Current state
 
-**SOURCE CONTENT: 10/10 KNOWLEDGE ARTICLES PUBLISH-READY.**
+**SOURCE: 10/10 KNOWLEDGE ARTICLES PUBLISH-READY.**
 
-**MARKDOWN METADATA SYNC: 10/10 CONFIRMED.**
+**METADATA: 10/10 SYNCHRONIZED.**
 
-**OEM-vs-ODM LANGUAGE QA: JARGON CLEANUP COMPLETE.**
+**ODM LANGUAGE QA: COMPLETE.**
 
-**PENDING: CI FOR FINAL HEAD + PRODUCTION ARTICLE/MEDIA QA.**
+**PENDING: FINAL CI + PRODUCTION ARTICLE/MEDIA VERIFICATION.**
