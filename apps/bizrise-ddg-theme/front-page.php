@@ -3,11 +3,16 @@
 if (!defined('ABSPATH')) { exit; }
 get_header();
 
+$ddg_page_media_id = static function (string $slug): int {
+    $page = get_page_by_path($slug);
+    return $page instanceof WP_Post && has_post_thumbnail($page) ? (int)get_post_thumbnail_id($page) : 0;
+};
+
 $front_id = (int)get_option('page_on_front');
-$hero_img = $front_id ? (string)get_the_post_thumbnail_url($front_id, 'full') : '';
-$about_img = ddg_theme2_page_image('ve-dang-duong', 'large');
-$cap_img = ddg_theme2_page_image('nang-luc', 'large');
-$brand_img = ddg_theme2_page_image('thuong-hieu', 'large');
+$hero_id = $front_id > 0 && has_post_thumbnail($front_id) ? (int)get_post_thumbnail_id($front_id) : 0;
+$about_id = $ddg_page_media_id('ve-dang-duong');
+$cap_id = $ddg_page_media_id('nang-luc');
+$brand_id = $ddg_page_media_id('thuong-hieu');
 
 $product_query = new WP_Query([
     'post_type' => 'product',
@@ -42,13 +47,51 @@ if ($product_query->posts) {
 
       <div class="t2-hero-collage" aria-label="Hệ sinh thái Đăng Dương Group">
         <figure class="t2-hero-collage__primary">
-          <?php if ($hero_img !== '') : ?><img src="<?php echo esc_url($hero_img); ?>" alt="Đăng Dương Group" fetchpriority="high"><?php elseif ($cap_img !== '') : ?><img src="<?php echo esc_url($cap_img); ?>" alt="Năng lực Đăng Dương Group" fetchpriority="high"><?php else : ?><span class="t2-media-placeholder">ĐĂNG DƯƠNG GROUP</span><?php endif; ?>
+          <?php
+          if ($hero_id > 0) {
+              echo wp_get_attachment_image($hero_id, 'full', false, [
+                  'alt' => 'Đăng Dương Group',
+                  'fetchpriority' => 'high',
+                  'loading' => 'eager',
+                  'decoding' => 'async',
+              ]);
+          } elseif ($cap_id > 0) {
+              echo wp_get_attachment_image($cap_id, 'full', false, [
+                  'alt' => 'Năng lực Đăng Dương Group',
+                  'fetchpriority' => 'high',
+                  'loading' => 'eager',
+                  'decoding' => 'async',
+              ]);
+          } else {
+              echo '<span class="t2-media-placeholder">ĐĂNG DƯƠNG GROUP</span>';
+          }
+          ?>
         </figure>
         <figure class="t2-hero-collage__tile t2-hero-collage__tile--a">
-          <?php if ($cap_img !== '') : ?><img src="<?php echo esc_url($cap_img); ?>" alt="Năng lực phát triển sản phẩm" loading="eager"><?php else : ?><span class="t2-media-placeholder">R&amp;D</span><?php endif; ?>
+          <?php
+          if ($cap_id > 0) {
+              echo wp_get_attachment_image($cap_id, 'large', false, [
+                  'alt' => 'Năng lực phát triển sản phẩm',
+                  'loading' => 'eager',
+                  'decoding' => 'async',
+              ]);
+          } else {
+              echo '<span class="t2-media-placeholder">R&amp;D</span>';
+          }
+          ?>
         </figure>
         <figure class="t2-hero-collage__tile t2-hero-collage__tile--b">
-          <?php if ($brand_img !== '') : ?><img src="<?php echo esc_url($brand_img); ?>" alt="Hệ sinh thái thương hiệu" loading="eager"><?php else : ?><span class="t2-media-placeholder">BRAND</span><?php endif; ?>
+          <?php
+          if ($brand_id > 0) {
+              echo wp_get_attachment_image($brand_id, 'large', false, [
+                  'alt' => 'Hệ sinh thái thương hiệu',
+                  'loading' => 'eager',
+                  'decoding' => 'async',
+              ]);
+          } else {
+              echo '<span class="t2-media-placeholder">BRAND</span>';
+          }
+          ?>
         </figure>
         <?php if ($feature_product instanceof WP_Post && has_post_thumbnail($feature_product)) : ?>
           <a class="t2-hero-product" href="<?php echo esc_url(get_permalink($feature_product)); ?>">
@@ -63,7 +106,17 @@ if ($product_query->posts) {
   <section class="t2-section t2-about">
     <div class="t2-shell t2-about__grid">
       <div class="t2-about__media">
-        <?php if ($about_img !== '') : ?><img src="<?php echo esc_url($about_img); ?>" alt="Về Đăng Dương Group" loading="lazy"><?php else : ?><div class="t2-media-placeholder t2-media-placeholder--large">ĐĂNG DƯƠNG</div><?php endif; ?>
+        <?php
+        if ($about_id > 0) {
+            echo wp_get_attachment_image($about_id, 'large', false, [
+                'alt' => 'Về Đăng Dương Group',
+                'loading' => 'lazy',
+                'decoding' => 'async',
+            ]);
+        } else {
+            echo '<div class="t2-media-placeholder t2-media-placeholder--large">ĐĂNG DƯƠNG</div>';
+        }
+        ?>
       </div>
       <div class="t2-about__copy">
         <p class="t2-eyebrow">VỀ ĐĂNG DƯƠNG</p>
