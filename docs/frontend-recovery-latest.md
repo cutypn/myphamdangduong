@@ -2,33 +2,33 @@
 
 ## Current result
 
-Mobile-first frontend/CRO recovery continues on `codex/rebuild-v2` without changing Product Truth, publication rules, WooCommerce mapping or product media assignments. Product/Data Recovery remains authoritative: public catalog = WooCommerce `post_type=product`; controlled manifest = 44; last verified controlled matched = 44/44; last verified controlled wrong Featured Image = 0; production on current HEAD remains CHƯA XÁC MINH.
+Theme/Frontend/CRO source on `codex/rebuild-v2` remains mobile-first and does not change Product Truth, HOLD/publication rules or WooCommerce product mapping. Public catalog remains WooCommerce-owned per the last Product/Data Recovery evidence; last verified controlled media state remains 44/44 matched and 0 wrong Featured Image.
 
-`docs/post-deploy-test-latest.md` is still blocked because production deploy/runtime/frontend cannot currently be reached from the tester, so there is no live screenshot or deployed-SHA evidence yet.
+`docs/post-deploy-test-latest.md` is still authoritative for production: runtime/frontend cannot currently be reached by the tester, so production deployed SHA, live screenshots, CWV and browser QA remain unverified.
 
-## P0/P1 audit and fix this run
+## P0/P1 change this run
 
-P1 performance/CRO issue found on the homepage media path:
+CRO tracking foundation was missing from the active theme JS. Added a vendor-neutral bridge directly to `assets/js/theme2.js`:
 
-- homepage hero/collage/about images were emitted from raw attachment URLs;
-- those raw `<img>` tags did not carry WordPress attachment `width` / `height` dimensions or responsive `srcset` / `sizes`;
-- this weakened responsive image selection and layout-shift protection, which conflicts with the mobile-first landing-page checklist.
+- `scroll` at 50% and 90%;
+- `form_start` once per form interaction;
+- `form_submit` on submit;
+- `ClickCTA` for `.t2-btn`, `.t2-text-link`, `[data-ddg-cta]`;
+- `ClickPhone` for `tel:` links;
+- `ClickZalo` for Zalo links;
+- campaign persistence for `utm_source`, `utm_medium`, `utm_campaign`, `utm_term`, `utm_content`, `gclid`, `fbclid` via session storage;
+- stored campaign values are injected as hidden fields into forms so attribution survives internal navigation;
+- every event is emitted as `ddg:tracking`; if a real `gtag` exists it is used, otherwise an existing `dataLayer` is used;
+- no GA4/GTM vendor ID or fake key was added;
+- `page_view` is intentionally left to the verified GA4/GTM integration to avoid duplicate automatic page views.
 
-Fix:
+An intermediate unused tracking draft file was removed; active implementation lives only in the already-enqueued `theme2.js`.
 
-- resolve homepage/page Featured Image attachment IDs;
-- render hero, capability, brand and about media with `wp_get_attachment_image()`;
-- primary LCP hero remains `loading=eager` + `fetchpriority=high` and is not lazy-loaded;
-- supporting hero tiles remain eager; below-the-fold About image remains lazy;
-- WordPress now emits attachment dimensions and responsive `srcset`/`sizes` automatically;
-- explicit descriptive ALT text is retained;
-- no product data, Product Truth, HOLD or publication rule changed.
+Exact code HEAD after cleanup: `dd67a9b8cd1ab4e283c9d3f50b4539fd87c79541`.
 
-Exact frontend code commit: `82ce6821caf9c6c411855c3a4732340db5bfb93a`.
+Files changed in active source:
 
-Files changed:
-
-- `apps/bizrise-ddg-theme/front-page.php`
+- `apps/bizrise-ddg-theme/assets/js/theme2.js`
 
 ## Mobile checklist
 
@@ -44,52 +44,57 @@ Files changed:
 | Product media portrait 9:16 / contain | PASS source | PASS source | PASS source |
 | Single product image contained | PASS source | PASS source | PASS source |
 | Article/body/table/form/footer responsive | PASS source | PASS source | PASS source |
-| Homepage hero not lazy-loaded | PASS source | PASS source | PASS source |
+| Homepage LCP hero eager/high priority | PASS source | PASS source | PASS source |
 | Homepage image width/height/srcset | PASS source | PASS source | PASS source |
 
-`PASS source` means static source/cascade/interaction inspection, not live production screenshot verification.
+`PASS source` is static source/cascade/interaction evidence only, not production screenshot verification.
 
-## CRO / tracking audit
+## URLs/templates in P0 scope
 
-Theme source still does not contain a verified GA4/GTM vendor ID or a verified `dataLayer`/`gtag` integration. No fake vendor key was added.
+- `/` → `front-page.php`
+- `/san-pham/`, product category/tag archives → WooCommerce archive template / WooCommerce `product`
+- representative single product → WooCommerce single template
+- `/thuong-hieu/`, corporate pages, `/lien-he/` → page/editorial templates as applicable
+- `/kien-thuc/` + article single/archive → editorial/article templates
 
-- `page_view`: external integration dependent, CHƯA XÁC MINH;
-- `scroll`: CHƯA XÁC MINH;
-- `form_start` / `form_submit`: CHƯA XÁC MINH;
-- `ClickCTA` / `ClickPhone` / `ClickZalo`: CHƯA XÁC MINH;
-- UTM preservation: no theme-level query-string stripping identified.
+## Tracking state
+
+| Signal | Source state |
+|---|---|
+| GA4/GTM vendor ID | MISSING / not verified; no fake ID added |
+| `page_view` | External verified GA4/GTM integration required |
+| `scroll` | PRESENT in theme bridge |
+| `form_start` | PRESENT in theme bridge |
+| `form_submit` | PRESENT in theme bridge |
+| `ClickCTA` | PRESENT in theme bridge |
+| `ClickPhone` | PRESENT in theme bridge |
+| `ClickZalo` | PRESENT in theme bridge |
+| UTM preservation | PRESENT for session + form hidden fields |
 
 ## Performance evidence
 
-- LCP hero implementation: source guard improved (`eager` + `fetchpriority=high`, responsive attachment markup).
-- CLS guard: source improved through attachment width/height plus responsive markup.
-- FCP, measured LCP, measured CLS and PageSpeed mobile: CHƯA XÁC MINH because production cannot currently be rendered/tested from the available environment.
+Source guards remain in place for responsive images, attachment width/height/srcset and eager/high-priority homepage LCP media. Measured FCP, LCP, CLS and PageSpeed mobile remain **CHƯA XÁC MINH** because production cannot currently be rendered from the available tester environment.
 
-## CI / deploy state
+Target remains: FCP <1.5s, LCP <3s, CLS <0.1, PageSpeed mobile >80 when measurement becomes available.
 
-For code commit `82ce6821caf9c6c411855c3a4732340db5bfb93a`:
+## Tests / CI
+
+For code HEAD `dd67a9b8cd1ab4e283c9d3f50b4539fd87c79541`:
 
 - Validate Bizrise DDG V2: **SUCCESS**;
 - Build Bizrise DDG V2 Release: **SUCCESS**;
-- production deployed SHA: CHƯA XÁC MINH.
+- PHP syntax / deployment shell / Product Truth / controlled media manifest checks in Validate: **SUCCESS**;
+- JS source smoke via local `node --check`: **BLOCKED in this runner** because raw GitHub hostname could not resolve; no claim of a local JS smoke PASS is made.
 
-## Production PASS evidence still required
+## Production state
 
-1. `deployed_sha` equals a validated/released current code SHA or descendant;
-2. `/`, `/san-pham/`, representative category/single product, brand, article, contact/store locator render successfully;
-3. 360/390/430 browser QA: hamburger/submenu, no horizontal overflow, 2-column product grid, hero/CTA/typography/footer;
-4. desktop >=1181px full nav does not break;
-5. catalog remains non-empty and WooCommerce-owned;
-6. measured performance/tracking evidence where instrumentation is actually available.
+**PRODUCTION PASS: CHƯA XÁC MINH**.
 
-## Status
+Still required before PASS:
 
-**MOBILE SOURCE: PASS**
-
-**RESPONSIVE HOMEPAGE MEDIA: FIXED IN SOURCE**
-
-**EXACT CODE CI: PASS**
-
-**PRODUCTION DEPLOY: CHƯA XÁC MINH**
-
-**BROWSER QA 360/390/430: CHƯA XÁC MINH**
+1. verify production `deployed_sha` matches a validated/released current SHA;
+2. render `/`, `/san-pham/`, category, product single, brand, article, corporate/contact pages;
+3. browser QA at 360/390/430 before desktop >=1180;
+4. verify forms/phone/Zalo/contact/store-locator paths actually work with production content/plugins;
+5. verify tracking events against the real GA4/GTM container if/when present;
+6. measure CWV/PageSpeed when production is reachable.
