@@ -4,12 +4,13 @@
 
 - Source/CI: PASS.
 - Branch: `codex/rebuild-v2`.
-- HEAD checked: `70067bbb90e8051fe0815e56527d1611c5de5790` (`docs(frontend): record responsive nav JS fix`).
-- Validate run `33139170151`: SUCCESS.
-- Release run `33139170190`: SUCCESS.
+- HEAD checked: `36c17c83f8b8937606f9dfb37a91eff9ca5fad67` (`docs(frontend): record responsive homepage media fix`).
+- Validate run `33142118240`: SUCCESS.
+- Release run `33142118201`: SUCCESS.
+- Validate confirms PHP syntax, deployment shell syntax, Product Truth seed, controlled 44-SKU media manifest, JSON and publish-ready article data all PASS.
 - Production catalog/runtime/media inventory on this HEAD: CHƯA XÁC MINH from this execution environment.
 - Product state changes this run: **0**.
-- Controlled SKU state remains protected; no guessed mapping or guessed media assignment was performed.
+- Controlled SKU state remains protected; no guessed mapping, guessed media assignment, fuzzy mapping, hard delete, mass draft or mass publish was performed.
 
 ## Last verified production evidence
 
@@ -28,7 +29,7 @@
 | Errors | 0 |
 | Public rows missing Featured Image | 22 |
 
-The 22 missing-image rows remain non-controlled candidates until the live product inventory proves their exact identity and relationship to a canonical storefront row.
+The 22 missing-image rows remain non-controlled candidates until live product inventory proves exact identity, duplicate/legacy/obsolete status and any canonical replacement.
 
 ## Publication policy
 
@@ -43,7 +44,7 @@ When production access is available, inspect:
 - `/wp-json/bizrise-ddg/v1/media-inventory?scope=products&per_page=100`
 - `/san-pham/`
 
-For every public WooCommerce product, verify ID, slug, title, brand/category, pack identity and Featured Image ID/file/URL/ALT/dimensions. Controlled products must resolve to the exact manifest poster. Non-controlled rows may only be reclassified when exact identity evidence and a canonical replacement are available.
+For every public WooCommerce product, verify canonical ID, slug, title, brand/category, pack identity, publish/catalog state and Featured Image ID/file/URL/ALT/dimensions. Controlled products must resolve to the exact manifest poster and must not have a duplicate canonical storefront row. Non-controlled rows may only be reclassified when exact identity evidence and a canonical replacement are available.
 
 ## Before / after — this run
 
@@ -54,26 +55,32 @@ For every public WooCommerce product, verify ID, slug, title, brand/category, pa
 | Controlled wrong Featured Image | 0 | 0 |
 | Product records with status changed by this run | 0 | 0 |
 | Product media assignments changed by this run | 0 | 0 |
-| Product IDs changed by this run | none | none |
+| Product IDs draft/trash by this run | none | none |
+| Hard-deleted products/media/database rows | 0 | 0 |
 
-## Production verification attempt — 2026-08-28 10:35 ICT
+## Production verification attempt — 2026-08-28 11:32 ICT
 
-The available web path returned no usable fresh production payload for the catalog/runtime/media endpoints, and a direct execution-environment HTTP probe failed before returning a trustworthy application response. Therefore the run does not infer production health from source or CI.
+Attempts to obtain fresh production evidence did not return a trustworthy application payload. Web discovery returned no indexed REST result, direct exact-URL opening was unavailable through the safe URL gate, and the direct execution-environment HTTP probe failed before returning an application response. Source/CI therefore must not be treated as production evidence.
 
 Still CHƯA XÁC MINH:
 
 - deployed SHA;
-- live `/san-pham/` product count;
+- live `/san-pham/` product count and whether the public catalog is non-empty on this HEAD;
 - runtime catalog counters;
 - full public Woo product inventory;
 - current missing Featured Image IDs;
 - duplicate Featured Image attachment groups;
-- exact classification of non-controlled candidates.
+- exact canonical classification of non-controlled candidates;
+- live ALT and image dimensions for all public rows.
 
 ## Media policy
 
-Prefer first-party Media Library assets. Preserve exact controlled poster identity. ALT must describe the actual media without adding unsupported claims. Do not crop away product identity or pack information. For web export optimization, record a Photoshop Export-for-Web requirement only when needed; no Photoshop execution is claimed in this run.
+Prefer first-party Media Library assets. Preserve exact controlled poster identity. ALT must describe the actual media without adding unsupported claims. Do not crop away product identity or pack information. Mobile assets should use 9:16 when the placement requires vertical media; desktop placements should use 16:9, 1:1 or 3:4 according to the actual component. For web export optimization, record a Photoshop Export-for-Web requirement only when needed; no Photoshop execution is claimed in this run.
+
+## Rollback policy
+
+No rollback is needed for this run because no product or media state changed. Any future deterministic cleanup must record product IDs, previous status, new status, canonical replacement and evidence source before applying draft/trash. Unknown/unmapped rows remain untouched and hard deletion is prohibited.
 
 ## Next safe action
 
-Once production is reachable: confirm deployed SHA and catalog health first; then audit all public Woo rows against the 44-row manifest and Product Truth, enumerate missing/duplicate media usage, classify non-controlled rows from exact evidence, and apply only reversible status changes with product IDs and before/after counts recorded here.
+Once production is reachable: confirm deployed SHA and catalog health first; then audit every public Woo row against the 44-row manifest and Product Truth, enumerate missing/duplicate media usage, classify non-controlled rows from exact evidence, and apply only reversible status changes with IDs and before/after counts recorded here. Controlled 44 SKU must remain intact and `/san-pham/` must remain non-empty throughout cleanup.
