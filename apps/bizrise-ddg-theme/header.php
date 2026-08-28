@@ -6,7 +6,7 @@ wp_enqueue_style(
     'bizrise-ddg-mobile-p0',
     get_template_directory_uri() . '/assets/css/mobile-p0.css',
     ['bizrise-ddg-theme213'],
-    '2026.08.28.4'
+    '2026.08.28.5'
 );
 ?><!doctype html>
 <html <?php language_attributes(); ?>>
