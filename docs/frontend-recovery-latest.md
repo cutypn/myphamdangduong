@@ -67,10 +67,10 @@ Theme source still does not contain a verified GA4/GTM vendor ID or a verified `
 
 ## CI / deploy state
 
-For code commit `82ce6821caf9c6c411855c3a4732340db5bfb93a` at report update time:
+For code commit `82ce6821caf9c6c411855c3a4732340db5bfb93a`:
 
-- Validate Bizrise DDG V2: running;
-- Build Bizrise DDG V2 Release: running;
+- Validate Bizrise DDG V2: **SUCCESS**;
+- Build Bizrise DDG V2 Release: **SUCCESS**;
 - production deployed SHA: CHƯA XÁC MINH.
 
 ## Production PASS evidence still required
@@ -88,7 +88,7 @@ For code commit `82ce6821caf9c6c411855c3a4732340db5bfb93a` at report update time
 
 **RESPONSIVE HOMEPAGE MEDIA: FIXED IN SOURCE**
 
-**EXACT CODE CI: RUNNING**
+**EXACT CODE CI: PASS**
 
 **PRODUCTION DEPLOY: CHƯA XÁC MINH**
 
