@@ -1,46 +1,60 @@
 # DDG Project Orchestrator — latest
 
-Reviewed: 2026-08-28 10:20 ICT
+Reviewed: 2026-08-28 11:22 ICT
 
 ## Objective
-P0 remains: finish a production-ready Đăng Dương Group website without expanding into ads/email/social. Source of truth is `codex/rebuild-v2`; production completion requires deployed-SHA and live evidence.
+P0 remains: finish the production-ready Đăng Dương Group website without expanding into ads/email/social. Source of truth is `codex/rebuild-v2`. Completion requires an exact deployed SHA plus live production evidence on that release.
 
 ## Inputs read
-- Git branch HEAD observed before this strategy write: `baa6c91af873a9310bb456c51ad0902bbee67e8d` (`chore(frontend): bust mobile navigation cache`).
-- `docs/post-deploy-test-latest.md`: production runtime/frontend remains **CHƯA XÁC MINH**; last observed Git HEAD there was older (`202f7e1...`) with Validate/Release SUCCESS, but deployed SHA was unavailable.
-- `docs/frontend-recovery-latest.md`: approved mindmap/source + CI PASS; mobile navigation source recovered through 1180px; production/browser QA unverified.
-- `docs/content-publish-latest.md`: 10/10 knowledge articles publish-ready; production article/media verification pending.
-- `apps/bizrise-ddg-theme/header.php`: top-level IA in source matches the approved order and contains the approved submenu families.
-- Shared product-marketing context did not exist at the start of this run.
+- Current branch HEAD: `01f7aa0ff92eb17dd429494d55c23e0584d2ff1a` (`docs(product): record current recovery gate`).
+- `.agents/product-marketing-context.md`: shared context exists and already covers overview, audience/beauty situations, differentiation, brand voice, verified proof points/constraints, goals, URL ownership and evidence rules.
+- `docs/post-deploy-test-latest.md`: last production test remains **CHƯA XÁC MINH** because deploy/runtime/frontend endpoints were unreachable; no deployed SHA was observed.
+- `docs/frontend-recovery-latest.md`: mobile source PASS; responsive nav JS/CSS breakpoint mismatch fixed; production/browser QA still unverified.
+- Latest product recovery report at HEAD: controlled manifest remains 44, last verified controlled match 44/44, wrong Featured Image 0, no product state/media changes; current production inventory remains unverified.
+- GitHub combined-status API returned no legacy commit statuses for current HEAD; therefore this round does not infer current Validate/Release success from an empty status list.
 
-## Decisions
-1. Created `.agents/product-marketing-context.md` as the shared marketing/IA contract. It separates consumer, OEM/ODM prospect and partner journeys; records only repository-verified proof points; defines voice, goals and URL ownership.
-2. IA top-level source is already aligned and is not rewritten this round: Trang chủ → Về Đăng Dương → Năng lực → Thương hiệu → Sản phẩm & Routine → Kiến thức → Đối tác → Liên hệ.
-3. Canonical ownership is enforced conceptually to prevent cannibalization: capability detail belongs to capability URLs; WooCommerce catalog owns product discovery; knowledge owns educational intent; `/doi-tac/` links to OEM/ODM rather than duplicating its detail intent; `/lien-he/` owns primary conversion.
-4. Largest unresolved P0 is not another marketing rewrite: it is production deploy/runtime verification. Adding more source changes before a deploy can be observed risks moving the target and duplicating Frontend/Product/Content agents.
-5. No unverified certification, capacity, partner, medical-effect or VOC statement is introduced.
+## IA / journey decision
+Approved top-level IA remains the contract and does not need another speculative rewrite:
 
-## Action owners
-- Release/Deploy path: obtain exact deployed SHA/runtime evidence for the latest CI-passing descendant of current source.
-- Post-Deploy Production Tester: once a new deployed SHA is observable, run core URLs, catalog, 360/390/430 and desktop tests and record P0/P1/P2 evidence.
-- Frontend Recovery: only act on reproducible frontend failures from production evidence; do not change Product Truth.
-- Product/Data Recovery: retain WooCommerce catalog ownership and HOLD/publication safety; only act on verified runtime/catalog defects.
-- Content Publish: keep 10/10 article registry publish-ready; only fix evidence-backed public copy/link issues.
-- Strategy/Orchestrator: maintain IA, journey, CTA/internal-link and URL ownership contract; avoid duplicate implementation work.
+Trang chủ → Về Đăng Dương → Năng lực → Thương hiệu → Sản phẩm & Routine → Kiến thức → Đối tác → Liên hệ.
+
+URL ownership remains:
+- corporate context: `/ve-dang-duong/`;
+- B2B capability hub/details: `/nang-luc/` and approved capability subpages;
+- brand discovery: `/thuong-hieu/` and brand subpages;
+- transactional discovery: WooCommerce `/san-pham/`; routine supports selection without duplicating product-detail intent;
+- education: `/kien-thuc/` and articles;
+- partnership: `/doi-tac/`, linking to OEM/ODM detail rather than duplicating it;
+- primary conversion: `/lien-he/` and approved action subpages.
+
+No new certification, capacity, partner, VOC, medical-effect or regulatory claim is introduced.
+
+## Priority decision
+The largest unresolved blocker is still **P0 production observability / post-deploy verification**, not IA or marketing copy. Further speculative source edits would move the release target and duplicate Frontend/Product/Content ownership.
+
+The strategy lane therefore makes no theme/Product Truth/catalog mutation this round. It freezes IA/journey ownership until production evidence identifies a reproducible P0/P1 defect.
+
+## Action owner
+- **Release/Deploy:** expose/read exact `deployed_sha` and `remote_sha` for a Validate + Release successful release lineage.
+- **Post-Deploy Production Tester:** when a new deployed SHA is observable, run the required core-page, submenu, WooCommerce catalog, 360/390/430, desktop >=1180, link/H1/404/content and media-inventory checks.
+- **Frontend Recovery:** fix only reproducible production frontend failures; preserve WooCommerce/Product Truth ownership.
+- **Product/Data Recovery:** fix only deterministic runtime/catalog defects; no guessed mapping, mass publish/draft or Product Truth override.
+- **Content Publish:** fix only evidence-backed public copy/link defects; preserve verified-claim rules.
+- **Strategy/Orchestrator:** maintain IA, CTA/internal-link journey and URL ownership; prevent duplicate work/cannibalization.
 
 ## KPI / Definition of Done
-P0 website completion requires all of the following on the same deployed release lineage:
-- deployed SHA is observable and corresponds to a Validate + Release CI-successful commit;
-- runtime status is readable and has no P0 catalog/publication failure;
-- eight top-level journeys and approved submenu URLs render without abnormal 404s;
-- `/san-pham/` is non-empty and WooCommerce-backed; HOLD/draft items do not leak publicly;
-- representative product/category/single pages and Featured Images pass production checks;
-- mobile 360/390/430 and desktop >=1180 pass header/submenu, overflow, hero, CTA, grid, article and footer checks;
-- no P0 broken links, duplicate H1, placeholder/internal jargon or unsafe claim is observed;
-- knowledge/article production and media inventory are verified where endpoints support it.
+PRODUCTION PASS requires all P0 checks on the same deployed release lineage:
+1. `deployed_sha == remote_sha` and corresponding Validate + Release CI are successful.
+2. Runtime status is readable with no P0 publication/catalog failure.
+3. Eight top-level journeys plus approved submenu URLs render without abnormal 404s.
+4. `/san-pham/` is non-empty, WooCommerce-owned, representative category/archive/single products render, Featured Images are correct, HOLD/draft does not leak.
+5. Mobile 360/390/430 passes header/hamburger/submenu, no horizontal overflow, hero, typography, CTA, two-column product grid, article cards, footer and tap targets.
+6. Desktop >=1180 passes navigation/layout.
+7. No P0 broken links, duplicate H1, placeholder/internal jargon or unsafe claim is observed.
+8. Product/article media inventory is verified where runtime endpoints support it.
 
 ## Blocker
-**P0 — production evidence unavailable in the latest tester report.** Source and CI progress cannot be promoted to PRODUCTION PASS until `/wp-json/bizrise-deploy/v1/status`, `/wp-json/bizrise-ddg/v1/runtime-status` and frontend production are reachable from a tester and the exact deployed SHA is checked.
+**P0 — exact deployed SHA and live production evidence remain unavailable in the latest independent tester report.** Source/CI progress is not production evidence.
 
 ## Next action
-Do not create speculative marketing scope. First observe the next deployed SHA and execute independent post-deploy production QA. If it exposes a P0, route the exact URL/viewport/evidence to the owning Frontend or Product agent. If all P0 checks pass, then close the website P0 and move remaining journey/copy refinements to P1.
+Do not open ads/email/social scope and do not create speculative marketing rewrites. First obtain the next observable deployed SHA and run independent production QA. Route any P0 with exact SHA + URL + viewport + evidence to its owner. If every P0 passes on that deployed SHA, close website P0 and move remaining journey/copy refinements to P1.
