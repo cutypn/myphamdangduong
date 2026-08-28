@@ -10,21 +10,11 @@
 
 ## Improvement in this run
 
-Updated `apps/bizrise-ddg-migrator/data/site-content.php` in commit `6699022b02af1d1cc86acc12ea5abbcefa23c8ba`.
+Updated `data/content/articles/lam-mau-my-pham-can-luu-y-gi.md` in commit `d698dcf7ab431317c31ea69db27a0f3ddd8fd458`.
 
-Public core-page copy was simplified to remove internal/business jargon without changing verified meaning or product data. Replacements include clearer Vietnamese wording for `Product Truth`, `claim`, `affiliate`, `brief`, `product brief`, `artwork`, `feedback`, `checklist`, `B2B`, and routine labels where the English term was unnecessary.
+The article was rewritten for cleaner public Vietnamese while retaining the same educational scope and publish-ready status. Internal/business jargon such as `feedback`, `brief`, `product owner`, `version`, `routine`, `copy feedback`, `claim` and `form feedback` was replaced with clearer Vietnamese phrasing. The direct answer, SEO title/meta and body copy now use the same public-facing terminology, and `last_verified` was advanced to **2026-08-28**.
 
-Core pages materially cleaned in this run:
-
-- `/nang-luc/`
-- `/thuong-hieu/`
-- `/san-pham/`
-- `/kien-thuc/`
-- `/doi-tac/`
-- `/nghien-cuu-phat-trien/`
-- `/nha-may-san-xuat-my-pham/`
-- `/oem-odm-my-pham/`
-- `/lien-he/`
+The body was also strengthened around three practical decisions: defining review criteria before receiving a sample, assigning one person to consolidate comments, and recording each sample version so later decisions remain traceable.
 
 Counts before/after:
 
@@ -32,8 +22,7 @@ Counts before/after:
 - publish-ready articles after: **10**
 - metadata synchronized before: **10/10**
 - metadata synchronized after: **10/10**
-- core pages with identified public-facing jargon before: **9**
-- core pages with identified public-facing jargon after: **0** for the terms addressed in this pass
+- article with identified public-facing jargon cleaned in this run: **1**
 - product detail copy changed: **0**
 
 ## Article media inventory
@@ -46,11 +35,11 @@ Runtime media before: **NOT VERIFIED**.
 
 Runtime media after: **NOT VERIFIED**.
 
-The endpoint still could not be read from the current verification environment. Direct REST open was rejected by the safe-URL layer, and a fresh exact-domain search on **2026-08-28** returned no indexable endpoint. Therefore article ID/slug/title/category, Featured Image ID/file/URL/ALT/dimensions, missing-featured counts, duplicate-attachment counts and live article-sync counts are not inferred.
+The endpoint could not be read from the current verification environment in this run. Therefore article ID/slug/title/category, Featured Image ID/file/URL/ALT/dimensions, missing-featured counts, duplicate-attachment counts and live article-sync counts are not inferred.
 
 ## CI state for content commit
 
-For commit `6699022b02af1d1cc86acc12ea5abbcefa23c8ba`, both Validate Bizrise DDG V2 and Build Bizrise DDG V2 Release were triggered. At the time this report was written they were still running, so this report does not claim CI PASS early.
+For content commit `d698dcf7ab431317c31ea69db27a0f3ddd8fd458`, GitHub had not yet returned completed status checks at the time this report was written. This report therefore does not claim CI PASS early.
 
 ## Production gate
 
@@ -72,7 +61,7 @@ No unverified certification, production-capacity, partner, contact, medical-effe
 
 **METADATA: 10/10 SYNCHRONIZED.**
 
-**CORE PUBLIC LANGUAGE QA: IMPROVED — 9 PAGES CLEANED IN THIS PASS.**
+**CONTENT CHANGE THIS RUN: 1 ARTICLE REWRITTEN FOR CLEARER PUBLIC VIETNAMESE.**
 
 **PRODUCT DETAIL COPY: UNCHANGED.**
 
