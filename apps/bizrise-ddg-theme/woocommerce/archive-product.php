@@ -48,7 +48,7 @@ $shop_url = ddg_theme2_url('san-pham');
     }
     ?>
 
-    <section class="t2-product-discovery" aria-label="Tìm và lọc sản phẩm">
+    <section id="danh-muc" class="t2-product-discovery" aria-label="Tìm và lọc sản phẩm">
       <form class="t2-product-search" role="search" method="get" action="<?php echo esc_url($shop_url); ?>">
         <label class="screen-reader-text" for="ddg-product-search">Tìm sản phẩm</label>
         <input id="ddg-product-search" class="t2-product-search__field" type="search" name="s" value="<?php echo esc_attr(get_search_query()); ?>" placeholder="Tìm sản phẩm..." autocomplete="off">
