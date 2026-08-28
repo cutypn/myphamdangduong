@@ -1,4 +1,4 @@
-/* DDG Product Mockup 2.2.3 — mobile-first storefront */
+/* DDG Product Mockup 2.2.4 — mobile-first storefront */
 .t2-product-archive{background:#fbfaf7;color:#16233d}
 .t2-product-archive .t2-index-hero--product{padding:0;background:linear-gradient(135deg,#071b35 0%,#0d294b 58%,#12385f 100%);color:#fff;border-bottom:1px solid rgba(255,255,255,.08)}
 .t2-product-archive .t2-index-hero__grid{min-height:310px;display:grid;grid-template-columns:minmax(0,1.3fr) minmax(280px,.7fr);gap:48px;align-items:end;padding-top:70px;padding-bottom:54px}
@@ -55,19 +55,19 @@
  .t2-product-archive .t2-product-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
  .t2-product-archive .t2-product-card{border-radius:15px;box-shadow:0 8px 22px rgba(18,38,64,.055)}
  .t2-product-archive .t2-product-card__media{padding:7px}
- .t2-product-archive .t2-product-card__media-brand{font-size:.62rem;padding-bottom:6px;line-height:1.35}
+ .t2-product-archive .t2-product-card__media-brand{font-size:.72rem;padding-bottom:6px;line-height:1.35}
  .t2-product-archive .t2-product-card__media-meta{min-height:50px;padding-top:7px}
- .t2-product-archive .t2-product-card__media-meta strong{font-size:.68rem;line-height:1.35}
- .t2-product-archive .t2-product-card__media-meta small{font-size:.62rem}
- .t2-product-archive .t2-product-card__copy{min-height:118px;padding:10px 10px 12px}
- .t2-product-archive .t2-product-card__copy .t2-kicker{font-size:.62rem;line-height:1.35}
- .t2-product-archive .t2-product-card__copy h3{font-size:.78rem;line-height:1.42}
- .t2-product-archive .t2-product-card__copy .t2-text-link{min-height:44px;display:flex;align-items:center;font-size:.68rem;line-height:1.35}
+ .t2-product-archive .t2-product-card__media-meta strong{font-size:.72rem;line-height:1.35}
+ .t2-product-archive .t2-product-card__media-meta small{font-size:.68rem;line-height:1.35}
+ .t2-product-archive .t2-product-card__copy{min-height:122px;padding:10px 10px 12px}
+ .t2-product-archive .t2-product-card__copy .t2-kicker{font-size:.68rem;line-height:1.35}
+ .t2-product-archive .t2-product-card__copy h3{font-size:.80rem;line-height:1.42}
+ .t2-product-archive .t2-product-card__copy .t2-text-link{min-height:44px;display:flex;align-items:center;font-size:.70rem;line-height:1.35}
 }
 @media(max-width:380px){
  .t2-product-archive__body{padding-bottom:62px}
  .t2-product-discovery{margin-left:-2px;margin-right:-2px}
  .t2-product-archive .t2-product-grid{gap:8px}
  .t2-product-archive .t2-product-card__copy{padding-left:8px;padding-right:8px}
- .t2-product-archive .t2-product-card__copy h3{font-size:.76rem}
+ .t2-product-archive .t2-product-card__copy h3{font-size:.78rem}
 }
