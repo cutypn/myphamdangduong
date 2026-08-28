@@ -1,0 +1,33 @@
+version: 1.0
+orchestration:
+  product_owner: AGT-PO
+  business_analyst: AGT-BA
+  project_manager: AGT-PM
+routes:
+  product_context: MKT-CTX
+  marketing_plan_gtm_launch: MKT-00
+  content_calendar: MKT-01
+  campaign_brief: MKT-02
+  performance_audit: MKT-03
+  short_video_script: MKT-04
+  ad_copy: MKT-05
+  ugc_egc_koc_brief: MKT-06
+  marketing_report: MKT-07
+  competitor_research: MKT-08
+  customer_insight_persona_journey: MKT-09
+  reverse_kpi_budget: MKT-10
+  channel_setup: MKT-11
+  landing_page: MKT-12
+  data_analysis: MKT-13
+  email_marketing: MKT-14
+  social_listening_crisis: MKT-15
+  marketing_psychology: MKT-16
+  pricing: MKT-17
+  referral_affiliate: MKT-18
+  ab_testing: MKT-19
+workflows:
+  campaign_launch: [MKT-CTX, MKT-08, MKT-09, MKT-00, MKT-02, MKT-01, MKT-04, MKT-05, MKT-06, MKT-11, MKT-12, MKT-13, MKT-03, MKT-07]
+  monthly_optimization: [MKT-13, MKT-03, MKT-07, MKT-10, MKT-01, MKT-04, MKT-05]
+  content_production: [MKT-09, MKT-01, MKT-04, MKT-06, MKT-05, MKT-13]
+  channel_setup: [MKT-CTX, MKT-11, MKT-12, MKT-14, MKT-15, MKT-13]
+governance_wrapper: [AGT-PO, AGT-BA, AGT-PM, SPECIALISTS, AGT-PM, AGT-PO]
