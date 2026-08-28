@@ -15,12 +15,12 @@ Public storefront remains WooCommerce `post_type=product`. Internal Product Trut
 ## Current Git / CI
 
 - Branch: `codex/rebuild-v2`
-- Current HEAD before this report refresh: `29ac9feafd0e795703d999b2b6c851fbca90cbad`
-- Commit: `ci(media): harden 44-SKU manifest integrity checks`
-- Product-impact assessment: **non-destructive CI hardening only** — no WooCommerce mapping, Product Truth, Featured Image assignment, HOLD handling, catalog visibility or product publish state was changed.
-- Validate Bizrise DDG V2 run `33128380675`: **SUCCESS**.
-- Build Bizrise DDG V2 Release run `33128380669`: **SUCCESS**.
-- New CI gate requires the controlled manifest to contain exactly 44 rows, all required fields populated, valid image filenames, unique `key`, unique source/poster filenames, and unique brand/product/pack identity.
+- Current HEAD before this report refresh: `68bd5c25c3a50c23d83c8f616c617f2bc19d791e`
+- Commit: `docs(product): refresh recovery state and manifest CI gate`
+- Product-impact assessment: **report-only / non-destructive** — no WooCommerce mapping, Product Truth, Featured Image assignment, HOLD handling, catalog visibility or product publish state was changed.
+- Validate Bizrise DDG V2 run `33128745800`: **SUCCESS**.
+- Build Bizrise DDG V2 Release run `33128745798`: **SUCCESS**.
+- The controlled manifest CI gate requires exactly 44 rows, all required fields populated, valid image filenames, unique `key`, unique source/poster filenames, and unique brand/product/pack identity.
 - CI validation still covers repository PHP lint / JSON / data checks configured by `validate-v2.yml` on this HEAD.
 - No fuzzy mapping, guessed image assignment, product deletion, mass draft or mass publish was performed.
 
@@ -79,17 +79,17 @@ No Product Truth HOLD/unknown/unverified record should be newly exposed. No fuzz
 | Product media inventory | unavailable | endpoint implemented; full live payload pending production reachability |
 | Runtime catalog observability | no direct counters | `catalog_runtime` implemented |
 | Controlled manifest integrity gate | weak structural assumption | **PASS** — exactly 44 rows + required values + unique keys/source/poster/identity |
-| Current code HEAD CI | unknown | **Validate PASS + Release PASS** on `29ac9feaf…` |
+| Current code HEAD CI | unknown | **Validate PASS + Release PASS** on `68bd5c25…` |
 | Current HEAD production deploy | unknown | **CHƯA XÁC MINH** |
 
-## Production verification attempt — 2026-08-28 07:07 ICT
+## Production verification attempt — 2026-08-28 08:06 ICT
 
 This run attempted direct DNS/HTTP access to:
 
 - `https://dangduonggroup.com/wp-json/bizrise-ddg/v1/media-inventory?scope=products&per_page=100`
 - `https://dangduonggroup.com/wp-json/bizrise-ddg/v1/runtime-status`
 
-Production DNS failed to resolve from the execution environment (`Temporary failure in name resolution`), so no fresh production payload could be obtained.
+Production DNS failed to resolve from the execution environment (`Temporary failure in name resolution`; `curl: (6) Could not resolve host: dangduonggroup.com`), so no fresh production payload could be obtained.
 
 Therefore the following remain **CHƯA XÁC MINH** on current HEAD:
 
