@@ -104,3 +104,144 @@
     desktopQuery.addListener(resetForDesktop);
   }
 })();
+
+(() => {
+  'use strict';
+
+  const campaignKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'fbclid'];
+  const startedForms = new WeakSet();
+  const firedScroll = new Set();
+
+  const readCampaign = () => {
+    const params = new URLSearchParams(window.location.search);
+    const next = {};
+
+    campaignKeys.forEach((key) => {
+      const value = params.get(key);
+      if (value) next[key] = value.slice(0, 255);
+    });
+
+    if (Object.keys(next).length) {
+      try {
+        window.sessionStorage.setItem('ddg_campaign', JSON.stringify(next));
+      } catch (error) {
+        // Attribution remains optional if storage is unavailable.
+      }
+      return next;
+    }
+
+    try {
+      return JSON.parse(window.sessionStorage.getItem('ddg_campaign') || '{}') || {};
+    } catch (error) {
+      return {};
+    }
+  };
+
+  const campaign = readCampaign();
+
+  const emit = (name, detail = {}) => {
+    const payload = {
+      event: name,
+      page_location: window.location.href,
+      page_path: window.location.pathname,
+      ...campaign,
+      ...detail,
+    };
+
+    window.dispatchEvent(new CustomEvent('ddg:tracking', { detail: payload }));
+
+    if (typeof window.gtag === 'function') {
+      const { event, ...params } = payload;
+      window.gtag('event', event, params);
+    } else if (Array.isArray(window.dataLayer)) {
+      window.dataLayer.push(payload);
+    }
+  };
+
+  const labelFor = (element) => {
+    const explicit = element.getAttribute('data-track-label');
+    if (explicit) return explicit.trim().slice(0, 160);
+    return (element.textContent || element.getAttribute('aria-label') || '')
+      .trim()
+      .replace(/\s+/g, ' ')
+      .slice(0, 160);
+  };
+
+  const formName = (form) => form.getAttribute('name') || form.getAttribute('id') || 'form';
+
+  const hydrateCampaignFields = (form) => {
+    Object.entries(campaign).forEach(([key, value]) => {
+      let field = form.querySelector(`input[name="${key}"]`);
+      if (!field) {
+        field = document.createElement('input');
+        field.type = 'hidden';
+        field.name = key;
+        field.setAttribute('data-ddg-campaign-field', '1');
+        form.appendChild(field);
+      }
+      if (!field.value) field.value = value;
+    });
+  };
+
+  document.querySelectorAll('form').forEach((form) => {
+    hydrateCampaignFields(form);
+
+    const start = () => {
+      if (startedForms.has(form)) return;
+      startedForms.add(form);
+      emit('form_start', { form_name: formName(form) });
+    };
+
+    form.addEventListener('focusin', start, { once: true });
+    form.addEventListener('input', start, { once: true });
+    form.addEventListener('submit', () => {
+      hydrateCampaignFields(form);
+      emit('form_submit', { form_name: formName(form) });
+    });
+  });
+
+  document.addEventListener('click', (event) => {
+    const element = event.target.closest('a, button');
+    if (!element) return;
+
+    const href = element instanceof HTMLAnchorElement ? element.getAttribute('href') || '' : '';
+    const label = labelFor(element);
+
+    if (/^tel:/i.test(href)) {
+      emit('ClickPhone', { link_url: href, link_text: label });
+      return;
+    }
+
+    if (/zalo\.me|zalo:/i.test(href)) {
+      emit('ClickZalo', { link_url: href, link_text: label });
+      return;
+    }
+
+    if (element.matches('.t2-btn, .t2-text-link, [data-ddg-cta]')) {
+      emit('ClickCTA', { link_url: href, link_text: label });
+    }
+  });
+
+  let scrollQueued = false;
+  const handleScroll = () => {
+    const doc = document.documentElement;
+    const maxScroll = Math.max(1, doc.scrollHeight - window.innerHeight);
+    const percent = Math.min(100, Math.round((window.scrollY / maxScroll) * 100));
+
+    [50, 90].forEach((threshold) => {
+      if (percent >= threshold && !firedScroll.has(threshold)) {
+        firedScroll.add(threshold);
+        emit('scroll', { percent_scrolled: threshold });
+      }
+    });
+  };
+
+  window.addEventListener('scroll', () => {
+    if (scrollQueued) return;
+    scrollQueued = true;
+    window.requestAnimationFrame(() => {
+      scrollQueued = false;
+      handleScroll();
+    });
+  }, { passive: true });
+})();
