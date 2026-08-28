@@ -10,9 +10,21 @@
 
 ## Improvement in this run
 
-Updated `data/content/articles/odm-my-pham-la-gi.md` in commit `c204883eef12e02c8c37aac5603cc2f37927f419`.
+Updated `apps/bizrise-ddg-migrator/data/site-content.php` in commit `6699022b02af1d1cc86acc12ea5abbcefa23c8ba`.
 
-The ODM article now uses clearer Vietnamese wording for technical/business terms, keeps the same legal/source-safe meaning, updates `last_verified` to **2026-08-28**, and adds a clear final next-step section aligned with its CTA metadata.
+Public core-page copy was simplified to remove internal/business jargon without changing verified meaning or product data. Replacements include clearer Vietnamese wording for `Product Truth`, `claim`, `affiliate`, `brief`, `product brief`, `artwork`, `feedback`, `checklist`, `B2B`, and routine labels where the English term was unnecessary.
+
+Core pages materially cleaned in this run:
+
+- `/nang-luc/`
+- `/thuong-hieu/`
+- `/san-pham/`
+- `/kien-thuc/`
+- `/doi-tac/`
+- `/nghien-cuu-phat-trien/`
+- `/nha-may-san-xuat-my-pham/`
+- `/oem-odm-my-pham/`
+- `/lien-he/`
 
 Counts before/after:
 
@@ -20,8 +32,9 @@ Counts before/after:
 - publish-ready articles after: **10**
 - metadata synchronized before: **10/10**
 - metadata synchronized after: **10/10**
-- ODM article language-cleanup items before: **1 article**
-- ODM article language-cleanup items after: **0 articles**
+- core pages with identified public-facing jargon before: **9**
+- core pages with identified public-facing jargon after: **0** for the terms addressed in this pass
+- product detail copy changed: **0**
 
 ## Article media inventory
 
@@ -33,7 +46,11 @@ Runtime media before: **NOT VERIFIED**.
 
 Runtime media after: **NOT VERIFIED**.
 
-The endpoint could not be read from the current verification environment: direct REST open was rejected by the safe-URL layer and exact-domain search returned no indexable endpoint. Therefore Featured Image ID/file/URL/ALT/dimensions, missing-featured counts, duplicate-attachment counts and live article-sync counts are not inferred.
+The endpoint still could not be read from the current verification environment. Direct REST open was rejected by the safe-URL layer, and a fresh exact-domain search on **2026-08-28** returned no indexable endpoint. Therefore article ID/slug/title/category, Featured Image ID/file/URL/ALT/dimensions, missing-featured counts, duplicate-attachment counts and live article-sync counts are not inferred.
+
+## CI state for content commit
+
+For commit `6699022b02af1d1cc86acc12ea5abbcefa23c8ba`, both Validate Bizrise DDG V2 and Build Bizrise DDG V2 Release were triggered. At the time this report was written they were still running, so this report does not claim CI PASS early.
 
 ## Production gate
 
@@ -55,6 +72,8 @@ No unverified certification, production-capacity, partner, contact, medical-effe
 
 **METADATA: 10/10 SYNCHRONIZED.**
 
-**ODM LANGUAGE QA: COMPLETE.**
+**CORE PUBLIC LANGUAGE QA: IMPROVED — 9 PAGES CLEANED IN THIS PASS.**
+
+**PRODUCT DETAIL COPY: UNCHANGED.**
 
 **PENDING: FINAL CI + PRODUCTION ARTICLE/MEDIA VERIFICATION.**
