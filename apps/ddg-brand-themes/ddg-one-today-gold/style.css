@@ -1,0 +1,34 @@
+/*
+Theme Name: DDG One Today Gold
+Description: One Today Gold brand theme for the Đăng Dương Multisite network.
+Template: ddg-beauty-premium
+Version: 1.0.0
+Requires PHP: 8.0
+Text Domain: ddg-one-today-gold
+*/
+
+:root {
+  --brand-primary: #c79a26;
+  --brand-primary-strong: #9f7314;
+  --brand-secondary: #2b2924;
+  --brand-accent: #e3c36f;
+  --brand-background: #fff8e8;
+  --brand-surface: #ffffff;
+  --brand-text: #29251d;
+  --brand-muted: #766d5b;
+  --brand-border: #e8d5a7;
+  --ddg-cherry: #8c6717;
+  --ddg-burgundy: #5c4310;
+  --ddg-ivory: var(--brand-background);
+}
+
+body { background:var(--brand-background); color:var(--brand-text); }
+a { color:var(--brand-primary-strong); }
+::selection { background:var(--brand-primary); color:#fff; }
+.wp-element-button,.button,.btn,.ddg-btn,.ddg-cta a { background:var(--brand-secondary); border-color:var(--brand-secondary); color:#fff; }
+.wp-element-button:hover,.button:hover,.btn:hover,.ddg-btn:hover,.ddg-cta a:hover { background:#11110f; border-color:#11110f; }
+.ddg-kicker,.eyebrow,.section-kicker { color:var(--brand-primary-strong); }
+.ddg-card,.product-card,.wp-block-group.is-style-card { background:var(--brand-surface); border-color:var(--brand-border); }
+.site-header,.ddg-header { border-bottom-color:rgba(199,154,38,.2); }
+.ddg-hero,.brand-hero { background:linear-gradient(135deg,#fff9e8 0%,#e7ca7c 58%,#3a352b 100%); }
+.ddg-accent-surface { background:#f5e6bd; }
