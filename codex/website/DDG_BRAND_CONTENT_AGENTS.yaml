@@ -1,0 +1,107 @@
+version: 1.0
+project: Bizrise Framework / Dang Duong Group
+controller: G0-WEB-CONTROLLER
+workflow: G4 -> SEO -> G7 -> CODEX-WEB-CONTENT-HTML -> DEV-CMS -> TESTER
+
+rules:
+  single_site_ownership: true
+  cross_brand_write: forbidden
+  deploy_permission: forbidden
+  self_qa_acceptance: forbidden
+  product_truth_required: true
+  approved_claim_only: true
+  one_h1_per_indexable_url: true
+  font: Be Vietnam Pro
+  html_body_must_start_below_h1: true
+  legal_document_as_featured_image: forbidden
+  production_live_requires_evidence: true
+
+agents:
+  DDG-CONTENT-ONE-TODAY:
+    brand: One Today
+    brand_key: one-today
+    domain: one-today.dangduonggroup.com
+    theme: ddg-one-today
+    export_root: apps/bizrise-ddg-codex-content/exports/brands/one-today
+    owns:
+      - homepage
+      - brand-story
+      - product-copy
+      - routine
+      - knowledge
+      - faq
+      - seo-metadata
+      - internal-links
+    forbidden_domains:
+      - she-one.dangduonggroup.com
+      - x2.dangduonggroup.com
+      - hatagold.dangduonggroup.com
+      - ever-today.dangduonggroup.com
+      - one-today-gold.dangduonggroup.com
+
+  DDG-CONTENT-SHE-ONE:
+    brand: She One
+    brand_key: she-one
+    domain: she-one.dangduonggroup.com
+    theme: ddg-she-one
+    export_root: apps/bizrise-ddg-codex-content/exports/brands/she-one
+    owns: [homepage, brand-story, product-copy, routine, knowledge, faq, seo-metadata, internal-links]
+    forbidden_domains: [one-today.dangduonggroup.com, x2.dangduonggroup.com, hatagold.dangduonggroup.com, ever-today.dangduonggroup.com, one-today-gold.dangduonggroup.com]
+
+  DDG-CONTENT-X2:
+    brand: Cream X2
+    brand_key: x2
+    domain: x2.dangduonggroup.com
+    theme: ddg-x2
+    export_root: apps/bizrise-ddg-codex-content/exports/brands/x2
+    owns: [homepage, brand-story, product-copy, routine, knowledge, faq, seo-metadata, internal-links]
+    forbidden_domains: [one-today.dangduonggroup.com, she-one.dangduonggroup.com, hatagold.dangduonggroup.com, ever-today.dangduonggroup.com, one-today-gold.dangduonggroup.com]
+
+  DDG-CONTENT-HATAGOLD:
+    brand: Hatagold
+    brand_key: hatagold
+    domain: hatagold.dangduonggroup.com
+    theme: ddg-hatagold
+    export_root: apps/bizrise-ddg-codex-content/exports/brands/hatagold
+    owns: [homepage, brand-story, product-copy, routine, knowledge, faq, seo-metadata, internal-links]
+    forbidden_domains: [one-today.dangduonggroup.com, she-one.dangduonggroup.com, x2.dangduonggroup.com, ever-today.dangduonggroup.com, one-today-gold.dangduonggroup.com]
+
+  DDG-CONTENT-EVER-TODAY:
+    brand: Ever Today
+    brand_key: ever-today
+    domain: ever-today.dangduonggroup.com
+    theme: ddg-ever-today
+    export_root: apps/bizrise-ddg-codex-content/exports/brands/ever-today
+    owns: [homepage, brand-story, product-copy, routine, knowledge, faq, seo-metadata, internal-links]
+    forbidden_domains: [one-today.dangduonggroup.com, she-one.dangduonggroup.com, x2.dangduonggroup.com, hatagold.dangduonggroup.com, one-today-gold.dangduonggroup.com]
+
+  DDG-CONTENT-ONE-TODAY-GOLD:
+    brand: One Today Gold
+    brand_key: one-today-gold
+    domain: one-today-gold.dangduonggroup.com
+    theme: ddg-one-today-gold
+    export_root: apps/bizrise-ddg-codex-content/exports/brands/one-today-gold
+    owns: [homepage, brand-story, product-copy, routine, knowledge, faq, seo-metadata, internal-links]
+    forbidden_domains: [one-today.dangduonggroup.com, she-one.dangduonggroup.com, x2.dangduonggroup.com, hatagold.dangduonggroup.com, ever-today.dangduonggroup.com]
+
+handoff_contract:
+  required_fields:
+    - agent_id
+    - brand_key
+    - domain
+    - url
+    - primary_keyword
+    - search_intent
+    - seo_title
+    - meta_description
+    - h1
+    - direct_answer
+    - content_html
+    - evidence
+    - qa
+  qa_required:
+    g4: PASS
+    seo: PASS
+    g7: PASS
+    html: PASS
+  next_owner: DEV-CMS-BRAND
