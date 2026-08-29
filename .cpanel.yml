@@ -6,4 +6,4 @@ deployment:
     - /bin/bash deploy/deploy-content-final.sh
     - /bin/bash deploy/deploy-codex-content.sh
     - /bin/bash deploy/verify-codex-content.sh
-    - /bin/bash deploy/disable-autopull.sh
+    - /bin/bash deploy/install-autopull.sh --mark-current
