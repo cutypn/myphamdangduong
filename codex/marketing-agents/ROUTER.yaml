@@ -1,8 +1,9 @@
-version: 1.0
+version: 1.1
 orchestration:
   product_owner: AGT-PO
   business_analyst: AGT-BA
   project_manager: AGT-PM
+  web_controller: G0-WEB
 routes:
   product_context: MKT-CTX
   marketing_plan_gtm_launch: MKT-00
@@ -25,9 +26,13 @@ routes:
   pricing: MKT-17
   referral_affiliate: MKT-18
   ab_testing: MKT-19
+  website_content_html_export: CODEX-WEB-CONTENT-HTML
+  product_page_content_html: CODEX-WEB-CONTENT-HTML
+  article_content_html: CODEX-WEB-CONTENT-HTML
 workflows:
   campaign_launch: [MKT-CTX, MKT-08, MKT-09, MKT-00, MKT-02, MKT-01, MKT-04, MKT-05, MKT-06, MKT-11, MKT-12, MKT-13, MKT-03, MKT-07]
   monthly_optimization: [MKT-13, MKT-03, MKT-07, MKT-10, MKT-01, MKT-04, MKT-05]
   content_production: [MKT-09, MKT-01, MKT-04, MKT-06, MKT-05, MKT-13]
   channel_setup: [MKT-CTX, MKT-11, MKT-12, MKT-14, MKT-15, MKT-13]
+  website_content_publish: [G0-WEB, AGT-BA, AGT-PO, AGT-PM, G4-CONTENT, SEO, G7-PROOF, CODEX-WEB-CONTENT-HTML, DEV-CMS, TESTER, SEO-QA, AGT-PO, DEVOPS]
 governance_wrapper: [AGT-PO, AGT-BA, AGT-PM, SPECIALISTS, AGT-PM, AGT-PO]
