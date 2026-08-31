@@ -10,7 +10,11 @@ LOG_FILE="$STATE_DIR/auto-deploy.log"
 LOCK_FILE="$STATE_DIR/auto-deploy.lock"
 QUEUE_SHA_FILE="$STATE_DIR/last-queued.sha"
 QUEUE_TIME_FILE="$STATE_DIR/last-queued.epoch"
+ATTEMPT_SHA_FILE="$STATE_DIR/attempt.sha"
+ATTEMPT_COUNT_FILE="$STATE_DIR/attempt.count"
+BLOCKED_SHA_FILE="$STATE_DIR/blocked.sha"
 QUEUE_RETRY_SECONDS=600
+MAX_QUEUE_ATTEMPTS=3
 
 mkdir -p "$STATE_DIR"
 touch "$LOG_FILE"
@@ -91,18 +95,47 @@ HEAD_SHA="$($GIT_BIN rev-parse HEAD 2>/dev/null || true)"
 SUCCESS_SHA="$(cat "$SUCCESS_MARKER" 2>/dev/null || true)"
 [ -n "$HEAD_SHA" ] || { set_status "FAIL cannot resolve updated HEAD"; exit 29; }
 
+# A successful deployment closes the retry circuit and clears stale state.
 if [ "$HEAD_SHA" = "$SUCCESS_SHA" ]; then
+  rm -f "$QUEUE_SHA_FILE" "$QUEUE_TIME_FILE" "$ATTEMPT_SHA_FILE" "$ATTEMPT_COUNT_FILE" "$BLOCKED_SHA_FILE"
   set_status "IDLE deployed=$SUCCESS_SHA"
   exit 0
 fi
 
+# A new release SHA automatically gets a fresh retry budget.
+ATTEMPT_SHA="$(cat "$ATTEMPT_SHA_FILE" 2>/dev/null || true)"
+if [ "$ATTEMPT_SHA" != "$HEAD_SHA" ]; then
+  printf '%s\n' "$HEAD_SHA" > "$ATTEMPT_SHA_FILE"
+  printf '0\n' > "$ATTEMPT_COUNT_FILE"
+  rm -f "$BLOCKED_SHA_FILE" "$QUEUE_SHA_FILE" "$QUEUE_TIME_FILE"
+fi
+
+# Circuit breaker: never queue one broken SHA forever. After the configured
+# retry budget is exhausted, keep polling for a NEW SHA but do not redeploy the
+# blocked release again.
+ATTEMPT_COUNT="$(cat "$ATTEMPT_COUNT_FILE" 2>/dev/null || printf '0')"
+case "$ATTEMPT_COUNT" in
+  ''|*[!0-9]*) ATTEMPT_COUNT=0 ;;
+esac
+BLOCKED_SHA="$(cat "$BLOCKED_SHA_FILE" 2>/dev/null || true)"
+if [ "$BLOCKED_SHA" = "$HEAD_SHA" ] || [ "$ATTEMPT_COUNT" -ge "$MAX_QUEUE_ATTEMPTS" ]; then
+  if [ "$BLOCKED_SHA" != "$HEAD_SHA" ]; then
+    printf '%s\n' "$HEAD_SHA" > "$BLOCKED_SHA_FILE"
+    set_status "BLOCKED sha=$HEAD_SHA retries=$ATTEMPT_COUNT/$MAX_QUEUE_ATTEMPTS"
+  fi
+  exit 0
+fi
+
 # cPanel deployment is asynchronous. Avoid queueing the same failing/in-progress
-# SHA every two minutes; allow a retry after ten minutes if success marker did not advance.
+# SHA every two minutes; allow a retry only after the cooldown.
 NOW_EPOCH="$(date +%s)"
 LAST_QUEUED_SHA="$(cat "$QUEUE_SHA_FILE" 2>/dev/null || true)"
 LAST_QUEUED_EPOCH="$(cat "$QUEUE_TIME_FILE" 2>/dev/null || printf '0')"
+case "$LAST_QUEUED_EPOCH" in
+  ''|*[!0-9]*) LAST_QUEUED_EPOCH=0 ;;
+esac
 if [ "$LAST_QUEUED_SHA" = "$HEAD_SHA" ] && [ "$((NOW_EPOCH - LAST_QUEUED_EPOCH))" -lt "$QUEUE_RETRY_SECONDS" ]; then
-  set_status "WAITING queued=$HEAD_SHA"
+  set_status "WAITING queued=$HEAD_SHA retry=$ATTEMPT_COUNT/$MAX_QUEUE_ATTEMPTS"
   exit 0
 fi
 
@@ -111,21 +144,38 @@ if [ -z "$UAPI_BIN" ]; then
   exit 30
 fi
 
-log "Queueing cPanel deployment: ${SUCCESS_SHA:-none} -> $HEAD_SHA"
+# Consume one retry slot BEFORE calling cPanel so even a queue API failure cannot
+# hammer the same release every cron tick.
+ATTEMPT_COUNT=$((ATTEMPT_COUNT + 1))
+printf '%s\n' "$ATTEMPT_COUNT" > "$ATTEMPT_COUNT_FILE"
+printf '%s\n' "$HEAD_SHA" > "$QUEUE_SHA_FILE"
+printf '%s\n' "$NOW_EPOCH" > "$QUEUE_TIME_FILE"
+printf '%s\n' "$HEAD_SHA" > "$STATE_DIR/last-attempt.sha"
+printf '%s\n' "$(date '+%Y-%m-%d %H:%M:%S')" > "$STATE_DIR/last-attempt-at.txt"
+
+log "Queueing cPanel deployment attempt $ATTEMPT_COUNT/$MAX_QUEUE_ATTEMPTS: ${SUCCESS_SHA:-none} -> $HEAD_SHA"
 DEPLOY_OUTPUT="$($UAPI_BIN --output=json VersionControlDeployment create repository_root="$REPO_ROOT" 2>&1)" || {
   printf '%s\n' "$DEPLOY_OUTPUT" >> "$LOG_FILE"
-  set_status "FAIL cPanel VersionControlDeployment create"
-  exit 31
+  if [ "$ATTEMPT_COUNT" -ge "$MAX_QUEUE_ATTEMPTS" ]; then
+    printf '%s\n' "$HEAD_SHA" > "$BLOCKED_SHA_FILE"
+    set_status "BLOCKED sha=$HEAD_SHA queue-api-failed retries=$ATTEMPT_COUNT/$MAX_QUEUE_ATTEMPTS"
+  else
+    set_status "FAIL cPanel VersionControlDeployment create retry=$ATTEMPT_COUNT/$MAX_QUEUE_ATTEMPTS"
+  fi
+  exit 0
 }
 printf '%s\n' "$DEPLOY_OUTPUT" >> "$LOG_FILE"
 
 # A queued task is not a successful deployment. .cpanel.yml advances success.sha
 # only in its final installer step after every production task has completed.
-printf '%s\n' "$HEAD_SHA" > "$QUEUE_SHA_FILE"
-printf '%s\n' "$NOW_EPOCH" > "$QUEUE_TIME_FILE"
-printf '%s\n' "$HEAD_SHA" > "$STATE_DIR/last-attempt.sha"
-printf '%s\n' "$(date '+%Y-%m-%d %H:%M:%S')" > "$STATE_DIR/last-attempt-at.txt"
-set_status "QUEUED sha=$HEAD_SHA"
+if [ "$ATTEMPT_COUNT" -ge "$MAX_QUEUE_ATTEMPTS" ]; then
+  # Do not block immediately after the third queue: give that deployment its full
+  # cooldown window. If it still has not produced success.sha, the next cron tick
+  # will enter BLOCKED state and stop queueing this SHA.
+  set_status "QUEUED sha=$HEAD_SHA attempt=$ATTEMPT_COUNT/$MAX_QUEUE_ATTEMPTS final-retry"
+else
+  set_status "QUEUED sha=$HEAD_SHA attempt=$ATTEMPT_COUNT/$MAX_QUEUE_ATTEMPTS"
+fi
 
 LINES="$(wc -l < "$LOG_FILE" | tr -d ' ')"
 if [ "${LINES:-0}" -gt 6000 ]; then
