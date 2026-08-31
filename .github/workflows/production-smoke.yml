@@ -11,18 +11,34 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: DNS and HTTPS smoke
+      - name: Bootstrap Network and smoke production
         shell: bash
         run: |
           set +e
           fail=0
+
+          echo "===== NETWORK BOOTSTRAP ====="
+          health="$(mktemp)"
+          health_meta="$(curl -L -sS --connect-timeout 10 --max-time 30 -H 'Cache-Control: no-cache' -o "$health" -w '%{http_code}|%{url_effective}|%{remote_ip}|%{ssl_verify_result}' "https://dangduonggroup.com/?ddg_network_health=1&ts=${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" 2>&1)"
+          health_rc=$?
+          echo "health_curl_rc=$health_rc meta=$health_meta"
+          cat "$health" || true
+          echo
+          if [ "$health_rc" -ne 0 ] || ! grep -Fq '"version":"2.0.0"' "$health"; then
+            echo "network_bootstrap_probe=FAIL"
+            fail=1
+          else
+            echo "network_bootstrap_probe=PASS"
+          fi
+          rm -f "$health"
+
           check() {
             host="$1"
             marker="$2"
             echo "===== $host ====="
             getent ahostsv4 "$host" || fail=1
             body="$(mktemp)"
-            meta="$(curl -L -sS --connect-timeout 10 --max-time 25 -o "$body" -w '%{http_code}|%{url_effective}|%{remote_ip}|%{ssl_verify_result}' "https://$host/" 2>&1)"
+            meta="$(curl -L -sS --connect-timeout 10 --max-time 25 -H 'Cache-Control: no-cache' -o "$body" -w '%{http_code}|%{url_effective}|%{remote_ip}|%{ssl_verify_result}' "https://$host/?smoke=${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" 2>&1)"
             rc=$?
             echo "curl_rc=$rc meta=$meta"
             if [ "$rc" -ne 0 ]; then fail=1; fi
