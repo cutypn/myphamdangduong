@@ -11,11 +11,26 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Bootstrap Network and smoke production
+      - name: Verify release, bootstrap Network and smoke production
         shell: bash
         run: |
           set +e
           fail=0
+
+          echo "===== RELEASE MARKER ====="
+          release="$(mktemp)"
+          release_meta="$(curl -L -sS --connect-timeout 10 --max-time 20 -H 'Cache-Control: no-cache' -o "$release" -w '%{http_code}|%{url_effective}|%{remote_ip}|%{ssl_verify_result}' "https://dangduonggroup.com/.well-known/ddg-release.json?ts=${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" 2>&1)"
+          release_rc=$?
+          echo "release_curl_rc=$release_rc meta=$release_meta"
+          cat "$release" || true
+          echo
+          if [ "$release_rc" -ne 0 ] || ! grep -Fq "\"sha\": \"$GITHUB_SHA\"" "$release"; then
+            echo "release_marker=FAIL expected=$GITHUB_SHA"
+            fail=1
+          else
+            echo "release_marker=PASS sha=$GITHUB_SHA"
+          fi
+          rm -f "$release"
 
           echo "===== NETWORK BOOTSTRAP ====="
           health="$(mktemp)"
