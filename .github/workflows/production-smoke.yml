@@ -1,0 +1,121 @@
+name: DDG Production Smoke
+
+on:
+  push:
+    branches:
+      - agent/ddg-media-importer
+  workflow_dispatch:
+  schedule:
+    - cron: '17 */6 * * *'
+
+permissions:
+  contents: read
+
+jobs:
+  production-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check production domains
+        shell: bash
+        run: |
+          set -u
+          mkdir -p smoke
+          : > smoke/results.tsv
+          failures=0
+
+          check_site() {
+            local host="$1"
+            local marker="$2"
+            local url="https://${host}/"
+            local body="smoke/${host}.html"
+            local headers="smoke/${host}.headers"
+
+            echo "::group::${host}"
+            dns="$(getent ahostsv4 "$host" | awk '{print $1}' | sort -u | paste -sd, - || true)"
+            if [ -z "$dns" ]; then
+              echo "DNS FAIL: $host"
+              printf '%s\tDNS_FAIL\t-\t-\t-\n' "$host" >> smoke/results.tsv
+              failures=$((failures+1))
+              echo "::endgroup::"
+              return
+            fi
+            echo "DNS: $dns"
+
+            meta="$(curl --connect-timeout 10 --max-time 30 --retry 2 --retry-delay 2 -L -sS -D "$headers" -o "$body" -w '%{http_code}|%{url_effective}|%{remote_ip}|%{ssl_verify_result}' "$url" || true)"
+            IFS='|' read -r code final_url remote_ip ssl_verify <<< "$meta"
+            code="${code:-000}"
+            final_url="${final_url:--}"
+            remote_ip="${remote_ip:--}"
+            ssl_verify="${ssl_verify:--}"
+
+            if [[ "$code" =~ ^[23][0-9][0-9]$ ]] && [ "$ssl_verify" = "0" ]; then
+              state="HTTP_PASS"
+            else
+              state="HTTP_FAIL"
+              failures=$((failures+1))
+            fi
+
+            marker_state="N/A"
+            if [ -n "$marker" ] && [ -s "$body" ]; then
+              if grep -Fqi "$marker" "$body"; then
+                marker_state="THEME_PASS"
+              else
+                marker_state="THEME_FAIL"
+                failures=$((failures+1))
+              fi
+            fi
+
+            title="$(python3 - "$body" <<'PY'
+import html, re, sys
+p=sys.argv[1]
+try:
+    s=open(p, encoding='utf-8', errors='ignore').read()
+except Exception:
+    print('')
+    raise SystemExit
+m=re.search(r'<title[^>]*>(.*?)</title>', s, re.I|re.S)
+print(html.unescape(re.sub(r'\s+',' ',m.group(1)).strip()) if m else '')
+PY
+)"
+            echo "HTTP: $code"
+            echo "Final URL: $final_url"
+            echo "Remote IP: $remote_ip"
+            echo "SSL verify: $ssl_verify"
+            echo "Theme marker: $marker_state"
+            echo "Title: $title"
+            printf '%s\t%s/%s\t%s\t%s\t%s\n' "$host" "$state" "$marker_state" "$code" "$remote_ip" "$title" >> smoke/results.tsv
+            echo "::endgroup::"
+          }
+
+          check_site 'dangduonggroup.com' ''
+          check_site 'one-today.dangduonggroup.com' 'ddg-brand-one-today'
+          check_site 'she-one.dangduonggroup.com' 'ddg-brand-she-one'
+          check_site 'x2.dangduonggroup.com' 'ddg-brand-x2'
+          check_site 'hatagold.dangduonggroup.com' 'ddg-brand-hatagold'
+          check_site 'ever-today.dangduonggroup.com' 'ddg-brand-ever-today'
+          check_site 'one-today-gold.dangduonggroup.com' 'ddg-brand-one-today-gold'
+
+          {
+            echo '## DDG Production Smoke'
+            echo
+            echo '| Host | Result | HTTP | Remote IP | Title |'
+            echo '|---|---|---:|---|---|'
+            while IFS=$'\t' read -r host result code ip title; do
+              printf '| `%s` | %s | %s | `%s` | %s |\n' "$host" "$result" "$code" "$ip" "$title"
+            done < smoke/results.tsv
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          cat smoke/results.tsv
+          if [ "$failures" -gt 0 ]; then
+            echo "Production smoke failures: $failures"
+            exit 1
+          fi
+
+      - name: Upload smoke evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ddg-production-smoke-${{ github.run_id }}
+          path: smoke/
+          retention-days: 14
