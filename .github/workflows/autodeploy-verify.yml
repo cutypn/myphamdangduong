@@ -1,0 +1,52 @@
+name: DDG Auto Deploy Verify
+
+on:
+  push:
+    branches:
+      - agent/ddg-media-importer
+  workflow_dispatch:
+
+concurrency:
+  group: ddg-autodeploy-verify
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 16
+    steps:
+      - name: Wait for cPanel auto-deploy release marker
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected="$GITHUB_SHA"
+          marker="https://dangduonggroup.com/.well-known/ddg-release.json"
+          echo "expected_sha=$expected"
+          for attempt in $(seq 1 30); do
+            body="$(mktemp)"
+            meta="$(curl -L -sS --connect-timeout 10 --max-time 20 -H 'Cache-Control: no-cache' -o "$body" -w '%{http_code}|%{url_effective}|%{remote_ip}|%{ssl_verify_result}' "${marker}?ts=${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${attempt}" 2>&1 || true)"
+            echo "attempt=$attempt meta=$meta"
+            cat "$body" || true
+            echo
+            if grep -Fq "\"sha\": \"$expected\"" "$body"; then
+              echo "AUTO_DEPLOY=PASS sha=$expected attempt=$attempt"
+              rm -f "$body"
+              exit 0
+            fi
+            rm -f "$body"
+            sleep 30
+          done
+          echo "AUTO_DEPLOY=FAIL expected=$expected"
+          exit 1
+
+      - name: Smoke main production page
+        shell: bash
+        run: |
+          set -euo pipefail
+          meta="$(curl -L -sS --connect-timeout 10 --max-time 30 -o /tmp/ddg-home.html -w '%{http_code}|%{url_effective}|%{remote_ip}|%{ssl_verify_result}' 'https://dangduonggroup.com/?autodeploy-smoke=1')"
+          echo "$meta"
+          code="${meta%%|*}"
+          case "$code" in
+            2??|3??) exit 0 ;;
+            *) exit 1 ;;
+          esac
