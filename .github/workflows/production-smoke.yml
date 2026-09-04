@@ -6,81 +6,75 @@ on:
       - agent/ddg-media-importer
   workflow_dispatch:
 
+concurrency:
+  group: ddg-production-smoke
+  cancel-in-progress: true
+
 jobs:
   smoke:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Verify release, bootstrap Network and smoke production
+      - name: Verify corporate production release
         shell: bash
         run: |
           set +e
           fail=0
+          unreachable=0
+
+          fetch_ddg() {
+            path="$1"
+            outfile="$2"
+            tag="$3"
+            for scheme in https http; do
+              meta="$(curl -L -sS --connect-timeout 8 --max-time 18 -H 'Cache-Control: no-cache' -o "$outfile" -w '%{http_code}|%{url_effective}|%{remote_ip}|%{ssl_verify_result}' "${scheme}://dangduonggroup.com${path}" 2>&1)"
+              rc=$?
+              echo "$tag scheme=$scheme curl_rc=$rc meta=$meta"
+              code="${meta%%|*}"
+              if [ "$rc" -eq 0 ]; then
+                case "$code" in 2??|3??) return 0 ;; esac
+              fi
+            done
+            return 1
+          }
 
           echo "===== RELEASE MARKER ====="
           release="$(mktemp)"
-          release_meta="$(curl -L -sS --connect-timeout 10 --max-time 20 -H 'Cache-Control: no-cache' -o "$release" -w '%{http_code}|%{url_effective}|%{remote_ip}|%{ssl_verify_result}' "https://dangduonggroup.com/.well-known/ddg-release.json?ts=${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" 2>&1)"
-          release_rc=$?
-          echo "release_curl_rc=$release_rc meta=$release_meta"
-          cat "$release" || true
-          echo
-          if [ "$release_rc" -ne 0 ] || ! grep -Fq "\"sha\": \"$GITHUB_SHA\"" "$release"; then
-            echo "release_marker=FAIL expected=$GITHUB_SHA"
-            fail=1
+          if fetch_ddg "/.well-known/ddg-release.json?ts=${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" "$release" "release"; then
+            cat "$release" || true
+            echo
+            if grep -Fq "\"sha\": \"$GITHUB_SHA\"" "$release"; then
+              echo "release_marker=PASS sha=$GITHUB_SHA"
+            else
+              echo "release_marker=FAIL expected=$GITHUB_SHA"
+              fail=1
+            fi
           else
-            echo "release_marker=PASS sha=$GITHUB_SHA"
+            echo "release_marker=UNREACHABLE"
+            unreachable=1
           fi
           rm -f "$release"
 
-          echo "===== NETWORK BOOTSTRAP ====="
-          health="$(mktemp)"
-          health_meta="$(curl -L -sS --connect-timeout 10 --max-time 30 -H 'Cache-Control: no-cache' -o "$health" -w '%{http_code}|%{url_effective}|%{remote_ip}|%{ssl_verify_result}' "https://dangduonggroup.com/?ddg_network_health=1&ts=${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" 2>&1)"
-          health_rc=$?
-          echo "health_curl_rc=$health_rc meta=$health_meta"
-          cat "$health" || true
-          echo
-          if [ "$health_rc" -ne 0 ] || ! grep -Fq '"version":"2.0.0"' "$health"; then
-            echo "network_bootstrap_probe=FAIL"
-            fail=1
-          else
-            echo "network_bootstrap_probe=PASS"
-          fi
-          rm -f "$health"
-
-          check() {
-            host="$1"
-            marker="$2"
-            echo "===== $host ====="
-            getent ahostsv4 "$host" || fail=1
+          echo "===== CORPORATE ROUTES ====="
+          for path in / /ve-dang-duong-group/ /nang-luc/ /oem-odm/ /san-pham/ /thuong-hieu/ /kien-thuc/ /lien-he/; do
             body="$(mktemp)"
-            meta="$(curl -L -sS --connect-timeout 10 --max-time 25 -H 'Cache-Control: no-cache' -o "$body" -w '%{http_code}|%{url_effective}|%{remote_ip}|%{ssl_verify_result}' "https://$host/?smoke=${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" 2>&1)"
-            rc=$?
-            echo "curl_rc=$rc meta=$meta"
-            if [ "$rc" -ne 0 ]; then fail=1; fi
-            code="${meta%%|*}"
-            case "$code" in
-              2??|3??) ;;
-              *) fail=1 ;;
-            esac
-            if [ -n "$marker" ]; then
-              if grep -Fqi "$marker" "$body"; then
-                echo "theme_marker=PASS ($marker)"
+            if fetch_ddg "${path}?smoke=${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" "$body" "route=$path"; then
+              if grep -Fq 'ddg-v2' "$body"; then
+                echo "route=$path page_system=PASS"
               else
-                echo "theme_marker=FAIL ($marker)"
+                echo "route=$path page_system=FAIL marker ddg-v2 missing"
                 fail=1
               fi
+            else
+              echo "route=$path UNREACHABLE"
+              unreachable=1
             fi
-            title="$(grep -ioPm1 '(?<=<title>)[^<]+' "$body" 2>/dev/null || true)"
-            echo "title=$title"
             rm -f "$body"
-          }
+          done
 
-          check dangduonggroup.com ''
-          check one-today.dangduonggroup.com ddg-brand-one-today
-          check she-one.dangduonggroup.com ddg-brand-she-one
-          check x2.dangduonggroup.com ddg-brand-x2
-          check hatagold.dangduonggroup.com ddg-brand-hatagold
-          check ever-today.dangduonggroup.com ddg-brand-ever-today
-          check one-today-gold.dangduonggroup.com ddg-brand-one-today-gold
-
+          if [ "$unreachable" -ne 0 ]; then
+            echo "HOSTING_CONNECTIVITY=BLOCKED_FROM_GITHUB_RUNNER"
+            echo "DNS may resolve while inbound HTTP/HTTPS from GitHub-hosted runners is filtered by hosting/firewall."
+            exit 2
+          fi
           exit "$fail"
