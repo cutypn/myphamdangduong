@@ -7,12 +7,13 @@ SRC="$REPO_ROOT/apps/bizrise-ddg-product-pages"
 TARGET="$WP_ROOT/wp-content/plugins/bizrise-ddg-product-pages"
 MU_TARGET="$WP_ROOT/wp-content/mu-plugins"
 LOADER="$SRC/bizrise-ddg-product-pages-loader.php"
+RUNTIME="$SRC/bizrise-ddg-product-pages-v13.php"
 
 log() { printf '[DDG PRODUCT PAGES] %s\n' "$*"; }
 fail() { log "ERROR: $*"; exit 1; }
 
 [ -d "$SRC" ] || fail "source missing: $SRC"
-[ -f "$SRC/bizrise-ddg-product-pages.php" ] || fail "plugin main file missing"
+[ -f "$RUNTIME" ] || fail "v1.3 runtime missing: $RUNTIME"
 [ -f "$LOADER" ] || fail "MU loader missing"
 
 PHP_BIN="$(command -v php || true)"
@@ -26,19 +27,23 @@ if [ -n "$PHP_BIN" ]; then
 fi
 
 mkdir -p "$TARGET" "$MU_TARGET"
-log "Copying plugin"
+log "Copying plugin source"
 cp -a "$SRC/." "$TARGET/"
 rm -f "$TARGET/bizrise-ddg-product-pages-loader.php"
+
+log "Promoting WooCommerce-only v1.3 runtime"
+cp -a "$RUNTIME" "$TARGET/bizrise-ddg-product-pages.php"
+
 log "Installing MU loader"
 cp -a "$LOADER" "$MU_TARGET/bizrise-ddg-product-pages-loader.php"
 
 if [ -n "$WP_BIN" ] && [ -f "$WP_ROOT/wp-load.php" ]; then
-  log "Rebuilding Product Truth pages"
+  log "Rebuilding WooCommerce product pages"
   if ! WP_CLI_PHP_ARGS='-d max_execution_time=0 -d memory_limit=512M' "$WP_BIN" --path="$WP_ROOT" eval '
     if (class_exists("Bizrise_DDG_Product_Pages")) {
       $report = Bizrise_DDG_Product_Pages::rebuild(true);
       update_option("bizrise_ddg_product_pages_report", $report, false);
-      update_option("bizrise_ddg_product_pages_version", "1.0.0", false);
+      update_option("bizrise_ddg_product_pages_version", "1.3.0", false);
       flush_rewrite_rules(false);
     }
   '; then
@@ -49,4 +54,4 @@ else
   log "WP-CLI unavailable; MU loader will rebuild on first WordPress request"
 fi
 
-log "PASS product pages deployed"
+log "PASS product pages v1.3 deployed"
