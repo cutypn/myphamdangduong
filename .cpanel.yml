@@ -2,12 +2,4 @@
 deployment:
   tasks:
     - /bin/bash deploy/install-autopull.sh
-    - /bin/bash deploy/deploy-ddg.sh
-    - /bin/bash deploy/deploy-ddg-page-system.sh
-    - /bin/bash deploy/deploy-product-pages.sh
-    - /bin/bash deploy/deploy-brand-network.sh
-    - /bin/bash deploy/deploy-content-final.sh
-    - /bin/bash deploy/deploy-codex-content.sh
-    - /bin/bash deploy/verify-codex-content.sh
-    - /bin/bash deploy/write-release-marker.sh
-    - /bin/bash deploy/install-autopull.sh --mark-current
+    - /bin/bash deploy/deploy-release.sh
