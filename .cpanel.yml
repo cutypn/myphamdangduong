@@ -3,6 +3,7 @@ deployment:
   tasks:
     - /bin/bash deploy/install-autopull.sh
     - /bin/bash deploy/deploy-ddg.sh
+    - /bin/bash deploy/deploy-ddg-page-system.sh
     - /bin/bash deploy/deploy-product-pages.sh
     - /bin/bash deploy/deploy-brand-network.sh
     - /bin/bash deploy/deploy-content-final.sh
