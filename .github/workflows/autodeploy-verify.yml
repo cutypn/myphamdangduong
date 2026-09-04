@@ -13,40 +13,58 @@ concurrency:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 16
+    timeout-minutes: 8
     steps:
-      - name: Wait for cPanel auto-deploy release marker
+      - name: Wait for hosting release marker
         shell: bash
         run: |
           set -euo pipefail
           expected="$GITHUB_SHA"
-          marker="https://dangduonggroup.com/.well-known/ddg-release.json"
-          echo "expected_sha=$expected"
-          for attempt in $(seq 1 30); do
-            body="$(mktemp)"
-            meta="$(curl -L -sS --connect-timeout 10 --max-time 20 -H 'Cache-Control: no-cache' -o "$body" -w '%{http_code}|%{url_effective}|%{remote_ip}|%{ssl_verify_result}' "${marker}?ts=${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${attempt}" 2>&1 || true)"
-            echo "attempt=$attempt meta=$meta"
-            cat "$body" || true
-            echo
-            if grep -Fq "\"sha\": \"$expected\"" "$body"; then
-              echo "AUTO_DEPLOY=PASS sha=$expected attempt=$attempt"
+          reachable=0
+
+          for attempt in $(seq 1 18); do
+            for scheme in https http; do
+              body="$(mktemp)"
+              meta="$(curl -L -sS --connect-timeout 8 --max-time 16 -H 'Cache-Control: no-cache' -o "$body" -w '%{http_code}|%{url_effective}|%{remote_ip}|%{ssl_verify_result}' "${scheme}://dangduonggroup.com/.well-known/ddg-release.json?ts=${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${attempt}" 2>&1 || true)"
+              echo "attempt=$attempt scheme=$scheme meta=$meta"
+              code="${meta%%|*}"
+              case "$code" in
+                2??|3??) reachable=1 ;;
+              esac
+              if grep -Fq "\"sha\": \"$expected\"" "$body"; then
+                echo "AUTO_DEPLOY=PASS sha=$expected attempt=$attempt scheme=$scheme"
+                rm -f "$body"
+                exit 0
+              fi
               rm -f "$body"
-              exit 0
-            fi
-            rm -f "$body"
-            sleep 30
+            done
+            sleep 15
           done
-          echo "AUTO_DEPLOY=FAIL expected=$expected"
+
+          if [ "$reachable" -eq 0 ]; then
+            echo "AUTO_DEPLOY=EXTERNAL_PROBE_BLOCKED expected=$expected"
+            echo "The hosting endpoint is not reachable from this GitHub-hosted runner over HTTP or HTTPS."
+            exit 2
+          fi
+          echo "AUTO_DEPLOY=FAIL marker reachable but expected SHA not deployed: $expected"
           exit 1
 
       - name: Smoke main production page
         shell: bash
         run: |
           set -euo pipefail
-          meta="$(curl -L -sS --connect-timeout 10 --max-time 30 -o /tmp/ddg-home.html -w '%{http_code}|%{url_effective}|%{remote_ip}|%{ssl_verify_result}' 'https://dangduonggroup.com/?autodeploy-smoke=1')"
-          echo "$meta"
-          code="${meta%%|*}"
-          case "$code" in
-            2??|3??) exit 0 ;;
-            *) exit 1 ;;
-          esac
+          for scheme in https http; do
+            body="$(mktemp)"
+            meta="$(curl -L -sS --connect-timeout 8 --max-time 18 -H 'Cache-Control: no-cache' -o "$body" -w '%{http_code}|%{url_effective}|%{remote_ip}|%{ssl_verify_result}' "${scheme}://dangduonggroup.com/?autodeploy-smoke=1" 2>&1 || true)"
+            echo "scheme=$scheme meta=$meta"
+            code="${meta%%|*}"
+            case "$code" in
+              2??|3??)
+                grep -Fq 'ddg-v2' "$body"
+                rm -f "$body"
+                exit 0
+                ;;
+            esac
+            rm -f "$body"
+          done
+          exit 2
