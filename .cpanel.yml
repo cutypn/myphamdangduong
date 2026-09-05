@@ -3,4 +3,5 @@ deployment:
   tasks:
     - /bin/bash deploy/install-autopull.sh
     - /bin/bash deploy/deploy-net-theme-studio.sh
+    - /bin/bash deploy/deploy-product-pages.sh
     - /bin/bash deploy/deploy-release.sh
