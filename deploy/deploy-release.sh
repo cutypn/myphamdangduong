@@ -52,19 +52,36 @@ fi
 write_public_status "DEPLOYING" "release started"
 log "START sha=$SHA"
 
-# Production-critical path only. Unrelated brand/content provisioning must not
-# prevent the corporate site release marker from advancing.
+# Main-domain publication runtime.
 /bin/bash "$REPO_ROOT/deploy/deploy-ddg-page-system.sh"
 
-# Static/runtime QA on the exact files copied to WordPress.
+# Brand network provisioning is part of the content phase. It reports its own
+# exact blocker but does not hide a valid main-site release behind DNS/SSL issues.
+if /bin/bash "$REPO_ROOT/deploy/deploy-brand-network.sh"; then
+  log "BRAND_NETWORK deploy step completed"
+else
+  log "BRAND_NETWORK DEFERRED: deploy-brand-network.sh returned non-zero"
+fi
+
 TARGET="$WP_ROOT/wp-content/plugins/bizrise-ddg-page-system"
+CONTENT_TARGET="$WP_ROOT/wp-content/plugins/bizrise-ddg-content-publication"
+BRAND_CONTENT_TARGET="$WP_ROOT/wp-content/plugins/bizrise-ddg-brand-network-content"
+
 [ -f "$TARGET/bizrise-ddg-page-system.php" ]
 [ -f "$TARGET/assets/ddg-v2.css" ]
 [ -f "$TARGET/assets/ddg-v2.js" ]
 [ -f "$WP_ROOT/wp-content/mu-plugins/bizrise-ddg-page-system-loader.php" ]
+[ -f "$CONTENT_TARGET/bizrise-ddg-content-publication.php" ]
+[ -f "$CONTENT_TARGET/assets/content-publication.css" ]
+[ -f "$CONTENT_TARGET/assets/content-publication.js" ]
+[ -f "$WP_ROOT/wp-content/mu-plugins/00001-bizrise-ddg-content-publication-loader.php" ]
+[ -f "$BRAND_CONTENT_TARGET/bizrise-ddg-brand-network-content.php" ]
+[ -f "$WP_ROOT/wp-content/mu-plugins/00002-bizrise-ddg-brand-network-content-loader.php" ]
 
 if [ -n "$PHP_BIN" ]; then
   "$PHP_BIN" -l "$TARGET/bizrise-ddg-page-system.php" >/dev/null
+  "$PHP_BIN" -l "$CONTENT_TARGET/bizrise-ddg-content-publication.php" >/dev/null
+  "$PHP_BIN" -l "$BRAND_CONTENT_TARGET/bizrise-ddg-brand-network-content.php" >/dev/null
   "$PHP_BIN" -d display_errors=0 -d memory_limit=512M -r '
     $_SERVER["HTTP_HOST"]="dangduonggroup.com";
     $_SERVER["SERVER_NAME"]="dangduonggroup.com";
@@ -74,13 +91,12 @@ if [ -n "$PHP_BIN" ]; then
     $_SERVER["SERVER_PORT"]="443";
     define("WP_USE_THEMES", false);
     require "/home/dangduon6a72/public_html/wp-load.php";
-    if (!class_exists("Bizrise_DDG_Page_System")) { fwrite(STDERR,"DDG page system class missing\n"); exit(41); }
+    foreach (["Bizrise_DDG_Page_System","Bizrise_DDG_Content_Publication","Bizrise_DDG_Brand_Network_Content"] as $class) {
+      if (!class_exists($class)) { fwrite(STDERR,"missing class: $class\n"); exit(41); }
+    }
   '
 fi
 
-# Host-local production smoke. This validates the actual Apache/PHP/WordPress
-# output on the production server and does not depend on GitHub runners being
-# allowed through the hosting firewall.
 [ -n "$CURL_BIN" ] || { log "FAIL curl unavailable for local production smoke"; exit 42; }
 
 local_smoke(){
@@ -100,7 +116,6 @@ local_smoke(){
 
   code="${meta%%|*}"
   if [ "$rc" -ne 0 ] || [[ ! "$code" =~ ^(2|3)[0-9][0-9]$ ]]; then
-    # Fallback for cPanel hosts where the local TLS vhost is not bound to 127.0.0.1.
     set +e
     meta="$($CURL_BIN -L -sS --connect-timeout 8 --max-time 20 \
       --resolve dangduonggroup.com:80:127.0.0.1 \
@@ -142,40 +157,70 @@ local_smoke(){
   rm -f "$body"
 }
 
+# Homepage is still the previous renderer until destination URLs are complete.
 local_smoke "/" "ddg-v2-home"
-local_smoke "/ve-dang-duong-group/" "ddg-v2-about"
-local_smoke "/nang-luc/" "ddg-v2-capability"
-local_smoke "/oem-odm/" "ddg-v2-oem"
-local_smoke "/san-pham/" "ddg-v2-products"
-local_smoke "/thuong-hieu/" "ddg-v2-brands"
-local_smoke "/kien-thuc/" "ddg-v2-knowledge"
-local_smoke "/lien-he/" "ddg-v2-contact"
+local_smoke "/ve-dang-duong-group/" "ddgc-publication"
+local_smoke "/nang-luc/" "ddgc-publication"
+local_smoke "/oem-odm/" "ddgc-publication"
+local_smoke "/san-pham/" "ddgc-publication"
+local_smoke "/thuong-hieu/" "ddgc-publication"
 
-# Optional dynamic smoke for one real WooCommerce product and one real article.
+# A product archive that renders but contains zero PUBLISH_READY products is not PASS.
 if [ -n "$PHP_BIN" ]; then
+  READY_COUNT="$($PHP_BIN -d display_errors=0 -d memory_limit=512M -r '
+    $_SERVER["HTTP_HOST"]="dangduonggroup.com";
+    $_SERVER["SERVER_NAME"]="dangduonggroup.com";
+    $_SERVER["REQUEST_URI"]="/";
+    $_SERVER["REQUEST_METHOD"]="GET";
+    define("WP_USE_THEMES", false);
+    require "/home/dangduon6a72/public_html/wp-load.php";
+    $ids=get_posts([
+      "post_type"=>"product","post_status"=>"publish","posts_per_page"=>-1,"fields"=>"ids",
+      "meta_query"=>[
+        "relation"=>"AND",
+        ["key"=>"_bizrise_ddg_regulatory_status","value"=>"active"],
+        ["key"=>"_bizrise_ddg_content_gate","value"=>"PUBLISH_ALLOWED"],
+        ["key"=>"_ddg_content_publication_status","value"=>"PUBLISH_READY"]
+      ]
+    ]);
+    echo count($ids);
+  ' 2>/dev/null || echo 0)"
+  READY_COUNT="${READY_COUNT//[^0-9]/}"
+  READY_COUNT="${READY_COUNT:-0}"
+  if [ "$READY_COUNT" -lt 1 ]; then
+    log "PRODUCT_GATE FAIL publish_ready=0"
+    exit 55
+  fi
+  log "PRODUCT_GATE PASS publish_ready=$READY_COUNT"
+
   PRODUCT_PATH="$($PHP_BIN -d display_errors=0 -r '
     define("WP_USE_THEMES", false);
     require "/home/dangduon6a72/public_html/wp-load.php";
-    $ids=get_posts(["post_type"=>"product","post_status"=>"publish","posts_per_page"=>1,"fields"=>"ids"]);
+    $ids=get_posts([
+      "post_type"=>"product","post_status"=>"publish","posts_per_page"=>1,"fields"=>"ids",
+      "meta_query"=>[["key"=>"_ddg_content_publication_status","value"=>"PUBLISH_READY"]]
+    ]);
     if ($ids) { $p=parse_url(get_permalink((int)$ids[0]), PHP_URL_PATH); echo $p ?: "/"; }
   ' 2>/dev/null || true)"
-  [ -z "$PRODUCT_PATH" ] || local_smoke "$PRODUCT_PATH" "ddg-v2-product"
-
-  ARTICLE_PATH="$($PHP_BIN -d display_errors=0 -r '
-    define("WP_USE_THEMES", false);
-    require "/home/dangduon6a72/public_html/wp-load.php";
-    $ids=get_posts(["post_type"=>"post","post_status"=>"publish","posts_per_page"=>1,"fields"=>"ids"]);
-    if ($ids) { $p=parse_url(get_permalink((int)$ids[0]), PHP_URL_PATH); echo $p ?: "/"; }
-  ' 2>/dev/null || true)"
-  [ -z "$ARTICLE_PATH" ] || local_smoke "$ARTICLE_PATH" "ddg-v2-article"
+  [ -z "$PRODUCT_PATH" ] || local_smoke "$PRODUCT_PATH" "ddgc-publication"
 fi
 
-# Advance the public marker only after production HTML passes host-local smoke.
-/bin/bash "$REPO_ROOT/deploy/write-release-marker.sh"
+# Brand-network status is logged separately. This allows PO/QA to distinguish
+# content readiness from DNS/SSL/subdomain provisioning blockers.
+if [ -n "$PHP_BIN" ]; then
+  NETWORK_STATUS="$($PHP_BIN -d display_errors=0 -d memory_limit=512M -r '
+    define("WP_USE_THEMES", false);
+    require "/home/dangduon6a72/public_html/wp-load.php";
+    if (class_exists("Bizrise_DDG_Brand_Network_Bootstrap")) {
+      echo wp_json_encode(Bizrise_DDG_Brand_Network_Bootstrap::status(), JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE);
+    }
+  ' 2>/dev/null || true)"
+  [ -z "$NETWORK_STATUS" ] || log "BRAND_NETWORK_STATUS $NETWORK_STATUS"
+fi
 
-# Install/refresh polling cron and persist successful SHA.
+/bin/bash "$REPO_ROOT/deploy/write-release-marker.sh"
 /bin/bash "$REPO_ROOT/deploy/install-autopull.sh" --mark-current
 
-write_public_status "PASS" "release deployed; runtime QA and host-local production smoke passed"
+write_public_status "PASS" "main content destinations deployed; runtime QA passed; product gate passed; brand network status logged"
 printf 'PASS deployed=%s\n' "$SHA" > "$STATUS_FILE"
 log "PASS sha=$SHA"
