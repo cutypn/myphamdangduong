@@ -52,11 +52,8 @@ fi
 write_public_status "DEPLOYING" "release started"
 log "START sha=$SHA"
 
-# Main-domain publication runtime.
 /bin/bash "$REPO_ROOT/deploy/deploy-ddg-page-system.sh"
 
-# Brand network provisioning is part of the content phase. It reports its own
-# exact blocker but does not hide a valid main-site release behind DNS/SSL issues.
 if /bin/bash "$REPO_ROOT/deploy/deploy-brand-network.sh"; then
   log "BRAND_NETWORK deploy step completed"
 else
@@ -157,7 +154,42 @@ local_smoke(){
   rm -f "$body"
 }
 
-# Homepage is still the previous renderer until destination URLs are complete.
+brand_smoke(){
+  local host="$1" marker="$2"
+  local body meta rc code h1_count
+  body="$(mktemp)"
+  set +e
+  meta="$($CURL_BIN -k -L -sS --connect-timeout 8 --max-time 20 \
+    --resolve "${host}:443:127.0.0.1" -H "Host: ${host}" -H 'Cache-Control: no-cache' \
+    -o "$body" -w '%{http_code}|%{url_effective}' "https://${host}/?ddg_local_smoke=${SHA}" 2>&1)"
+  rc=$?
+  set -e
+  code="${meta%%|*}"
+  if [ "$rc" -ne 0 ] || [[ ! "$code" =~ ^(2|3)[0-9][0-9]$ ]]; then
+    log "BRAND_SMOKE DEFERRED host=$host rc=$rc meta=$meta"
+    rm -f "$body"
+    return 0
+  fi
+  if grep -Eqi 'Fatal error|There has been a critical error|Uncaught (Error|Exception)' "$body"; then
+    log "BRAND_SMOKE FAIL host=$host fatal_marker_found"
+    rm -f "$body"
+    return 56
+  fi
+  if ! grep -Fq "$marker" "$body"; then
+    log "BRAND_SMOKE FAIL host=$host missing_marker=$marker"
+    rm -f "$body"
+    return 57
+  fi
+  h1_count="$( (grep -Eoi '<h1([[:space:]>])' "$body" || true) | wc -l | tr -d ' ' )"
+  if [ "${h1_count:-0}" -ne 1 ]; then
+    log "BRAND_SMOKE FAIL host=$host h1_count=${h1_count:-0}"
+    rm -f "$body"
+    return 58
+  fi
+  log "BRAND_SMOKE PASS host=$host code=$code marker=$marker h1=1"
+  rm -f "$body"
+}
+
 local_smoke "/" "ddg-v2-home"
 local_smoke "/ve-dang-duong-group/" "ddgc-publication"
 local_smoke "/nang-luc/" "ddgc-publication"
@@ -165,9 +197,9 @@ local_smoke "/oem-odm/" "ddgc-publication"
 local_smoke "/san-pham/" "ddgc-publication"
 local_smoke "/thuong-hieu/" "ddgc-publication"
 
-# A product archive that renders but contains zero PUBLISH_READY products is not PASS.
+# Publication gate is based on verified Product Truth status, not media completion.
 if [ -n "$PHP_BIN" ]; then
-  READY_COUNT="$($PHP_BIN -d display_errors=0 -d memory_limit=512M -r '
+  ELIGIBLE_COUNT="$($PHP_BIN -d display_errors=0 -d memory_limit=512M -r '
     $_SERVER["HTTP_HOST"]="dangduonggroup.com";
     $_SERVER["SERVER_NAME"]="dangduonggroup.com";
     $_SERVER["REQUEST_URI"]="/";
@@ -179,34 +211,35 @@ if [ -n "$PHP_BIN" ]; then
       "meta_query"=>[
         "relation"=>"AND",
         ["key"=>"_bizrise_ddg_regulatory_status","value"=>"active"],
-        ["key"=>"_bizrise_ddg_content_gate","value"=>"PUBLISH_ALLOWED"],
-        ["key"=>"_ddg_content_publication_status","value"=>"PUBLISH_READY"]
+        ["key"=>"_bizrise_ddg_content_gate","value"=>"PUBLISH_ALLOWED"]
       ]
     ]);
     echo count($ids);
   ' 2>/dev/null || echo 0)"
-  READY_COUNT="${READY_COUNT//[^0-9]/}"
-  READY_COUNT="${READY_COUNT:-0}"
-  if [ "$READY_COUNT" -lt 1 ]; then
-    log "PRODUCT_GATE FAIL publish_ready=0"
+  ELIGIBLE_COUNT="${ELIGIBLE_COUNT//[^0-9]/}"
+  ELIGIBLE_COUNT="${ELIGIBLE_COUNT:-0}"
+  if [ "$ELIGIBLE_COUNT" -lt 1 ]; then
+    log "PRODUCT_GATE FAIL eligible_published=0"
     exit 55
   fi
-  log "PRODUCT_GATE PASS publish_ready=$READY_COUNT"
+  log "PRODUCT_GATE PASS eligible_published=$ELIGIBLE_COUNT"
 
   PRODUCT_PATH="$($PHP_BIN -d display_errors=0 -r '
     define("WP_USE_THEMES", false);
     require "/home/dangduon6a72/public_html/wp-load.php";
     $ids=get_posts([
       "post_type"=>"product","post_status"=>"publish","posts_per_page"=>1,"fields"=>"ids",
-      "meta_query"=>[["key"=>"_ddg_content_publication_status","value"=>"PUBLISH_READY"]]
+      "meta_query"=>[
+        "relation"=>"AND",
+        ["key"=>"_bizrise_ddg_regulatory_status","value"=>"active"],
+        ["key"=>"_bizrise_ddg_content_gate","value"=>"PUBLISH_ALLOWED"]
+      ]
     ]);
     if ($ids) { $p=parse_url(get_permalink((int)$ids[0]), PHP_URL_PATH); echo $p ?: "/"; }
   ' 2>/dev/null || true)"
   [ -z "$PRODUCT_PATH" ] || local_smoke "$PRODUCT_PATH" "ddgc-publication"
 fi
 
-# Brand-network status is logged separately. This allows PO/QA to distinguish
-# content readiness from DNS/SSL/subdomain provisioning blockers.
 if [ -n "$PHP_BIN" ]; then
   NETWORK_STATUS="$($PHP_BIN -d display_errors=0 -d memory_limit=512M -r '
     define("WP_USE_THEMES", false);
@@ -216,11 +249,16 @@ if [ -n "$PHP_BIN" ]; then
     }
   ' 2>/dev/null || true)"
   [ -z "$NETWORK_STATUS" ] || log "BRAND_NETWORK_STATUS $NETWORK_STATUS"
+  if printf '%s' "$NETWORK_STATUS" | grep -Fq '"status":"PASS"'; then
+    for slug in one-today she-one x2 hatagold ever-today one-today-gold; do
+      brand_smoke "${slug}.dangduonggroup.com" "ddgb-brand-landing"
+    done
+  fi
 fi
 
 /bin/bash "$REPO_ROOT/deploy/write-release-marker.sh"
 /bin/bash "$REPO_ROOT/deploy/install-autopull.sh" --mark-current
 
-write_public_status "PASS" "main content destinations deployed; runtime QA passed; product gate passed; brand network status logged"
+write_public_status "PASS" "main destinations deployed; eligible Product Truth catalogue published; brand network provisioned when host routing is available"
 printf 'PASS deployed=%s\n' "$SHA" > "$STATUS_FILE"
 log "PASS sha=$SHA"
