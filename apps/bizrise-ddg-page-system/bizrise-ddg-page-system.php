@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Bizrise DDG Page System
  * Description: Semantic production page system for dangduonggroup.com. Full HTML/CSS rendering for core corporate, product, brand and knowledge pages.
- * Version: 2.0.0
+ * Version: 2.0.1
  * Author: Bizrise Framework
  * Requires PHP: 8.0
  */
@@ -10,7 +10,7 @@
 if (!defined('ABSPATH')) { exit; }
 
 final class Bizrise_DDG_Page_System {
-    private const VERSION = '2.0.0';
+    private const VERSION = '2.0.1';
     private const BRAND_TAX = 'ddg_brand';
 
     public static function boot(): void {
@@ -136,10 +136,7 @@ final class Bizrise_DDG_Page_System {
   </div>
   <div class="ddg-nav-wrap">
     <div class="ddg-shell ddg-nav">
-      <a class="ddg-logo" href="<?php echo esc_url(home_url('/')); ?>" aria-label="Đăng Dương Group">
-        <span class="ddg-logo-mark">DDG</span>
-        <small>ĐĂNG DƯƠNG<br>GROUP</small>
-      </a>
+      <?php self::render_site_logo('header'); ?>
       <button class="ddg-menu-toggle" type="button" aria-expanded="false" aria-controls="ddg-primary-nav">☰</button>
       <nav id="ddg-primary-nav" class="ddg-primary-nav" aria-label="Điều hướng chính">
         <?php self::nav_link('Trang chủ', '/', $page === 'home'); ?>
@@ -175,7 +172,7 @@ final class Bizrise_DDG_Page_System {
   </section>
   <div class="ddg-shell ddg-footer-grid">
     <div>
-      <a class="ddg-logo ddg-logo--footer" href="<?php echo esc_url(home_url('/')); ?>"><span class="ddg-logo-mark">DDG</span><small>ĐĂNG DƯƠNG GROUP</small></a>
+      <?php self::render_site_logo('footer'); ?>
       <p>Nội dung website được tổ chức theo dữ liệu sản phẩm, thương hiệu và tài liệu đã được xác minh.</p>
     </div>
     <div><h3>Về chúng tôi</h3><a href="<?php echo esc_url(home_url('/ve-dang-duong-group/')); ?>">Giới thiệu</a><a href="<?php echo esc_url(home_url('/nang-luc/')); ?>">Năng lực</a><a href="<?php echo esc_url(home_url('/thuong-hieu/')); ?>">Thương hiệu</a></div>
@@ -187,6 +184,41 @@ final class Bizrise_DDG_Page_System {
 <?php wp_footer(); ?>
 </body>
 </html><?php
+    }
+
+    private static function render_site_logo(string $context = 'header'): void {
+        $home = home_url('/');
+        $class = 'ddg-logo ddg-logo--official' . ($context === 'footer' ? ' ddg-logo--footer' : '');
+        $logo_id = (int)get_theme_mod('custom_logo');
+
+        if ($logo_id > 0) {
+            $alt = trim((string)get_post_meta($logo_id, '_wp_attachment_image_alt', true));
+            if ($alt === '') { $alt = get_bloginfo('name') ?: 'Đăng Dương Group'; }
+            $image = wp_get_attachment_image(
+                $logo_id,
+                'full',
+                false,
+                [
+                    'class' => 'ddg-official-logo',
+                    'alt' => $alt,
+                    'loading' => 'eager',
+                    'decoding' => 'async',
+                ]
+            );
+            if ($image !== '') {
+                echo '<a class="' . esc_attr($class) . '" href="' . esc_url($home) . '" aria-label="Đăng Dương Group">' . $image . '</a>';
+                return;
+            }
+        }
+
+        // Fallback only when WordPress has no Custom Logo configured.
+        $icon = get_site_icon_url(256);
+        if ($icon) {
+            echo '<a class="' . esc_attr($class) . '" href="' . esc_url($home) . '" aria-label="Đăng Dương Group"><img class="ddg-official-logo" src="' . esc_url($icon) . '" width="256" height="256" alt="Đăng Dương Group"></a>';
+            return;
+        }
+
+        echo '<a class="' . esc_attr($class . ' ddg-logo--fallback') . '" href="' . esc_url($home) . '" aria-label="Đăng Dương Group"><strong>Đăng Dương Group</strong></a>';
     }
 
     private static function nav_link(string $label, string $path, bool $active): void {
