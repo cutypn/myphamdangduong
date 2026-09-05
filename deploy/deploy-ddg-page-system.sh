@@ -21,6 +21,7 @@ fail(){ log "ERROR: $*"; exit 1; }
 [ -f "$HOME_SRC/bizrise-ddg-homepage-loader.php" ] || fail "homepage MU loader missing"
 [ -f "$HOME_SRC/assets/home.css" ] || fail "homepage CSS missing"
 [ -f "$HOME_SRC/assets/home.js" ] || fail "homepage JS missing"
+[ -f "$HOME_SRC/assets/banner-overlay.css" ] || fail "homepage banner overlay CSS missing"
 
 mkdir -p "$TARGET" "$HOME_TARGET" "$MU"
 cp -a "$SRC/." "$TARGET/"
@@ -31,6 +32,9 @@ cp -a "$HOME_SRC/." "$HOME_TARGET/"
 rm -f "$HOME_TARGET/bizrise-ddg-homepage-loader.php"
 cp -a "$HOME_SRC/bizrise-ddg-homepage-loader.php" "$MU/bizrise-ddg-homepage-loader.php"
 
+[ -f "$HOME_TARGET/assets/banner-overlay.css" ] || fail "homepage banner overlay CSS not copied"
+grep -Fq 'DDG Banner Overlay Contract' "$HOME_TARGET/assets/banner-overlay.css" || fail "homepage banner overlay contract marker missing"
+
 if command -v php >/dev/null 2>&1; then
   while IFS= read -r -d '' f; do php -l "$f" >/dev/null || fail "PHP lint failed: $f"; done < <(find "$TARGET" "$HOME_TARGET" -type f -name '*.php' -print0)
 fi
@@ -39,4 +43,4 @@ if command -v wp >/dev/null 2>&1 && [ -f "$WP_ROOT/wp-load.php" ]; then
   wp --path="$WP_ROOT" cache flush >/dev/null 2>&1 || true
 fi
 
-log "PASS semantic page system + homepage renderer deployed"
+log "PASS semantic page system + homepage renderer + banner overlay deployed"
