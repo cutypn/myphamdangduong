@@ -1,0 +1,34 @@
+/*
+Theme Name: DDG Cream X2
+Description: Cream X2 brand theme for the Đăng Dương Multisite network.
+Template: ddg-beauty-premium
+Version: 1.0.0
+Requires PHP: 8.0
+Text Domain: ddg-x2
+*/
+
+:root {
+  --brand-primary: #4fc4c7;
+  --brand-primary-strong: #13898e;
+  --brand-secondary: #0f6d73;
+  --brand-accent: #83e0df;
+  --brand-background: #f2fbfb;
+  --brand-surface: #ffffff;
+  --brand-text: #16393b;
+  --brand-muted: #638184;
+  --brand-border: #cde9e9;
+  --ddg-cherry: var(--brand-secondary);
+  --ddg-burgundy: #0d5559;
+  --ddg-ivory: var(--brand-background);
+}
+
+body { background:var(--brand-background); color:var(--brand-text); }
+a { color:var(--brand-secondary); }
+::selection { background:var(--brand-primary); color:#073a3d; }
+.wp-element-button,.button,.btn,.ddg-btn,.ddg-cta a { background:var(--brand-secondary); border-color:var(--brand-secondary); color:#fff; }
+.wp-element-button:hover,.button:hover,.btn:hover,.ddg-btn:hover,.ddg-cta a:hover { background:#0d5559; border-color:#0d5559; }
+.ddg-kicker,.eyebrow,.section-kicker { color:var(--brand-primary-strong); }
+.ddg-card,.product-card,.wp-block-group.is-style-card { background:var(--brand-surface); border-color:var(--brand-border); }
+.site-header,.ddg-header { border-bottom-color:rgba(19,137,142,.16); }
+.ddg-hero,.brand-hero { background:linear-gradient(135deg,#effcfc 0%,#bceeed 56%,#ffffff 100%); }
+.ddg-accent-surface { background:#e0f7f7; }

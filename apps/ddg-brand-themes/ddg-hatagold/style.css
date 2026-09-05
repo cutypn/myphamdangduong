@@ -1,0 +1,34 @@
+/*
+Theme Name: DDG Hatagold
+Description: Hatagold brand theme for the Đăng Dương Multisite network.
+Template: ddg-beauty-premium
+Version: 1.0.0
+Requires PHP: 8.0
+Text Domain: ddg-hatagold
+*/
+
+:root {
+  --brand-primary: #f2b900;
+  --brand-primary-strong: #c99500;
+  --brand-secondary: #5a3718;
+  --brand-accent: #d8aa36;
+  --brand-background: #fffaf0;
+  --brand-surface: #ffffff;
+  --brand-text: #2c2116;
+  --brand-muted: #7a6956;
+  --brand-border: #ead7a8;
+  --ddg-cherry: #8b5f11;
+  --ddg-burgundy: #5a3718;
+  --ddg-ivory: var(--brand-background);
+}
+
+body { background:var(--brand-background); color:var(--brand-text); }
+a { color:var(--brand-secondary); }
+::selection { background:var(--brand-primary); color:var(--brand-text); }
+.wp-element-button,.button,.btn,.ddg-btn,.ddg-cta a { background:var(--brand-secondary); border-color:var(--brand-secondary); color:#fff; }
+.wp-element-button:hover,.button:hover,.btn:hover,.ddg-btn:hover,.ddg-cta a:hover { background:#3e2511; border-color:#3e2511; }
+.ddg-kicker,.eyebrow,.section-kicker { color:var(--brand-primary-strong); }
+.ddg-card,.product-card,.wp-block-group.is-style-card { background:var(--brand-surface); border-color:var(--brand-border); }
+.site-header,.ddg-header { border-bottom-color:rgba(201,149,0,.2); }
+.ddg-hero,.brand-hero { background:linear-gradient(135deg,#fff9e5 0%,#ffd95e 55%,#f6b900 100%); }
+.ddg-accent-surface { background:#fff0b8; }

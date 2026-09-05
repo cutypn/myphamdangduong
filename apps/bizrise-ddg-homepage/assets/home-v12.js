@@ -1,0 +1,1 @@
+(function(){'use strict';document.addEventListener('click',function(e){var t=e.target.closest('.ddgh-menu-toggle');if(!t)return;var n=document.getElementById('ddgh-primary');if(!n)return;var o=n.classList.toggle('is-open');t.setAttribute('aria-expanded',o?'true':'false');});})();

@@ -1,0 +1,1 @@
+Codex writes approved article JSON packages in this directory. Runtime WordPress imports only schema 1.0 packages with all QA gates PASS.
