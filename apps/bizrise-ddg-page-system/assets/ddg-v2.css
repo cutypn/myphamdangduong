@@ -26,9 +26,11 @@ body.ddg-v2{margin:0;background:#fff;color:var(--ddg-ink);font-family:var(--font
 .ddg-nav-wrap{position:sticky;top:0;z-index:90;background:rgba(255,252,250,.96);border-bottom:1px solid var(--ddg-line);backdrop-filter:blur(16px)}
 .admin-bar .ddg-nav-wrap{top:32px}
 .ddg-nav{min-height:84px;display:grid;grid-template-columns:180px 1fr auto;align-items:center;gap:30px}
-.ddg-logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ddg-red)}
-.ddg-logo-mark{font:800 28px/1 Georgia,serif;letter-spacing:.04em}
-.ddg-logo small{font-size:9px;line-height:1.05;font-weight:800;letter-spacing:.11em}
+.ddg-logo{display:flex;align-items:center;text-decoration:none;color:var(--ddg-red);min-width:0}
+.ddg-logo--official{justify-self:start}
+.ddg-logo--official .ddg-official-logo{display:block;width:auto;height:auto;max-width:172px;max-height:58px;object-fit:contain}
+.ddg-logo--footer .ddg-official-logo{max-width:154px;max-height:54px}
+.ddg-logo--fallback strong{font-size:16px;line-height:1.2;letter-spacing:.02em;color:var(--ddg-red-dark)}
 .ddg-primary-nav{display:flex;justify-content:center;align-items:center;gap:clamp(15px,1.6vw,29px)}
 .ddg-primary-nav a{position:relative;text-decoration:none;font-size:14px;font-weight:700;white-space:nowrap}
 .ddg-primary-nav a::after{content:"";position:absolute;left:50%;bottom:-14px;width:0;height:2px;background:var(--ddg-red);transform:translateX(-50%);transition:.2s}
@@ -36,7 +38,11 @@ body.ddg-v2{margin:0;background:#fff;color:var(--ddg-ink);font-family:var(--font
 .ddg-header-cta,.ddg-btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 22px;border:1px solid var(--ddg-red);border-radius:8px;background:linear-gradient(180deg,#ad111a,#8d0710);color:#fff!important;text-decoration:none;font-size:13px;font-weight:800}
 .ddg-header-cta{min-height:44px}
 .ddg-menu-toggle{display:none;border:0;background:none;color:var(--ddg-red);font-size:26px}
-.ddg-hero{background:radial-gradient(circle at 75% 24%,rgba(255,255,255,.95),transparent 22rem),linear-gradient(120deg,#fff9f6 0%,#fae9e3 52%,#f7ddd4 100%);overflow:hidden;border-bottom:1px solid var(--ddg-line)}
+.ddg-hero{background:
+  radial-gradient(circle at 75% 24%,rgba(255,255,255,.95),transparent 22rem),
+  linear-gradient(120deg,#fff9f6 0%,#fae9e3 52%,#f7ddd4 100%);
+  overflow:hidden;border-bottom:1px solid var(--ddg-line)
+}
 .ddg-hero-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(420px,.9fr);align-items:center;min-height:540px;gap:50px}
 .ddg-kicker{margin:0 0 9px;color:var(--ddg-red);font-size:12px;font-weight:900;letter-spacing:.10em;text-transform:uppercase}
 .ddg-hero h1{margin:0;color:var(--ddg-red-dark);font-size:clamp(42px,4.6vw,72px);line-height:1.05;letter-spacing:-.035em;max-width:820px}
@@ -227,3 +233,6 @@ body.ddg-v2{margin:0;background:#fff;color:var(--ddg-ink);font-family:var(--font
  .ddg-product-facts>div{grid-template-columns:120px 1fr;font-size:13px}
  .ddg-footer-cta h2{font-size:28px}
 }
+
+@media(max-width:900px){.ddg-logo--official .ddg-official-logo{max-width:150px;max-height:50px}}
+@media(max-width:600px){.ddg-logo--official .ddg-official-logo{max-width:132px;max-height:44px}}
