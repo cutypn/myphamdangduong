@@ -11,6 +11,8 @@ CONTENT_SRC="$REPO_ROOT/apps/bizrise-ddg-content-publication"
 CONTENT_TARGET="$WP_ROOT/wp-content/plugins/bizrise-ddg-content-publication"
 BRAND_CONTENT_SRC="$REPO_ROOT/apps/bizrise-ddg-brand-network-content"
 BRAND_CONTENT_TARGET="$WP_ROOT/wp-content/plugins/bizrise-ddg-brand-network-content"
+PRODUCT_MEDIA_SRC="$REPO_ROOT/apps/bizrise-ddg-product-media-contract"
+PRODUCT_MEDIA_TARGET="$WP_ROOT/wp-content/plugins/bizrise-ddg-product-media-contract"
 MU="$WP_ROOT/wp-content/mu-plugins"
 
 log(){ printf '[DDG PAGE SYSTEM] %s\n' "$*"; }
@@ -36,7 +38,10 @@ fail(){ log "ERROR: $*"; exit 1; }
 [ -f "$BRAND_CONTENT_SRC/bizrise-ddg-brand-network-content-loader.php" ] || fail "brand network content MU loader missing"
 [ -f "$BRAND_CONTENT_SRC/assets/brand-network.css" ] || fail "brand network content CSS missing"
 
-mkdir -p "$TARGET" "$HOME_TARGET" "$CONTENT_TARGET" "$BRAND_CONTENT_TARGET" "$MU"
+[ -f "$PRODUCT_MEDIA_SRC/bizrise-ddg-product-media-contract.php" ] || fail "product media contract source missing"
+[ -f "$PRODUCT_MEDIA_SRC/bizrise-ddg-product-media-contract-loader.php" ] || fail "product media contract MU loader missing"
+
+mkdir -p "$TARGET" "$HOME_TARGET" "$CONTENT_TARGET" "$BRAND_CONTENT_TARGET" "$PRODUCT_MEDIA_TARGET" "$MU"
 
 cp -a "$SRC/." "$TARGET/"
 rm -f "$TARGET/bizrise-ddg-page-system-loader.php"
@@ -54,21 +59,28 @@ cp -a "$BRAND_CONTENT_SRC/." "$BRAND_CONTENT_TARGET/"
 rm -f "$BRAND_CONTENT_TARGET/bizrise-ddg-brand-network-content-loader.php"
 cp -a "$BRAND_CONTENT_SRC/bizrise-ddg-brand-network-content-loader.php" "$MU/00002-bizrise-ddg-brand-network-content-loader.php"
 
+cp -a "$PRODUCT_MEDIA_SRC/." "$PRODUCT_MEDIA_TARGET/"
+rm -f "$PRODUCT_MEDIA_TARGET/bizrise-ddg-product-media-contract-loader.php"
+cp -a "$PRODUCT_MEDIA_SRC/bizrise-ddg-product-media-contract-loader.php" "$MU/00003-bizrise-ddg-product-media-contract-loader.php"
+
 [ -f "$HOME_TARGET/assets/banner-overlay.css" ] || fail "homepage banner overlay CSS not copied"
 grep -Fq 'DDG Banner Overlay Contract' "$HOME_TARGET/assets/banner-overlay.css" || fail "homepage banner overlay contract marker missing"
 
 grep -Fq "Thương hiệu" "$CONTENT_TARGET/bizrise-ddg-content-publication.php" || fail "product brand filter marker missing"
 grep -Fq "Công dụng" "$CONTENT_TARGET/bizrise-ddg-content-publication.php" || fail "product benefit filter marker missing"
 grep -Fq "Network Leads" "$BRAND_CONTENT_TARGET/bizrise-ddg-brand-network-content.php" || fail "network lead runtime marker missing"
+grep -Fq "LEGAL_DOCUMENT" "$PRODUCT_MEDIA_TARGET/bizrise-ddg-product-media-contract.php" || fail "product legal document separation marker missing"
+grep -Fq "Hồ sơ công bố sản phẩm" "$PRODUCT_MEDIA_TARGET/bizrise-ddg-product-media-contract.php" || fail "product declaration description marker missing"
 
 if command -v php >/dev/null 2>&1; then
-  while IFS= read -r -d '' f; do php -l "$f" >/dev/null || fail "PHP lint failed: $f"; done < <(find "$TARGET" "$HOME_TARGET" "$CONTENT_TARGET" "$BRAND_CONTENT_TARGET" -type f -name '*.php' -print0)
+  while IFS= read -r -d '' f; do php -l "$f" >/dev/null || fail "PHP lint failed: $f"; done < <(find "$TARGET" "$HOME_TARGET" "$CONTENT_TARGET" "$BRAND_CONTENT_TARGET" "$PRODUCT_MEDIA_TARGET" -type f -name '*.php' -print0)
   php -l "$MU/00001-bizrise-ddg-content-publication-loader.php" >/dev/null || fail "content publication loader lint failed"
   php -l "$MU/00002-bizrise-ddg-brand-network-content-loader.php" >/dev/null || fail "brand network content loader lint failed"
+  php -l "$MU/00003-bizrise-ddg-product-media-contract-loader.php" >/dev/null || fail "product media contract loader lint failed"
 fi
 
 if command -v wp >/dev/null 2>&1 && [ -f "$WP_ROOT/wp-load.php" ]; then
   wp --path="$WP_ROOT" cache flush >/dev/null 2>&1 || true
 fi
 
-log "PASS page system + publication + brand network content deployed"
+log "PASS page system + publication + brand network + product media contract deployed"
