@@ -1,5 +1,5 @@
 <?php
-/** Bizrise DDG Brand Network Content MU loader v1.3 — public copy polish */
+/** Bizrise DDG Brand Network Content MU loader v1.4 — public copy polish */
 if (!defined('ABSPATH')) { exit; }
 
 $plugin = WP_PLUGIN_DIR . '/bizrise-ddg-brand-network-content/bizrise-ddg-brand-network-content.php';
@@ -8,23 +8,9 @@ if (is_readable($plugin)) {
 }
 
 /**
- * Do not present inactive/unverified brand proposals as live brands.
- * Product Truth currently promotes One Today, Hatagold and She One.
- */
-add_action('template_redirect', static function (): void {
-    if (is_admin() || wp_doing_ajax() || is_feed() || is_embed()) { return; }
-
-    $host = strtolower((string) ($_SERVER['HTTP_HOST'] ?? ''));
-    foreach (['x2.', 'ever-today.', 'one-today-gold.'] as $prefix) {
-        if (str_starts_with($host, $prefix)) {
-            wp_safe_redirect(network_home_url('/thuong-hieu/'), 302);
-            exit;
-        }
-    }
-}, -1001);
-
-/**
  * Brand proposal public copy polish.
+ * All six brand/dòng recorded in Product Master remain discoverable at brand level;
+ * product publication stays governed independently by Product Truth.
  */
 add_action('template_redirect', static function (): void {
     if (is_admin() || wp_doing_ajax() || is_feed() || is_embed()) { return; }
