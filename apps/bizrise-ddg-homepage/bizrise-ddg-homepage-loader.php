@@ -1,5 +1,5 @@
 <?php
-/** DDG Homepage MU loader v1.3 — public copy polish */
+/** DDG Homepage MU loader v1.4 — public copy + brand visual polish */
 if (!defined('ABSPATH')) { exit; }
 
 $legacy = WP_PLUGIN_DIR . '/bizrise-ddg-homepage/bizrise-ddg-homepage.php';
@@ -8,9 +8,9 @@ $v12 = WP_PLUGIN_DIR . '/bizrise-ddg-homepage/bizrise-ddg-homepage-v12.php';
 if (is_readable($v12)) { require_once $v12; }
 
 /**
- * Homepage public copy polish.
+ * Homepage public copy and visual polish.
  * Keeps renderer/layout intact while preventing internal project vocabulary,
- * outline copy and inactive brand proposals from reaching visitors.
+ * showing the full recorded brand set and avoiding repeated showcase imagery.
  */
 add_action('template_redirect', static function (): void {
     if (is_admin() || wp_doing_ajax() || is_feed() || is_embed()) { return; }
@@ -78,14 +78,41 @@ add_action('template_redirect', static function (): void {
 
         $html = strtr($html, $replacements);
 
-        // Main homepage promotes only the currently active/verified brand set.
-        if (str_contains($html, 'ddgh-brand-grid')) {
-            $html = preg_replace(
-                '#<article class="ddgh-brand-card">(?:(?!</article>).)*?https://(?:x2|ever-today|one-today-gold)\.dangduonggroup\.com/(?:(?!</article>).)*?</article>#si',
-                '',
-                $html
-            ) ?: $html;
+        // Give each recorded brand a distinct first-party visual. One Today Gold
+        // has no exact named media asset in the current library, so it keeps a
+        // text-led premium treatment instead of borrowing a potentially wrong SKU.
+        $brand_visuals = [
+            'One Today' => 'https://dangduonggroup.com/wp-content/uploads/2026/08/26-one-today-kem-trang-da-mat-a-chuc-nang-30g-source.jpg',
+            'She One' => 'https://dangduonggroup.com/wp-content/uploads/2026/08/24-she-one-kem-duong-trang-da-toan-than-she-one-140g-source.jpg',
+            'Cream X2' => 'https://dangduonggroup.com/wp-content/uploads/2026/08/ddg-cream-x2-kem-trang-da-mat-da-chuc-nang-20g-mobile-9x16-1.jpg',
+            'Hatagold' => 'https://dangduonggroup.com/wp-content/uploads/2026/08/hatagold-b5-banner-16x9-1.jpg',
+            'Ever Today' => 'https://dangduonggroup.com/wp-content/uploads/2026/08/ddg-ever-today-kem-giup-mo-nam-tan-nhang-doi-moi-6g-pc-1500x1500-1.jpg',
+        ];
+
+        foreach ($brand_visuals as $brand => $url) {
+            $needle = '<div class="ddgh-brand-mark">' . $brand . '</div>';
+            $replacement = '<div class="ddgh-brand-mark ddgh-brand-mark--visual"><img src="' . esc_url($url) . '" alt="' . esc_attr($brand) . '" loading="lazy" decoding="async"><span>' . esc_html($brand) . '</span></div>';
+            $html = str_replace($needle, $replacement, $html);
         }
+
+        // Avoid repeating the same corporate image in the profile collage and
+        // the later full-width showcase. Use a different One Today visual here.
+        $showcase = 'https://dangduonggroup.com/wp-content/uploads/2026/08/25-one-today-kem-duong-trang-giup-mo-cac-dau-hieu-lao-hoa-da-giup-mo-nep-nhan-da-30g-source.jpg';
+        $html = preg_replace_callback(
+            '#(<picture class="ddgh-showcase-media"[^>]*>\s*<img\s+src=")[^"]+("[^>]*>)#si',
+            static fn(array $m): string => $m[1] . esc_url($showcase) . $m[2],
+            $html,
+            1
+        ) ?: $html;
+
+        $brand_css = '<style id="ddgh-brand-visual-polish">'
+            . '.ddgh-brand-mark--visual{position:relative;overflow:hidden;padding:0;background:#f8efec;isolation:isolate}'
+            . '.ddgh-brand-mark--visual img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;filter:saturate(.96) contrast(1.02);z-index:0}'
+            . '.ddgh-brand-mark--visual:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(75,8,12,.04),rgba(75,8,12,.48));z-index:1}'
+            . '.ddgh-brand-mark--visual span{position:relative;z-index:2;align-self:end;width:100%;padding:12px 8px;color:#fff;font-size:12px;font-weight:900;text-shadow:0 1px 8px rgba(0,0,0,.35)}'
+            . '.ddgh-brand-card{min-width:0}.ddgh-brand-grid{align-items:stretch}'
+            . '</style>';
+        $html = str_replace('</head>', $brand_css . '</head>', $html);
 
         return $html;
     });
