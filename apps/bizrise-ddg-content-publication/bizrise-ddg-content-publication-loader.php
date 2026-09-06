@@ -1,7 +1,7 @@
 <?php
 /**
  * Bizrise DDG Content Publication MU loader
- * Public copy polish v1.3.0.
+ * Public copy polish v1.4.0.
  */
 if (!defined('ABSPATH')) { exit; }
 
@@ -12,15 +12,9 @@ if (is_readable($plugin)) {
 
 /**
  * Public catalogue gate.
- *
- * A product is public when Product Truth says:
- * - regulatory status = active
- * - content gate = PUBLISH_ALLOWED
- *
- * Desktop/mobile media readiness is tracked separately. When a dedicated
- * mobile image is still missing, the verified desktop image is temporarily
- * reused so the product detail URL remains reachable while Media completes
- * the 9:16 asset.
+ * A product is public only when regulatory status is active and content gate
+ * is PUBLISH_ALLOWED. Brand-level discovery is handled separately and does
+ * not relax this product publication rule.
  */
 add_action('init', static function (): void {
     if (!post_type_exists('product')) { return; }
@@ -42,14 +36,8 @@ add_action('init', static function (): void {
         'no_found_rows'  => true,
         'meta_query'     => [
             'relation' => 'AND',
-            [
-                'key'   => '_bizrise_ddg_regulatory_status',
-                'value' => 'active',
-            ],
-            [
-                'key'   => '_bizrise_ddg_content_gate',
-                'value' => 'PUBLISH_ALLOWED',
-            ],
+            ['key' => '_bizrise_ddg_regulatory_status', 'value' => 'active'],
+            ['key' => '_bizrise_ddg_content_gate', 'value' => 'PUBLISH_ALLOWED'],
         ],
     ]);
 
@@ -78,15 +66,10 @@ add_action('init', static function (): void {
         update_post_meta($id, '_ddg_content_publication_status', 'PUBLISH_READY');
         update_post_meta($id, '_ddg_media_status', ($desktop_id > 0 && $mobile_id > 0) ? 'MEDIA_READY' : 'MEDIA_PENDING');
 
-        if ($desktop_id < 1 || $mobile_id < 1) {
-            $media_pending++;
-        }
+        if ($desktop_id < 1 || $mobile_id < 1) { $media_pending++; }
 
         if (get_post_status($id) !== 'publish') {
-            wp_update_post([
-                'ID'          => $id,
-                'post_status' => 'publish',
-            ]);
+            wp_update_post(['ID' => $id, 'post_status' => 'publish']);
         }
         $published++;
     }
@@ -106,10 +89,9 @@ add_action('init', static function (): void {
 
 /**
  * Public copy polish.
- *
- * The renderer intentionally keeps implementation vocabulary internally.
- * This output layer prevents those project terms from leaking into customer-
- * facing pages and upgrades outline-style copy without touching Product Truth.
+ * Internal implementation vocabulary is kept out of customer-facing HTML.
+ * The full six-brand/dòng set recorded in Product Master remains visible on
+ * the brand hub; only product publication is restricted by Product Truth.
  */
 add_action('template_redirect', static function (): void {
     if (is_admin() || wp_doing_ajax() || is_feed() || is_embed()) { return; }
@@ -132,7 +114,7 @@ add_action('template_redirect', static function (): void {
             'Phát triển sản phẩm, thương hiệu, nội dung và các điểm chạm phục vụ consumer discovery, B2B và đối tác.'
                 => 'Kết nối phát triển sản phẩm, xây dựng thương hiệu, nội dung và các điểm chạm phục vụ người tiêu dùng lẫn đối tác doanh nghiệp.',
             'One Today, She One, Cream X2, Hatagold, Ever Today và One Today Gold được tổ chức thành các brand landing riêng trên network.'
-                => 'One Today, Hatagold và She One được tổ chức thành các trang thương hiệu riêng, liên kết trực tiếp với danh mục sản phẩm đang được xác minh và công bố.',
+                => 'Hệ sinh thái hiện ghi nhận One Today, One Today Gold, Ever Today, Cream X2, Hatagold và She One. Mỗi thương hiệu hoặc dòng có không gian giới thiệu riêng; sản phẩm chỉ được công bố khi dữ liệu tương ứng đã được xác minh.',
             'Thông tin sản phẩm công khai được kiểm soát bằng Product Truth; tên sản phẩm, hồ sơ và claim được tách thành các lớp dữ liệu khác nhau.'
                 => 'Thông tin sản phẩm công khai được đối chiếu với dữ liệu đã xác minh; tên sản phẩm, hồ sơ và thông tin công dụng được quản lý tách biệt để hạn chế sai lệch.',
             'Nội dung năng lực chỉ công bố các fact đã có nguồn. Chứng nhận, công suất, diện tích, số năm, số công thức hoặc số thị trường không được tự điền khi chưa có hồ sơ xác minh.'
@@ -160,7 +142,7 @@ add_action('template_redirect', static function (): void {
                 => 'Hỗ trợ kết nối dữ liệu sản phẩm, bao bì, hình ảnh và nội dung để thương hiệu có hệ thông tin nhất quán trước khi ra thị trường.',
             '>Brief<' => '>Tiếp nhận yêu cầu<',
             'Mỗi thương hiệu trong hệ sinh thái Đăng Dương Group được phát triển thành một premium landing/lookbook riêng trên WordPress Multisite. Landing kể câu chuyện thương hiệu, kết nối với hệ sinh thái Đăng Dương Group và chỉ kéo đúng sản phẩm đã qua Product Truth của brand đó.'
-                => 'Mỗi thương hiệu trong hệ sinh thái Đăng Dương Group có một không gian riêng để kể câu chuyện, giới thiệu định hướng chăm sóc, nhóm sản phẩm và cơ hội hợp tác. Sản phẩm hiển thị trên từng trang thương hiệu được lấy từ danh mục đã xác minh để thông tin luôn nhất quán.',
+                => 'Mỗi thương hiệu hoặc dòng trong hệ sinh thái Đăng Dương Group có một không gian riêng để kể câu chuyện, giới thiệu định hướng chăm sóc và nhóm sản phẩm liên quan. Việc hiển thị sản phẩm vẫn tuân theo dữ liệu đã được xác minh.',
             'BRAND NETWORK' => 'HỆ SINH THÁI THƯƠNG HIỆU',
             'Mở landing →' => 'Khám phá thương hiệu →',
             'Danh mục chỉ hiển thị WooCommerce Product đã qua Product Truth và media gate. Bộ lọc luôn đi theo thứ tự <strong>Thương hiệu</strong> trước, sau đó đến <strong>Công dụng</strong>; keyword công dụng được kiểm soát tối đa 4 chữ.'
@@ -175,24 +157,13 @@ add_action('template_redirect', static function (): void {
             'Danh mục WooCommerce Product đã qua Product Truth và Media Gate.'
                 => 'Khám phá danh mục sản phẩm đã được đối chiếu thông tin và hình ảnh trước khi công bố.',
             'Brand Network của Đăng Dương Group với các premium landing theo từng thương hiệu.'
-                => 'Khám phá hệ sinh thái thương hiệu Đăng Dương Group và câu chuyện riêng của từng thương hiệu.',
+                => 'Khám phá hệ sinh thái thương hiệu Đăng Dương Group và câu chuyện riêng của từng thương hiệu hoặc dòng.',
             'Trang chỉ công bố dữ liệu đã qua Product Truth; claim chi tiết được bổ sung khi có nguồn đã duyệt.'
                 => 'Trang chỉ công bố thông tin sản phẩm đã được xác minh; thông tin công dụng chi tiết được bổ sung khi có nguồn phù hợp.',
             'Product Truth' => 'dữ liệu sản phẩm đã xác minh',
             'Media Gate' => 'kiểm tra hình ảnh',
         ];
 
-        $html = strtr($html, $replacements);
-
-        // Only active/verified brand proposals are promoted on the main brand hub.
-        if (str_contains($html, 'ddgc-brand-grid')) {
-            $html = preg_replace(
-                '#<article class="ddgc-brand-card">(?:(?!</article>).)*?https://(?:x2|ever-today|one-today-gold)\.dangduonggroup\.com/(?:(?!</article>).)*?</article>#si',
-                '',
-                $html
-            ) ?: $html;
-        }
-
-        return $html;
+        return strtr($html, $replacements);
     });
 }, -25);
