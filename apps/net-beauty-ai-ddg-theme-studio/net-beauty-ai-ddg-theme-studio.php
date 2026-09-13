@@ -2,14 +2,14 @@
 /**
  * Plugin Name: NÉT Beauty AI — DDG Theme Studio
  * Description: Theme-aware content editor, brand governance and HTML exporter for the Đăng Dương Group multisite network.
- * Version: 1.0.0
+ * Version: 1.1.0
  * Author: Bizrise Framework
  * Requires PHP: 8.0
  */
 if (!defined('ABSPATH')) { exit; }
 
 final class NET_Beauty_AI_DDG_Theme_Studio {
-    private const VERSION = '1.0.0';
+    private const VERSION = '1.1.0';
     private const NONCE = 'net_ddg_theme_studio';
 
     public static function boot(): void {
@@ -99,7 +99,7 @@ final class NET_Beauty_AI_DDG_Theme_Studio {
     public static function render_admin(): void {
         if (!current_user_can('edit_posts')) return; $profiles=self::profiles(); $current=self::current_brand_key(); ?>
         <div class="wrap netddg-wrap">
-          <header class="netddg-head"><div><p class="netddg-eyebrow">NÉT BEAUTY AI · DDG THEME STUDIO</p><h1>Bộ chỉnh sửa nội dung theo thương hiệu</h1><p>Soạn nội dung phù hợp theme mới, kiểm soát brand voice, preview và xuất HTML sạch.</p></div><div class="netddg-badge">Be Vietnam Pro · Semantic HTML</div></header>
+          <header class="netddg-head"><div><p class="netddg-eyebrow">NÉT BEAUTY AI · DDG THEME STUDIO</p><h1>Bộ chỉnh sửa nội dung theo thương hiệu</h1><p>Soạn nội dung theo đúng component của theme đang chạy, kiểm soát brand voice, preview và xuất HTML sạch.</p></div><div class="netddg-badge">Theme-native HTML · Be Vietnam Pro</div></header>
           <div class="netddg-layout">
             <section class="netddg-panel netddg-controls"><h2>1. Context nội dung</h2>
               <label>Thương hiệu<select id="netddg-brand"><?php foreach($profiles as $key=>$p): ?><option value="<?php echo esc_attr($key); ?>" <?php selected($key,$current); ?>><?php echo esc_html($p['label']); ?></option><?php endforeach; ?></select></label>
@@ -136,24 +136,132 @@ final class NET_Beauty_AI_DDG_Theme_Studio {
 
     public static function contract(string $brand_key): array {
         $p=self::profiles()[$brand_key]??self::profiles()['dang-duong-group'];
-        return ['version'=>self::VERSION,'brand_key'=>$brand_key,'brand'=>$p['label'],'theme'=>$p['theme'],'site_role'=>$p['site_role'],'voice'=>$p['voice'],'font'=>'Be Vietnam Pro','html_mode'=>'body_fragment','rules'=>['Theme owns page H1; generated body starts with Direct Answer and H2.','No html/head/body/header/footer/script/style/iframe.','No inline event handlers.','Do not invent certifications, capacity, years, partners, export markets, ingredients or efficacy claims.','Cosmetics must not use treatment language such as trị/xóa/dứt điểm/tận gốc unless explicitly approved and legally permitted.','Product facts follow Product Truth / Product Master / Approved Claim Library.','Images must use real media, correct ALT, width/height and responsive art direction.']];
+        return [
+            'version'=>self::VERSION,
+            'brand_key'=>$brand_key,
+            'brand'=>$p['label'],
+            'theme'=>$p['theme'],
+            'site_role'=>$p['site_role'],
+            'voice'=>$p['voice'],
+            'font'=>'Be Vietnam Pro',
+            'html_mode'=>'body_fragment',
+            'theme_components'=>[
+                'section',
+                'container',
+                'narrow',
+                'section-heading',
+                'eyebrow',
+                'stats-grid',
+                'news-grid',
+                'news-card',
+                'news-card__body',
+                'partners-row',
+                'cta-section',
+                'cta-grid',
+                'btn',
+                'btn--primary',
+                'btn--light',
+            ],
+            'rules'=>[
+                'Theme owns page H1; generated body must never contain H1.',
+                'Generated HTML must reuse the current DDG theme component classes instead of inventing a parallel design system.',
+                'Use section + container (and narrow for editorial body) as the main layout shell.',
+                'Use section-heading and eyebrow for section hierarchy; use news-grid/news-card only for two-column editorial cards; use stats-grid for verified fact blocks.',
+                'Use cta-section + cta-grid + btn classes for the final CTA.',
+                'No html/head/body/header/footer/script/style/iframe.',
+                'No inline event handlers or inline CSS.',
+                'Do not invent certifications, capacity, years, partners, export markets, ingredients or efficacy claims.',
+                'Cosmetics must not use treatment language such as trị/xóa/dứt điểm/tận gốc unless explicitly approved and legally permitted.',
+                'Product facts follow Product Truth / Product Master / Approved Claim Library.',
+                'Images must use real media, correct ALT, width/height and responsive art direction.',
+            ],
+        ];
     }
 
     private static function build_fragment(array $d): string {
-        $p=self::profiles()[$d['brand']]; $answer=self::direct_answer($d); $facts=self::lines($d['facts']); $claims=self::lines($d['claims']); $sections=self::section_plan($d['type'],$p['label']);
-        $out='<div class="ddg-ai-content ddg-ai-content--'.esc_attr($d['brand']).'" data-brand="'.esc_attr($d['brand']).'" data-theme="'.esc_attr($p['theme']).'">';
-        $out.='<p class="ddg-direct-answer">'.esc_html($answer).'</p>';
-        foreach($sections as $index=>$section){ $out.='<section class="ddg-content-section"><h2>'.esc_html($section['h2']).'</h2><p>'.esc_html($section['lead']).'</p>';
-            if($index===0&&$facts){ $out.='<div class="ddg-fact-grid">'; foreach(array_slice($facts,0,6) as $fact)$out.='<article class="ddg-fact-card"><h3>'.esc_html(self::fact_heading($fact)).'</h3><p>'.esc_html($fact).'</p></article>'; $out.='</div>'; }
-            elseif($index===1&&$claims){ $out.='<ul class="ddg-approved-claims">'; foreach(array_slice($claims,0,8) as $claim)$out.='<li>'.esc_html($claim).'</li>'; $out.='</ul>'; }
-            else $out.='<div class="ddg-content-grid"><article><h3>'.esc_html($section['h3a']).'</h3><p>'.esc_html($section['bodya']).'</p></article><article><h3>'.esc_html($section['h3b']).'</h3><p>'.esc_html($section['bodyb']).'</p></article></div>';
-            $out.='</section>'; }
-        $out.='<section class="ddg-content-cta"><h2>'.esc_html(self::cta_heading($d['type'],$p['label'])).'</h2><p>'.esc_html(self::cta_copy($d['type'],$p['label'])).'</p><a class="ddg-btn" href="'.esc_url(self::cta_url($d['type'])).'">'.esc_html($p['cta']).'</a></section></div>'; return $out;
+        $p = self::profiles()[$d['brand']];
+        $answer = self::direct_answer($d);
+        $facts = self::lines($d['facts']);
+        $claims = self::lines($d['claims']);
+        $sections = self::section_plan($d['type'], $p['label']);
+
+        $out = '<div class="netddg-theme-fragment" data-brand="'.esc_attr($d['brand']).'" data-theme="'.esc_attr($p['theme']).'" data-netddg-version="'.esc_attr(self::VERSION).'">';
+
+        // Direct Answer uses the same editorial shell as the production theme.
+        $out .= '<section class="section"><div class="container narrow">';
+        $out .= '<div class="section-heading">';
+        $out .= '<span class="eyebrow">'.esc_html($p['label']).'</span>';
+        $out .= '<p>'.esc_html($answer).'</p>';
+        $out .= '</div>';
+        $out .= '</div></section>';
+
+        foreach ($sections as $index => $section) {
+            $out .= '<section class="section"><div class="container narrow">';
+            $out .= '<div class="section-heading">';
+            $out .= '<span class="eyebrow">'.esc_html(sprintf('%02d', $index + 1)).'</span>';
+            $out .= '<h2>'.esc_html($section['h2']).'</h2>';
+            $out .= '<p>'.esc_html($section['lead']).'</p>';
+            $out .= '</div>';
+
+            if ($index === 0 && $facts) {
+                $out .= '<div class="stats-grid">';
+                foreach (array_slice($facts, 0, 6) as $fact) {
+                    $out .= '<div><b>'.esc_html(self::fact_heading($fact)).'</b><span>'.esc_html($fact).'</span></div>';
+                }
+                $out .= '</div>';
+            } elseif ($index === 1 && $claims) {
+                $out .= '<div class="partners-row">';
+                foreach (array_slice($claims, 0, 8) as $claim) {
+                    $out .= '<span>'.esc_html($claim).'</span>';
+                }
+                $out .= '</div>';
+            } else {
+                $out .= '<div class="news-grid">';
+                $out .= '<article class="news-card"><div class="news-card__body"><h3>'.esc_html($section['h3a']).'</h3><p>'.esc_html($section['bodya']).'</p></div></article>';
+                $out .= '<article class="news-card"><div class="news-card__body"><h3>'.esc_html($section['h3b']).'</h3><p>'.esc_html($section['bodyb']).'</p></div></article>';
+                $out .= '</div>';
+            }
+
+            $out .= '</div></section>';
+        }
+
+        $out .= '<section class="cta-section"><div class="container cta-grid">';
+        $out .= '<div><span class="eyebrow">'.esc_html($p['label']).'</span><h2>'.esc_html(self::cta_heading($d['type'], $p['label'])).'</h2><p>'.esc_html(self::cta_copy($d['type'], $p['label'])).'</p></div>';
+        $out .= '<a class="btn btn--light" href="'.esc_url(self::cta_url($d['type'])).'">'.esc_html($p['cta']).'</a>';
+        $out .= '</div></section>';
+
+        $out .= '</div>';
+        return $out;
     }
 
     private static function ai_prompt(array $d): string {
-        $p=self::profiles()[$d['brand']];
-        return "Bạn là biên tập viên của {$p['label']} trong hệ sinh thái Đăng Dương Group.\nROLE: {$p['site_role']}\nVOICE: {$p['voice']}\nTHEME: {$p['theme']}\nFONT: Be Vietnam Pro.\n\nNHIỆM VỤ: Viết nội dung loại '{$d['type']}' cho chủ đề '{$d['title']}', primary keyword '{$d['keyword']}', intent '{$d['intent']}'.\nFACT ĐƯỢC XÁC MINH:\n{$d['facts']}\n\nAPPROVED CLAIMS:\n{$d['claims']}\n\nGHI CHÚ:\n{$d['notes']}\n\nBẮT BUỘC: Chỉ xuất body fragment HTML. Không tạo H1 vì theme giữ H1. Bắt đầu bằng Direct Answer rồi H2/H3 semantic. Không script/style/iframe. Không bịa chứng nhận, công suất, số năm, đối tác, thị trường, thành phần hoặc hiệu quả. Không dùng ngôn ngữ điều trị mỹ phẩm như trị/xóa/dứt điểm/tận gốc nếu không có approved claim. Tôn trọng brand story và giọng văn riêng. Nội dung phải hữu ích trước khi bán hàng. CTA phải phù hợp vai trò trang và liên kết nội bộ tự nhiên.";
+        $p = self::profiles()[$d['brand']];
+        return "Bạn là biên tập viên của {$p['label']} trong hệ sinh thái Đăng Dương Group.\n"
+            ."ROLE: {$p['site_role']}\n"
+            ."VOICE: {$p['voice']}\n"
+            ."THEME: {$p['theme']}\n"
+            ."FONT: Be Vietnam Pro.\n\n"
+            ."NHIỆM VỤ: Viết nội dung loại '{$d['type']}' cho chủ đề '{$d['title']}', primary keyword '{$d['keyword']}', intent '{$d['intent']}'.\n\n"
+            ."FACT ĐƯỢC XÁC MINH:\n{$d['facts']}\n\n"
+            ."APPROVED CLAIMS:\n{$d['claims']}\n\n"
+            ."GHI CHÚ:\n{$d['notes']}\n\n"
+            ."THEME CLASS CONTRACT — BẮT BUỘC:\n"
+            ."- Chỉ xuất BODY FRAGMENT, không html/head/body/header/footer/script/style/iframe.\n"
+            ."- KHÔNG tạo H1; theme WordPress render H1. Nội dung bắt đầu bằng Direct Answer rồi H2/H3 semantic.\n"
+            ."- Không tự tạo design system/class mới. Dùng component đang có của DDG theme.\n"
+            ."- Shell section: <section class=\"section\"><div class=\"container narrow\">...</div></section>.\n"
+            ."- Heading block: <div class=\"section-heading\"><span class=\"eyebrow\">...</span><h2>...</h2><p>...</p></div>.\n"
+            ."- Fact đã xác minh: dùng <div class=\"stats-grid\"> với các <div><b>...</b><span>...</span></div>.\n"
+            ."- Hai khối editorial: dùng <div class=\"news-grid\"><article class=\"news-card\"><div class=\"news-card__body\">...</div></article>...</div>.\n"
+            ."- Approved claim ngắn: có thể dùng <div class=\"partners-row\"><span>...</span></div>.\n"
+            ."- CTA cuối: dùng <section class=\"cta-section\"><div class=\"container cta-grid\">...<a class=\"btn btn--light\">...</a></div></section>.\n"
+            ."- Không inline style, không inline event handler.\n\n"
+            ."FACT & CLAIM GOVERNANCE:\n"
+            ."- Không bịa chứng nhận, công suất, số năm, đối tác, thị trường, thành phần hoặc hiệu quả.\n"
+            ."- Không dùng ngôn ngữ điều trị mỹ phẩm như trị/xóa/dứt điểm/tận gốc nếu không có approved claim.\n"
+            ."- Product facts phải theo Product Truth / Product Master / Approved Claim Library.\n"
+            ."- Nội dung phải hữu ích trước khi bán hàng; CTA và internal link phải phù hợp vai trò trang.\n"
+            ."- Nếu cần hình ảnh, chỉ tham chiếu media thật; không tự tạo URL ảnh hoặc thông tin ALT không có căn cứ.";
     }
 
     private static function direct_answer(array $d): string { $p=self::profiles()[$d['brand']]; $topic=$d['title']?:self::default_title($d['type'],$p['label']); if($d['type']==='oem') return $topic.' được trình bày theo góc nhìn B2B, tập trung vào nhu cầu đối tác, phạm vi phối hợp và các bước triển khai có thể xác minh.'; if($d['type']==='company-profile') return $topic.' giới thiệu '.$p['label'].' bằng thông tin doanh nghiệp có nguồn, tránh sử dụng số liệu hoặc chứng nhận chưa được xác minh.'; if($d['type']==='product') return $topic.' được giải thích theo vai trò trong routine và dữ liệu sản phẩm đã được xác minh, không suy luận claim từ tên sản phẩm hoặc nội dung legacy.'; return $topic.' được trình bày theo định hướng '.$p['label'].': giúp người đọc hiểu vấn đề, bối cảnh và lựa chọn phù hợp trước khi đưa ra quyết định.'; }
