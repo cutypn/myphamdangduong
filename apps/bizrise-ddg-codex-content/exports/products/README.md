@@ -1,0 +1,1 @@
+Codex writes approved product JSON packages in this directory. Do not place legal-document images here; media remains in the media pipeline.
