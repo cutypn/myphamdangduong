@@ -6,38 +6,47 @@ const els={brand:$('#netddg-brand'),type:$('#netddg-type'),title:$('#netddg-titl
 function profile(){return NET_DDG_STUDIO.profiles[els.brand.value]||NET_DDG_STUDIO.profiles['dang-duong-group'];}
 function renderBrand(){const p=profile();els.card.innerHTML='<strong>'+esc(p.label)+'</strong><p>'+esc(p.site_role)+'</p><p><b>Voice:</b> '+esc(p.voice)+'</p><p><b>Theme:</b> '+esc(p.theme)+'</p>';}
 function payload(extra={}){return new URLSearchParams(Object.assign({action:'net_ddg_build_html',nonce:NET_DDG_STUDIO.nonce,brand:els.brand.value,type:els.type.value,title:els.title.value,keyword:els.keyword.value,intent:els.intent.value,facts:els.facts.value,claims:els.claims.value,notes:els.notes.value},extra));}
-async function build(){els.status.textContent='Đang dựng...';const r=await fetch(NET_DDG_STUDIO.ajax,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8'},body:payload()});const j=await r.json();if(!j.success){els.status.textContent='Lỗi';alert(j.data?.message||'Không dựng được HTML');return;}els.html.value=j.data.html;els.html.dataset.prompt=j.data.prompt;els.status.textContent='Đã dựng theo '+profile().label;preview();}
+function normalizeThemeFragment(source){
+  const parser=new DOMParser();
+  const doc=parser.parseFromString('<main>'+String(source||'')+'</main>','text/html');
+  const root=doc.querySelector('main');
+  if(!root)return String(source||'');
+  root.querySelectorAll('.section').forEach((el,i)=>{
+    el.classList.remove('section'); el.classList.add('ddgc-section');
+    const container=el.querySelector(':scope > .container');
+    if(container){container.classList.remove('container');container.classList.add('ddgc-shell');if(container.classList.contains('narrow')){container.classList.remove('narrow');container.classList.add('ddgc-copy-narrow');}}
+    const heading=el.querySelector(':scope .section-heading');
+    if(i===0 && heading && !heading.querySelector('h2')){
+      const answer=heading.querySelector('p');
+      if(answer){answer.classList.add('ddgc-direct-answer');}
+      heading.replaceWith(...Array.from(heading.childNodes));
+      return;
+    }
+    if(heading){heading.classList.remove('section-heading');heading.classList.add('ddgc-heading','ddgc-heading--left');const eyebrow=heading.querySelector('.eyebrow');if(eyebrow){eyebrow.classList.remove('eyebrow');eyebrow.classList.add('ddgc-eyebrow');if(eyebrow.tagName==='SPAN'){const p=doc.createElement('p');p.className='ddgc-eyebrow';p.textContent=eyebrow.textContent;eyebrow.replaceWith(p);}}}
+    const stats=el.querySelector(':scope .stats-grid');
+    if(stats){stats.classList.remove('stats-grid');stats.classList.add('ddgc-grid-3');stats.querySelectorAll(':scope > div').forEach(card=>{card.classList.add('ddgc-card');const b=card.querySelector('b'),sp=card.querySelector('span');if(b){const h3=doc.createElement('h3');h3.textContent=b.textContent;b.replaceWith(h3);}if(sp){const p=doc.createElement('p');p.textContent=sp.textContent;sp.replaceWith(p);}});}
+    const proof=el.querySelector(':scope .partners-row');
+    if(proof){proof.classList.remove('partners-row');proof.classList.add('ddgc-mini-proof');}
+    const grid=el.querySelector(':scope .news-grid');
+    if(grid){grid.classList.remove('news-grid');grid.classList.add('ddgc-product-split');grid.querySelectorAll('.news-card').forEach(card=>{card.classList.remove('news-card');const body=card.querySelector('.news-card__body');if(body)body.classList.remove('news-card__body');});}
+  });
+  const cta=root.querySelector('.cta-section');
+  if(cta){cta.classList.remove('cta-section');cta.classList.add('ddgc-network-cta');const container=cta.querySelector(':scope > .container');if(container){container.classList.remove('container');container.classList.add('ddgc-shell');}const link=cta.querySelector('a.btn');if(link){link.classList.remove('btn','btn--light');link.classList.add('ddgc-btn','ddgc-btn--light');}}
+  root.querySelectorAll('script,style,iframe,[onclick],[onload]').forEach(n=>n.remove());
+  root.querySelectorAll('a[href]').forEach(a=>{const href=a.getAttribute('href')||'';if(/^javascript:/i.test(href))a.removeAttribute('href');});
+  return root.innerHTML.trim();
+}
+function normalizePrompt(prompt){return String(prompt||'').replace(/section \+ container \(and narrow for editorial body\)/g,'ddgc-section + ddgc-shell + ddgc-copy-narrow').replace(/<section class=\\"section\\"><div class=\\"container narrow\\">/g,'<section class="ddgc-section"><div class="ddgc-shell ddgc-copy-narrow">').replace(/section-heading/g,'ddgc-heading').replace(/stats-grid/g,'ddgc-grid-3').replace(/news-grid/g,'ddgc-product-split').replace(/news-card__body/g,'').replace(/news-card/g,'').replace(/partners-row/g,'ddgc-mini-proof').replace(/cta-section/g,'ddgc-network-cta').replace(/cta-grid/g,'ddgc-shell').replace(/btn--light/g,'ddgc-btn--light').replace(/class=\\"btn\\"/g,'class="ddgc-btn"');}
+async function build(){els.status.textContent='Đang dựng...';try{const r=await fetch(NET_DDG_STUDIO.ajax,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8'},body:payload()});const j=await r.json();if(!j.success){els.status.textContent='Lỗi';alert(j.data?.message||'Không dựng được HTML');return;}els.html.value=normalizeThemeFragment(j.data.html);els.html.dataset.prompt=normalizePrompt(j.data.prompt);els.status.textContent='Đã dựng HTML theo theme '+profile().label;preview();}catch(e){els.status.textContent='Lỗi';alert('Không kết nối được bộ dựng HTML.');}}
 function preview(){
-  const html=els.html.value;
+  const html=normalizeThemeFragment(els.html.value);
   els.frame.srcdoc=`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>
-  :root{--ddg-red:#9b0d16;--ddg-ink:#302927;--ddg-muted:#716866;--ddg-line:#eadbd7;--ddg-soft:#fff8f5}
-  *{box-sizing:border-box}
-  body{margin:0;font-family:"Be Vietnam Pro",system-ui,sans-serif;color:var(--ddg-ink);line-height:1.7;background:#fff}
-  .section{padding:54px 0;border-bottom:1px solid var(--ddg-line)}
-  .container{width:min(1180px,calc(100% - 48px));margin:0 auto}
-  .container.narrow{width:min(920px,calc(100% - 48px))}
-  .section-heading{margin:0 0 26px}
-  .section-heading .eyebrow,.eyebrow{display:block;margin:0 0 8px;color:var(--ddg-red);font-size:12px;font-weight:900;letter-spacing:.12em;text-transform:uppercase}
-  .section-heading h2,.cta-section h2{margin:0 0 12px;font:800 32px/1.2 "Be Vietnam Pro",sans-serif}
-  .section-heading h2{color:var(--ddg-red)}
-  .section-heading p{margin:0;color:var(--ddg-muted)}
-  .stats-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
-  .stats-grid>div{padding:18px;border:1px solid var(--ddg-line);border-radius:12px;background:#fff}
-  .stats-grid b,.stats-grid span{display:block}.stats-grid b{color:var(--ddg-red);margin-bottom:6px}.stats-grid span{font-size:14px;color:var(--ddg-muted)}
-  .news-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
-  .news-card{border:1px solid var(--ddg-line);border-radius:14px;background:#fff;overflow:hidden}
-  .news-card__body{padding:20px}.news-card__body h3{margin:0 0 8px;font-size:18px}.news-card__body p{margin:0;color:var(--ddg-muted)}
-  .partners-row{display:flex;flex-wrap:wrap;gap:10px}.partners-row span{padding:9px 12px;border:1px solid var(--ddg-line);border-radius:999px;background:var(--ddg-soft);font-size:13px}
-  .cta-section{padding:44px 0;background:linear-gradient(120deg,#850811,#b30f19);color:#fff}
-  .cta-grid{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:28px;align-items:center}
-  .cta-section .eyebrow{color:#fff;opacity:.8}.cta-section p{margin:0;opacity:.9}
-  .btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 20px;border-radius:8px;text-decoration:none;font-weight:800}
-  .btn--light{background:#fff;color:var(--ddg-red)}
-  @media(max-width:700px){.section{padding:36px 0}.container,.container.narrow{width:min(100% - 32px,920px)}.stats-grid,.news-grid,.cta-grid{grid-template-columns:1fr}.section-heading h2,.cta-section h2{font-size:26px}}
-  </style></head><body><main class="entry-content">${html}</main></body></html>`;
+  :root{--ddgc-red-900:#83050B;--ddgc-red-800:#960A11;--ddgc-red-700:#A90915;--ddgc-ivory:#FDF8F7;--ddgc-blush:#FDF4F2;--ddgc-blush-2:#FAECE9;--ddgc-white:#fff;--ddgc-ink:#2E2928;--ddgc-muted:#756B68;--ddgc-line:#EADBD7;--ddgc-font:"Be Vietnam Pro",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+  *{box-sizing:border-box}body{margin:0;color:var(--ddgc-ink);background:#fff;font-family:var(--ddgc-font);line-height:1.65}.ddgc-section{padding:68px 0}.ddgc-shell{width:min(calc(100% - 40px),1480px);margin-inline:auto}.ddgc-copy-narrow{max-width:980px}.ddgc-direct-answer{margin:0;font-size:clamp(18px,1.5vw,23px);line-height:1.7;color:#403937}.ddgc-heading{max-width:850px;margin:0 auto 32px;text-align:center}.ddgc-heading--left{margin-left:0;text-align:left}.ddgc-heading>p,.ddgc-eyebrow{margin:0 0 8px;color:var(--ddgc-red-800);font-size:12px;font-weight:900;letter-spacing:.09em;text-transform:uppercase}.ddgc-heading h2,.ddgc-product-split h2{margin:0;color:var(--ddgc-red-900);font-size:clamp(28px,3vw,46px);line-height:1.18;letter-spacing:-.02em}.ddgc-heading h2{margin-bottom:10px}.ddgc-heading>p:not(.ddgc-eyebrow){color:var(--ddgc-muted)}.ddgc-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}.ddgc-card{padding:26px;border:1px solid var(--ddgc-line);border-radius:16px;background:#fff;box-shadow:0 10px 30px rgba(83,31,26,.04)}.ddgc-card h3{margin:0 0 8px;color:var(--ddgc-red-900);font-size:20px}.ddgc-card p{margin:0;color:var(--ddgc-muted)}.ddgc-product-split{display:grid;grid-template-columns:1fr 1fr;gap:28px}.ddgc-product-split article{padding:26px;border:1px solid var(--ddgc-line);border-radius:16px}.ddgc-product-split h3{margin:0 0 8px;color:var(--ddgc-red-900);font-size:20px}.ddgc-product-split p{margin:0;color:var(--ddgc-muted)}.ddgc-mini-proof{display:flex;flex-wrap:wrap;gap:8px}.ddgc-mini-proof span{padding:7px 10px;border:1px solid var(--ddgc-line);border-radius:10px;background:rgba(255,255,255,.7);font-size:11px}.ddgc-network-cta{padding:44px 0;background:linear-gradient(100deg,#8c0710,#b81019);color:#fff}.ddgc-network-cta>.ddgc-shell{display:grid;grid-template-columns:1fr auto;align-items:center;gap:24px}.ddgc-network-cta h2{margin:0;font-size:clamp(28px,3vw,42px);line-height:1.15}.ddgc-network-cta p{margin:7px 0;color:rgba(255,255,255,.8)}.ddgc-network-cta .ddgc-eyebrow{color:#fff}.ddgc-btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 22px;border:1px solid var(--ddgc-red-800);border-radius:8px;background:linear-gradient(180deg,var(--ddgc-red-700),var(--ddgc-red-900));color:#fff!important;text-decoration:none;font-size:13px;font-weight:850}.ddgc-btn--light{background:#fff;color:var(--ddgc-red-800)!important}@media(max-width:767px){.ddgc-section{padding:44px 0}.ddgc-shell{width:min(calc(100% - 22px),1480px)}.ddgc-grid-3,.ddgc-product-split,.ddgc-network-cta>.ddgc-shell{grid-template-columns:1fr}}
+  </style></head><body><main>${html}</main></body></html>`;
 }
 async function copyText(text,msg){await navigator.clipboard.writeText(text);els.status.textContent=msg;}
-function exportHtml(){const blob=new Blob([els.html.value],{type:'text/html;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);const slug=(els.title.value||profile().label).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');a.download=(slug||'net-beauty-ai')+'.html';a.click();URL.revokeObjectURL(a.href);}
-async function saveDraft(){if(!els.html.value.trim()){alert('HTML đang trống.');return;}const body=payload({action:'net_ddg_save_draft',html:els.html.value});const r=await fetch(NET_DDG_STUDIO.ajax,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8'},body});const j=await r.json();if(!j.success){alert(j.data?.message||'Không lưu được.');return;}els.status.innerHTML='Đã lưu draft #'+j.data.post_id;window.open(j.data.edit_url,'_blank','noopener');}
-els.brand.value=NET_DDG_STUDIO.currentBrand||'dang-duong-group';renderBrand();els.brand.addEventListener('change',renderBrand);$('#netddg-build').addEventListener('click',e=>{e.preventDefault();build();});$('#netddg-preview').addEventListener('click',e=>{e.preventDefault();preview();});$('#netddg-copy-html').addEventListener('click',e=>{e.preventDefault();copyText(els.html.value,'Đã copy HTML');});$('#netddg-export-html').addEventListener('click',e=>{e.preventDefault();exportHtml();});$('#netddg-copy-prompt').addEventListener('click',async e=>{e.preventDefault();if(!els.html.dataset.prompt)await build();copyText(els.html.dataset.prompt||'','Đã copy prompt AI');});$('#netddg-save-draft').addEventListener('click',e=>{e.preventDefault();saveDraft();});
+function exportHtml(){const html=normalizeThemeFragment(els.html.value);const blob=new Blob([html],{type:'text/html;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);const slug=(els.title.value||profile().label).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');a.download=(slug||'net-beauty-ai')+'.html';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}
+async function saveDraft(){if(!els.html.value.trim()){alert('HTML đang trống.');return;}const html=normalizeThemeFragment(els.html.value);const body=payload({action:'net_ddg_save_draft',html});const r=await fetch(NET_DDG_STUDIO.ajax,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8'},body});const j=await r.json();if(!j.success){alert(j.data?.message||'Không lưu được.');return;}els.status.innerHTML='Đã lưu draft #'+j.data.post_id;window.open(j.data.edit_url,'_blank','noopener');}
+els.brand.value=NET_DDG_STUDIO.currentBrand||'dang-duong-group';renderBrand();els.brand.addEventListener('change',renderBrand);$('#netddg-build').addEventListener('click',e=>{e.preventDefault();build();});$('#netddg-preview').addEventListener('click',e=>{e.preventDefault();preview();});$('#netddg-copy-html').addEventListener('click',e=>{e.preventDefault();copyText(normalizeThemeFragment(els.html.value),'Đã copy HTML theme-native');});$('#netddg-export-html').addEventListener('click',e=>{e.preventDefault();exportHtml();});$('#netddg-copy-prompt').addEventListener('click',async e=>{e.preventDefault();if(!els.html.dataset.prompt)await build();copyText(els.html.dataset.prompt||'','Đã copy prompt AI');});$('#netddg-save-draft').addEventListener('click',e=>{e.preventDefault();saveDraft();});
 })();
