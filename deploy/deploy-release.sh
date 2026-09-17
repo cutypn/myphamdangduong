@@ -197,7 +197,6 @@ local_smoke "/oem-odm/" "ddgc-publication"
 local_smoke "/san-pham/" "ddgc-publication"
 local_smoke "/thuong-hieu/" "ddgc-publication"
 
-# Publication gate is based on verified Product Truth status, not media completion.
 if [ -n "$PHP_BIN" ]; then
   ELIGIBLE_COUNT="$($PHP_BIN -d display_errors=0 -d memory_limit=512M -r '
     $_SERVER["HTTP_HOST"]="dangduonggroup.com";
@@ -251,7 +250,7 @@ if [ -n "$PHP_BIN" ]; then
   [ -z "$NETWORK_STATUS" ] || log "BRAND_NETWORK_STATUS $NETWORK_STATUS"
   if printf '%s' "$NETWORK_STATUS" | grep -Fq '"status":"PASS"'; then
     for slug in one-today she-one x2 hatagold ever-today one-today-gold; do
-      brand_smoke "${slug}.dangduonggroup.com" "ddgb-brand-landing"
+      brand_smoke "${slug}.dangduonggroup.com" "ddgbp"
     done
   fi
 fi
