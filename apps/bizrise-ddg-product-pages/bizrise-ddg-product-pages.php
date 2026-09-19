@@ -2,14 +2,14 @@
 /**
  * Plugin Name: Bizrise DDG Product Pages
  * Description: Product Catalogue + Product Detail renderer/importer for Dang Duong Group using Product Truth and existing first-party media.
- * Version: 1.0.0
+ * Version: 1.1.0
  * Author: Bizrise Framework
  * Requires PHP: 8.0
  */
 if (!defined('ABSPATH')) { exit; }
 if (!class_exists('Bizrise_DDG_Product_Pages')) {
 final class Bizrise_DDG_Product_Pages {
-    private const VERSION = '1.0.0';
+    private const VERSION = '1.1.0';
     private const OPTION_VERSION = 'bizrise_ddg_product_pages_version';
     private const REPORT_OPTION = 'bizrise_ddg_product_pages_report';
     private const POST_TYPE = 'bizrise_product';
@@ -186,6 +186,55 @@ final class Bizrise_DDG_Product_Pages {
         return array_merge(['post_type'=>self::POST_TYPE,'post_status'=>'publish','posts_per_page'=>12,'paged'=>max(1,(int)get_query_var('paged')),'meta_query'=>$meta_query,'s'=>$search],$extra);
     }
     public static function distinct_meta_values(string $key): array { global $wpdb; $sql=$wpdb->prepare("SELECT DISTINCT pm.meta_value FROM {$wpdb->postmeta} pm INNER JOIN {$wpdb->posts} p ON p.ID=pm.post_id WHERE p.post_type=%s AND p.post_status='publish' AND pm.meta_key=%s AND pm.meta_value<>'' ORDER BY pm.meta_value ASC",self::POST_TYPE,$key); return array_values(array_filter(array_map('sanitize_text_field',(array)$wpdb->get_col($sql)))); }
+
+    public static function evidence_image_ids(int $post_id): array {
+        $ids = [];
+        foreach (self::document_ids($post_id) as $doc_id) {
+            if (wp_attachment_is_image((int) $doc_id)) { $ids[] = (int) $doc_id; }
+        }
+
+        $filename = trim((string) get_post_meta($post_id, '_bizrise_ddg_evidence_filename', true));
+        if ($filename !== '') {
+            $filename = wp_basename(parse_url($filename, PHP_URL_PATH) ?: $filename);
+            global $wpdb;
+            $like = '%' . $wpdb->esc_like($filename);
+            $found = (int) $wpdb->get_var($wpdb->prepare(
+                "SELECT pm.post_id
+                 FROM {$wpdb->postmeta} pm
+                 INNER JOIN {$wpdb->posts} p ON p.ID = pm.post_id
+                 WHERE pm.meta_key = '_wp_attached_file'
+                   AND (pm.meta_value = %s OR pm.meta_value LIKE %s)
+                   AND p.post_type = 'attachment'
+                 ORDER BY pm.post_id DESC
+                 LIMIT 1",
+                $filename,
+                $like
+            ));
+            if ($found && wp_attachment_is_image($found)) { $ids[] = $found; }
+        }
+
+        return array_values(array_unique(array_filter(array_map('intval', $ids))));
+    }
+
+    public static function brand_url(string $brand): string {
+        $fallback = add_query_arg('brand', $brand, home_url('/thuong-hieu/'));
+        if (!is_multisite() || trim($brand) === '') return $fallback;
+
+        $normalized = self::normalize_brand_for_url($brand);
+        $sites = get_sites(['number'=>200,'public'=>1,'archived'=>0,'deleted'=>0,'spam'=>0]);
+        foreach ($sites as $site) {
+            $haystack = self::normalize_brand_for_url((string)$site->domain . ' ' . (string)$site->path . ' ' . (string)$site->blogname);
+            if ($normalized !== '' && str_contains($haystack, $normalized)) {
+                return get_home_url((int)$site->blog_id, '/');
+            }
+        }
+        return $fallback;
+    }
+
+    private static function normalize_brand_for_url(string $text): string {
+        $text = strtolower(remove_accents(wp_strip_all_tags($text)));
+        return trim((string) preg_replace('/[^a-z0-9]+/', '-', $text), '-');
+    }
 
     public static function admin_menu(): void { add_management_page('DDG Product Pages','DDG Product Pages','manage_options','ddg-product-pages',[__CLASS__,'render_admin']); }
     public static function render_admin(): void {
