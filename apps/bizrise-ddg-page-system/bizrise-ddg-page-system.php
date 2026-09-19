@@ -906,9 +906,10 @@ final class Bizrise_DDG_Page_System {
         }
         foreach ($ids as $id) {
             $brand = self::brand($id);
-            $thumb = get_the_post_thumbnail($id, 'medium_large', [
+            $thumb_id = self::product_primary_image_id($id);
+            $thumb = $thumb_id ? wp_get_attachment_image($thumb_id, 'medium_large', false, [
                 'loading'=>'lazy','decoding'=>'async','alt'=>self::product_alt($id),
-            ]);
+            ]) : '';
             $attrs = $filterable ? ' data-brand="' . esc_attr(sanitize_title($brand)) . '"' : '';
             echo '<article class="ddg-product-card"' . $attrs . '>';
             echo '<a href="' . esc_url(get_permalink($id)) . '">';
