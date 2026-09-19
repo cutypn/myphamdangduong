@@ -11,6 +11,7 @@ while (have_posts()) : the_post();
     $gallery = Bizrise_DDG_Product_Pages::gallery_ids($id);
     $docs = Bizrise_DDG_Product_Pages::document_ids($id);
     $related = Bizrise_DDG_Product_Pages::related_products($id, 5);
+    $evidence_images = Bizrise_DDG_Product_Pages::evidence_image_ids($id);
 
     $claims_verified = (string) get_post_meta($id, '_bizrise_ddg_claims_verified', true) === '1';
     $verification = strtoupper(trim((string) get_post_meta($id, '_bizrise_ddg_verification_status', true)));
@@ -42,8 +43,7 @@ while (have_posts()) : the_post();
         }
     }
 
-    $brand_url = home_url('/san-pham/');
-    if ($brand !== '') { $brand_url = add_query_arg('brand', $brand, home_url('/san-pham/')); }
+    $brand_url = $brand !== '' ? Bizrise_DDG_Product_Pages::brand_url($brand) : home_url('/thuong-hieu/');
 
     $overview_content = trim((string) get_post_field('post_content', $id));
     $public_overview = '';
@@ -137,34 +137,106 @@ while (have_posts()) : the_post();
     <?php endif; ?>
 
     <section class="ddg-pdp-details" aria-label="Thông tin chi tiết sản phẩm">
-        <div class="ddg-pdp-tabs" data-ddg-tabs>
-            <div class="ddg-pdp-tabs__nav" role="tablist" aria-label="Nội dung sản phẩm">
-                <button class="is-active" type="button" role="tab" aria-selected="true" aria-controls="ddg-tab-overview" id="ddg-tab-overview-btn">Mô tả sản phẩm</button>
-                <?php if ($benefits_html !== '') : ?><button type="button" role="tab" aria-selected="false" aria-controls="ddg-tab-benefits" id="ddg-tab-benefits-btn">Công dụng</button><?php endif; ?>
-                <?php if ($how_to_use_html !== '') : ?><button type="button" role="tab" aria-selected="false" aria-controls="ddg-tab-howto" id="ddg-tab-howto-btn">Cách sử dụng</button><?php endif; ?>
-                <?php if ($ingredients_html !== '') : ?><button type="button" role="tab" aria-selected="false" aria-controls="ddg-tab-ingredients" id="ddg-tab-ingredients-btn">Thành phần</button><?php endif; ?>
-                <?php if ($docs) : ?><button type="button" role="tab" aria-selected="false" aria-controls="ddg-tab-document" id="ddg-tab-document-btn">Tài liệu</button><?php endif; ?>
-            </div>
+        <div class="ddg-pdp-details__primary">
+            <article class="ddg-pdp-panel ddg-pdp-panel--description">
+                <p class="ddg-eyebrow">MÔ TẢ CHI TIẾT</p>
+                <h2>Mô tả sản phẩm</h2>
+                <?php echo wp_kses_post($public_overview); ?>
+            </article>
 
-            <div class="ddg-pdp-tabs__panels">
-                <article class="ddg-pdp-panel is-active" id="ddg-tab-overview" role="tabpanel" aria-labelledby="ddg-tab-overview-btn"><h2>Tổng quan về <?php the_title(); ?></h2><?php echo wp_kses_post($public_overview); ?></article>
-                <?php if ($benefits_html !== '') : ?><article class="ddg-pdp-panel" id="ddg-tab-benefits" role="tabpanel" aria-labelledby="ddg-tab-benefits-btn" hidden><h2>Công dụng của <?php the_title(); ?></h2><?php echo wp_kses_post($benefits_html); ?></article><?php endif; ?>
-                <?php if ($how_to_use_html !== '') : ?><article class="ddg-pdp-panel" id="ddg-tab-howto" role="tabpanel" aria-labelledby="ddg-tab-howto-btn" hidden><h2>Cách sử dụng</h2><?php echo wp_kses_post($how_to_use_html); ?></article><?php endif; ?>
-                <?php if ($ingredients_html !== '') : ?><article class="ddg-pdp-panel" id="ddg-tab-ingredients" role="tabpanel" aria-labelledby="ddg-tab-ingredients-btn" hidden><h2>Thành phần</h2><?php echo wp_kses_post($ingredients_html); ?></article><?php endif; ?>
+            <?php if ($benefits_html !== '') : ?>
+                <article class="ddg-pdp-panel ddg-pdp-panel--claim">
+                    <p class="ddg-eyebrow">CÔNG DỤNG CÔNG BỐ</p>
+                    <h2>Công dụng</h2>
+                    <?php echo wp_kses_post($benefits_html); ?>
+                </article>
+            <?php elseif ($approved_benefits) : ?>
+                <article class="ddg-pdp-panel ddg-pdp-panel--claim">
+                    <p class="ddg-eyebrow">CÔNG DỤNG CÔNG BỐ</p>
+                    <h2>Công dụng</h2>
+                    <ul class="ddg-benefit-list">
+                        <?php foreach ($approved_benefits as $benefit) : ?><li><?php echo esc_html((string) $benefit); ?></li><?php endforeach; ?>
+                    </ul>
+                </article>
+            <?php endif; ?>
+
+            <article id="product-publication" class="ddg-pdp-panel ddg-pdp-panel--publication">
+                <div class="ddg-publication-heading">
+                    <div>
+                        <p class="ddg-eyebrow">THÔNG TIN CÔNG BỐ</p>
+                        <h2>Phiếu công bố & tài liệu xác minh</h2>
+                    </div>
+                    <div class="ddg-publication-status">
+                        <strong><?php echo esc_html($verification !== '' ? $verification : 'Đang xác minh'); ?></strong>
+                        <?php if ($evidence_date !== '') : ?><span>Cập nhật <?php echo esc_html($evidence_date); ?></span><?php endif; ?>
+                    </div>
+                </div>
+
+                <?php if ($evidence_images) : ?>
+                    <div class="ddg-publication-images">
+                        <?php foreach ($evidence_images as $image_id) :
+                            $full = wp_get_attachment_image_src((int) $image_id, 'full');
+                            if (!$full) { continue; }
+                            $alt = Bizrise_DDG_Product_Pages::attachment_alt((int) $image_id, $id);
+                        ?>
+                            <figure class="ddg-publication-image">
+                                <img src="<?php echo esc_url($full[0]); ?>" width="<?php echo esc_attr((string) $full[1]); ?>" height="<?php echo esc_attr((string) $full[2]); ?>" alt="<?php echo esc_attr($alt); ?>" loading="lazy" decoding="async">
+                                <figcaption><?php echo esc_html(get_the_title((int) $image_id) ?: 'Tài liệu công bố'); ?></figcaption>
+                            </figure>
+                        <?php endforeach; ?>
+                    </div>
+                <?php else : ?>
+                    <p class="ddg-publication-empty">Hồ sơ công bố đã được ghi nhận trong Product Truth nhưng chưa có ảnh media để hiển thị trực tiếp trên trang.</p>
+                <?php endif; ?>
 
                 <?php if ($docs) : ?>
-                    <article class="ddg-pdp-panel" id="ddg-tab-document" role="tabpanel" aria-labelledby="ddg-tab-document-btn" hidden>
-                        <h2>Tài liệu sản phẩm</h2>
-                        <div class="ddg-document-grid">
-                            <?php foreach ($docs as $doc_id) : $url = wp_get_attachment_url((int) $doc_id); if (!$url) { continue; } ?>
-                                <a class="ddg-document-card" href="<?php echo esc_url($url); ?>" target="_blank" rel="noopener noreferrer"><div class="ddg-document-card__thumb" aria-hidden="true">PDF</div><div><h3><?php echo esc_html(get_the_title((int) $doc_id) ?: 'Tài liệu sản phẩm'); ?></h3><p><?php echo esc_html($evidence_type !== '' ? ucwords(str_replace(['_', '-'], ' ', $evidence_type)) : 'Tài liệu liên quan'); ?></p><span>Xem tài liệu</span></div></a>
-                            <?php endforeach; ?>
-                        </div>
-                    </article>
+                    <div class="ddg-document-grid">
+                        <?php foreach ($docs as $doc_id) : $url = wp_get_attachment_url((int) $doc_id); if (!$url) { continue; } ?>
+                            <a class="ddg-document-card" href="<?php echo esc_url($url); ?>" target="_blank" rel="noopener noreferrer">
+                                <div class="ddg-document-card__thumb" aria-hidden="true"><?php echo wp_attachment_is_image((int) $doc_id) ? 'IMG' : 'PDF'; ?></div>
+                                <div><h3><?php echo esc_html(get_the_title((int) $doc_id) ?: 'Tài liệu sản phẩm'); ?></h3><p><?php echo esc_html($evidence_type !== '' ? ucwords(str_replace(['_', '-'], ' ', $evidence_type)) : 'Tài liệu liên quan'); ?></p><span>Mở tài liệu</span></div>
+                            </a>
+                        <?php endforeach; ?>
+                    </div>
                 <?php endif; ?>
+            </article>
+        </div>
+
+        <aside class="ddg-pdp-details__aside">
+            <div class="ddg-pdp-panel ddg-pdp-panel--brand">
+                <p class="ddg-eyebrow">THƯƠNG HIỆU</p>
+                <h2><?php echo esc_html($brand ?: 'Đăng Dương Group'); ?></h2>
+                <p>Khám phá câu chuyện thương hiệu và toàn bộ danh mục sản phẩm thuộc thương hiệu này.</p>
+                <a class="ddg-btn ddg-btn--secondary" href="<?php echo esc_url($brand_url); ?>">Xem trang thương hiệu →</a>
+            </div>
+
+            <div class="ddg-pdp-panel ddg-pdp-panel--regulatory">
+                <p class="ddg-eyebrow">HỒ SƠ XÁC MINH</p>
+                <h2><?php echo esc_html($verification === 'VERIFIED_NOTIFICATION_IMAGE' ? 'Đã đối chiếu hồ sơ' : 'Đang xác minh'); ?></h2>
+                <p>Thông tin công bố chỉ được hiển thị theo tài liệu đã được lưu trong Product Truth. Không mở rộng claim ngoài hồ sơ.</p>
+                <?php if ($evidence_images) : ?><a class="ddg-text-link" href="#product-publication">Xem ảnh công bố ↓</a><?php endif; ?>
+            </div>
+        </aside>
+    </section>
+
+    <?php if ($how_to_use_html !== '' || $ingredients_html !== '' || $routine_html !== '' || $faq_html !== '') : ?>
+    <section class="ddg-pdp-details ddg-pdp-details--secondary" aria-label="Thông tin bổ sung">
+        <div class="ddg-pdp-tabs" data-ddg-tabs>
+            <div class="ddg-pdp-tabs__nav" role="tablist" aria-label="Nội dung bổ sung">
+                <?php if ($how_to_use_html !== '') : ?><button class="is-active" type="button" role="tab" aria-selected="true" aria-controls="ddg-tab-howto" id="ddg-tab-howto-btn">Cách sử dụng</button><?php endif; ?>
+                <?php if ($ingredients_html !== '') : ?><button type="button" role="tab" aria-selected="<?php echo $how_to_use_html === '' ? 'true' : 'false'; ?>" aria-controls="ddg-tab-ingredients" id="ddg-tab-ingredients-btn">Thành phần</button><?php endif; ?>
+                <?php if ($routine_html !== '') : ?><button type="button" role="tab" aria-selected="<?php echo $how_to_use_html === '' && $ingredients_html === '' ? 'true' : 'false'; ?>" aria-controls="ddg-tab-routine" id="ddg-tab-routine-btn">Routine</button><?php endif; ?>
+                <?php if ($faq_html !== '') : ?><button type="button" role="tab" aria-selected="<?php echo $how_to_use_html === '' && $ingredients_html === '' && $routine_html === '' ? 'true' : 'false'; ?>" aria-controls="ddg-tab-faq" id="ddg-tab-faq-btn">FAQ</button><?php endif; ?>
+            </div>
+            <div class="ddg-pdp-tabs__panels">
+                <?php if ($how_to_use_html !== '') : ?><article class="ddg-pdp-panel is-active" id="ddg-tab-howto" role="tabpanel"><h2>Cách sử dụng</h2><?php echo wp_kses_post($how_to_use_html); ?></article><?php endif; ?>
+                <?php if ($ingredients_html !== '') : ?><article class="ddg-pdp-panel<?php echo $how_to_use_html === '' ? ' is-active' : ''; ?>" id="ddg-tab-ingredients" role="tabpanel" <?php echo $how_to_use_html !== '' ? 'hidden' : ''; ?>><h2>Thành phần</h2><?php echo wp_kses_post($ingredients_html); ?></article><?php endif; ?>
+                <?php if ($routine_html !== '') : ?><article class="ddg-pdp-panel<?php echo $how_to_use_html === '' && $ingredients_html === '' ? ' is-active' : ''; ?>" id="ddg-tab-routine" role="tabpanel" <?php echo $how_to_use_html !== '' || $ingredients_html !== '' ? 'hidden' : ''; ?>><h2>Routine</h2><?php echo wp_kses_post($routine_html); ?></article><?php endif; ?>
+                <?php if ($faq_html !== '') : ?><article class="ddg-pdp-panel<?php echo $how_to_use_html === '' && $ingredients_html === '' && $routine_html === '' ? ' is-active' : ''; ?>" id="ddg-tab-faq" role="tabpanel" <?php echo $how_to_use_html !== '' || $ingredients_html !== '' || $routine_html !== '' ? 'hidden' : ''; ?>><h2>FAQ</h2><?php echo wp_kses_post($faq_html); ?></article><?php endif; ?>
             </div>
         </div>
     </section>
+    <?php endif; ?>
 
     <?php if ($brand_banner_desktop > 0 && $brand_story_heading !== '' && $brand_story_text !== '') :
         $banner_alt = $brand !== '' ? 'Câu chuyện thương hiệu ' . $brand : 'Câu chuyện thương hiệu';
