@@ -173,6 +173,29 @@ body.ddg-v2{margin:0;background:#fff;color:var(--ddg-ink);font-family:var(--font
 .ddg-footer-grid p{color:var(--ddg-muted);font-size:13px;max-width:300px}
 .ddg-logo--footer{margin-bottom:12px}
 .ddg-footer-bottom{padding:16px 0;border-top:1px solid var(--ddg-line);font-size:12px;color:var(--ddg-muted)}
+
+.ddg-product-highlights{margin:26px 0 0;padding:20px 0;border-top:1px solid var(--ddg-line)}
+.ddg-product-highlights h2{margin:0 0 12px;color:var(--ddg-red-dark);font-size:20px}
+.ddg-product-highlights ul{margin:0;padding:0;list-style:none}
+.ddg-product-highlights li{position:relative;padding:7px 0 7px 25px;color:#4e4644}
+.ddg-product-highlights li::before{content:"✓";position:absolute;left:0;color:var(--ddg-red);font-weight:900}
+.ddg-product-content{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:42px;align-items:start}
+.ddg-product-content__main{min-width:0}
+.ddg-product-content__aside{display:grid;gap:18px;position:sticky;top:110px}
+.ddg-product-content__aside .ddg-panel{margin:0}
+.ddg-product-brand-card h2,.ddg-product-regulatory h2{margin:0;color:var(--ddg-red-dark);font-size:25px;line-height:1.2}
+.ddg-product-brand-card p,.ddg-product-regulatory p{color:var(--ddg-muted)}
+.ddg-product-claim{margin-top:42px;padding-top:32px;border-top:1px solid var(--ddg-line)}
+.ddg-product-claim h2{margin:0;color:var(--ddg-red-dark);font-size:32px}
+.ddg-product-evidence{margin-top:42px;padding-top:34px;border-top:1px solid var(--ddg-line)}
+.ddg-product-evidence__heading{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,.65fr);gap:28px;align-items:end;margin-bottom:22px}
+.ddg-product-evidence__heading h2{margin:0;color:var(--ddg-red-dark);font-size:clamp(28px,3vw,42px);line-height:1.12}
+.ddg-product-evidence__heading>p{margin:0;color:var(--ddg-muted)}
+.ddg-product-evidence figure{margin:0;border:1px solid var(--ddg-line);border-radius:20px;background:#fff;padding:16px;box-shadow:var(--ddg-shadow);text-align:center}
+.ddg-product-evidence img{display:block;width:100%;height:auto;max-height:none;border-radius:12px;object-fit:contain}
+.ddg-product-evidence figcaption{padding:12px 6px 0;color:var(--ddg-muted);font-size:12px;word-break:break-word}
+.ddg-product-order-cta{display:flex;justify-content:center;flex-wrap:wrap;gap:12px}
+
 @media(max-width:1180px){
  .ddg-nav{grid-template-columns:150px 1fr auto;gap:18px}
  .ddg-primary-nav{gap:14px}
