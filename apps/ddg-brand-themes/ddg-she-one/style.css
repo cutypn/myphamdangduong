@@ -1,0 +1,35 @@
+/*
+Theme Name: DDG She One
+Description: She One brand theme for the Đăng Dương Multisite network.
+Template: ddg-beauty-premium
+Version: 1.0.0
+Requires PHP: 8.0
+Text Domain: ddg-she-one
+*/
+
+:root {
+  --brand-primary: #d8dadd;
+  --brand-primary-strong: #a9adb3;
+  --brand-secondary: #d9a8b8;
+  --brand-accent: #b58a2b;
+  --brand-sky: #cce7f4;
+  --brand-background: #fffafb;
+  --brand-surface: #ffffff;
+  --brand-text: #211d20;
+  --brand-muted: #766f74;
+  --brand-border: #eadfe4;
+  --ddg-cherry: #9d526d;
+  --ddg-burgundy: #744052;
+  --ddg-ivory: var(--brand-background);
+}
+
+body { background:var(--brand-background); color:var(--brand-text); }
+a { color:#9d526d; }
+::selection { background:var(--brand-secondary); color:var(--brand-text); }
+.wp-element-button,.button,.btn,.ddg-btn,.ddg-cta a { background:#9d526d; border-color:#9d526d; color:#fff; }
+.wp-element-button:hover,.button:hover,.btn:hover,.ddg-btn:hover,.ddg-cta a:hover { background:#744052; border-color:#744052; }
+.ddg-kicker,.eyebrow,.section-kicker { color:var(--brand-accent); }
+.ddg-card,.product-card,.wp-block-group.is-style-card { background:var(--brand-surface); border-color:var(--brand-border); }
+.site-header,.ddg-header { border-bottom-color:rgba(181,138,43,.16); }
+.ddg-hero,.brand-hero { background:linear-gradient(135deg,#fff 0%,#f6e7ed 48%,#dceff7 100%); }
+.ddg-accent-surface { background:linear-gradient(135deg,#f7edf1,#e9f5fa); }

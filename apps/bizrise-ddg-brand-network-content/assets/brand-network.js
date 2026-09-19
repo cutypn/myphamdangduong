@@ -1,0 +1,1 @@
+(function(){'use strict';document.addEventListener('click',function(e){var b=e.target.closest('.ddgb-menu-toggle');if(!b)return;var n=document.getElementById('ddgb-brand-menu');if(!n)return;var o=n.classList.toggle('is-open');b.setAttribute('aria-expanded',o?'true':'false');});})();

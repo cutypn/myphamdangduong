@@ -1,0 +1,80 @@
+name: DDG Production Smoke
+
+on:
+  push:
+    branches:
+      - agent/ddg-media-importer
+  workflow_dispatch:
+
+concurrency:
+  group: ddg-production-smoke
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Verify corporate production release
+        shell: bash
+        run: |
+          set +e
+          fail=0
+          unreachable=0
+
+          fetch_ddg() {
+            path="$1"
+            outfile="$2"
+            tag="$3"
+            for scheme in https http; do
+              meta="$(curl -L -sS --connect-timeout 8 --max-time 18 -H 'Cache-Control: no-cache' -o "$outfile" -w '%{http_code}|%{url_effective}|%{remote_ip}|%{ssl_verify_result}' "${scheme}://dangduonggroup.com${path}" 2>&1)"
+              rc=$?
+              echo "$tag scheme=$scheme curl_rc=$rc meta=$meta"
+              code="${meta%%|*}"
+              if [ "$rc" -eq 0 ]; then
+                case "$code" in 2??|3??) return 0 ;; esac
+              fi
+            done
+            return 1
+          }
+
+          echo "===== RELEASE MARKER ====="
+          release="$(mktemp)"
+          if fetch_ddg "/.well-known/ddg-release.json?ts=${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" "$release" "release"; then
+            cat "$release" || true
+            echo
+            if grep -Fq "\"sha\": \"$GITHUB_SHA\"" "$release"; then
+              echo "release_marker=PASS sha=$GITHUB_SHA"
+            else
+              echo "release_marker=FAIL expected=$GITHUB_SHA"
+              fail=1
+            fi
+          else
+            echo "release_marker=UNREACHABLE"
+            unreachable=1
+          fi
+          rm -f "$release"
+
+          echo "===== CORPORATE ROUTES ====="
+          for path in / /ve-dang-duong-group/ /nang-luc/ /oem-odm/ /san-pham/ /thuong-hieu/ /kien-thuc/ /lien-he/; do
+            body="$(mktemp)"
+            if fetch_ddg "${path}?smoke=${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" "$body" "route=$path"; then
+              if grep -Fq 'ddg-v2' "$body"; then
+                echo "route=$path page_system=PASS"
+              else
+                echo "route=$path page_system=FAIL marker ddg-v2 missing"
+                fail=1
+              fi
+            else
+              echo "route=$path UNREACHABLE"
+              unreachable=1
+            fi
+            rm -f "$body"
+          done
+
+          if [ "$unreachable" -ne 0 ]; then
+            echo "HOSTING_CONNECTIVITY=BLOCKED_FROM_GITHUB_RUNNER"
+            echo "DNS may resolve while inbound HTTP/HTTPS from GitHub-hosted runners is filtered by hosting/firewall."
+            exit 2
+          fi
+          exit "$fail"

@@ -1,0 +1,35 @@
+/*
+Theme Name: DDG One Today
+Description: Premium One Today brand theme for the Đăng Dương Multisite network.
+Template: ddg-beauty-premium
+Version: 1.1.0
+Requires PHP: 8.0
+Text Domain: ddg-one-today
+*/
+
+:root{
+  --brand-primary:#d5a318;
+  --brand-primary-strong:#b98a00;
+  --brand-secondary:#a01419;
+  --brand-accent:#7a4b1d;
+  --brand-background:#fff9eb;
+  --brand-surface:#ffffff;
+  --brand-text:#2d211a;
+  --brand-muted:#786b5e;
+  --brand-border:#ead9ad;
+  --ddg-cherry:var(--brand-secondary);
+  --ddg-burgundy:#780d12;
+  --ddg-ivory:var(--brand-background);
+  --ddg-font:"Be Vietnam Pro",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+html,body,button,input,textarea,select{font-family:var(--ddg-font)!important}
+body{background:var(--brand-background);color:var(--brand-text)}
+a{color:var(--brand-secondary)}
+::selection{background:var(--brand-primary);color:var(--brand-text)}
+.wp-element-button,.button,.btn,.ddg-btn,.ddg-cta a{background:var(--brand-secondary);border-color:var(--brand-secondary);color:#fff}
+.wp-element-button:hover,.button:hover,.btn:hover,.ddg-btn:hover,.ddg-cta a:hover{background:#7d0c11;border-color:#7d0c11}
+.ddg-kicker,.eyebrow,.section-kicker{color:var(--brand-secondary)}
+.ddg-card,.product-card,.wp-block-group.is-style-card{background:var(--brand-surface);border-color:var(--brand-border)}
+.site-header,.ddg-header{border-bottom-color:rgba(160,20,25,.14)}
+.ddg-hero,.brand-hero{background:linear-gradient(135deg,#fff7df 0%,#ffe9a5 58%,#f8e1d7 100%)}
+.ddg-accent-surface{background:#fff2df}
