@@ -2,14 +2,14 @@
 /**
  * Plugin Name: Bizrise DDG Brand Network Content
  * Description: Premium brand landing/lookbook renderer and shared network lead form for DDG Multisite.
- * Version: 1.2.0
+ * Version: 1.3.0
  * Author: Bizrise Framework
  * Requires PHP: 8.0
  */
 if (!defined('ABSPATH')) { exit; }
 
 final class Bizrise_DDG_Brand_Network_Content {
-    private const VERSION = '1.2.0';
+    private const VERSION = '1.3.0';
     private const LEAD_POST_TYPE = 'ddg_network_lead';
 
     public static function boot(): void {
@@ -87,19 +87,8 @@ final class Bizrise_DDG_Brand_Network_Content {
 
     public static function assets(): void {
         if (!self::is_brand_front()) { return; }
-        wp_enqueue_style(
-            'ddg-brand-network-content',
-            plugin_dir_url(__FILE__) . 'assets/brand-network.css',
-            [],
-            self::VERSION
-        );
-        wp_enqueue_script(
-            'ddg-brand-network-content',
-            plugin_dir_url(__FILE__) . 'assets/brand-network.js',
-            [],
-            self::VERSION,
-            true
-        );
+        wp_enqueue_style('ddg-brand-shared-theme', plugins_url('../bizrise-ddg-page-system/assets/ddg-v2.css', __FILE__), [], '2.0.1');
+        wp_enqueue_script('ddg-brand-shared-theme-js', plugins_url('../bizrise-ddg-page-system/assets/ddg-v2.js', __FILE__), [], '2.0.1', true);
     }
 
     private static function current_brand_key(): string {
@@ -149,258 +138,94 @@ final class Bizrise_DDG_Brand_Network_Content {
     private static function render(string $key, array $brand): void {
         status_header(200);
         nocache_headers();
-
         $products = self::network_products($brand['title']);
         $visual_products = array_values(array_filter($products, static fn(array $p): bool => $p['image'] !== ''));
-        $lookbook = self::lookbook_media($key, $brand['title'], $visual_products);
-        $hero_desktop = self::hero_media($key, false, $lookbook);
-        $hero_mobile = self::hero_media($key, true, $lookbook);
-        $factory = self::factory_media();
-        $evidence_count = count(array_filter($products, static fn(array $p): bool => $p['evidence'] !== ''));
-
         ?><!doctype html>
 <html <?php language_attributes(); ?>>
 <head>
 <meta charset="<?php bloginfo('charset'); ?>">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title><?php echo esc_html($brand['seo_title']); ?></title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title><?php echo esc_html($brand['seo_title'] . ' | Đăng Dương Group'); ?></title>
 <meta name="description" content="<?php echo esc_attr($brand['meta']); ?>">
 <link rel="canonical" href="<?php echo esc_url(home_url('/')); ?>">
 <?php wp_head(); ?>
 </head>
-<body <?php body_class('ddgb-brand-landing ddgb-brand-' . $key . ($key === 'one-today' ? ' ddgb-one-today-v2' : '')); ?>>
+<body <?php body_class('ddg-v2 ddg-brand-landing ddg-brand-' . $key); ?>>
 <?php wp_body_open(); ?>
-<header class="ddgb-header">
-  <div class="ddgb-shell ddgb-header__inner">
+<header class="ddg-site-header">
+  <div class="ddg-topbar"><div class="ddg-shell">
+    <span>Đăng Dương Group — Kiến tạo thương hiệu mỹ phẩm Việt</span>
+    <nav aria-label="Liên kết nhanh"><a href="<?php echo esc_url(network_home_url('/kien-thuc/')); ?>">Kiến thức</a><a href="<?php echo esc_url(network_home_url('/lien-he/')); ?>">Liên hệ</a></nav>
+  </div></div>
+  <div class="ddg-nav-wrap"><div class="ddg-shell ddg-nav">
     <?php self::logo(); ?>
-    <button class="ddgb-menu-toggle" type="button" aria-expanded="false" aria-controls="ddgb-brand-menu">☰</button>
-    <nav id="ddgb-brand-menu" class="ddgb-brand-menu" aria-label="Điều hướng thương hiệu">
-      <a href="#story">Câu chuyện</a>
-      <a href="#needs">Nhu cầu</a>
-      <a href="#products">Sản phẩm</a>
-      <a href="#routine">Routine</a>
-      <a href="#lookbook">Lookbook</a>
-      <a href="#contact">Liên hệ</a>
+    <button class="ddg-menu-toggle" type="button" aria-expanded="false" aria-controls="ddg-primary-nav">☰</button>
+    <nav id="ddg-primary-nav" class="ddg-primary-nav" aria-label="Điều hướng chính">
+      <a href="<?php echo esc_url(network_home_url('/')); ?>">Trang chủ</a>
+      <a href="<?php echo esc_url(network_home_url('/ve-dang-duong-group/')); ?>">Giới thiệu</a>
+      <a href="<?php echo esc_url(network_home_url('/nang-luc/')); ?>">Năng lực</a>
+      <a href="<?php echo esc_url(network_home_url('/san-pham/')); ?>">Sản phẩm</a>
+      <a href="<?php echo esc_url(network_home_url('/oem-odm/')); ?>">OEM/ODM</a>
+      <a class="is-active" href="<?php echo esc_url(network_home_url('/thuong-hieu/')); ?>">Thương hiệu</a>
+      <a href="<?php echo esc_url(network_home_url('/kien-thuc/')); ?>">Kiến thức</a>
+      <a href="<?php echo esc_url(network_home_url('/lien-he/')); ?>">Liên hệ</a>
     </nav>
-    <a class="ddgb-header-cta" href="#products">Khám phá sản phẩm</a>
-  </div>
+    <a class="ddg-header-cta" href="#products">Khám phá sản phẩm</a>
+  </div></div>
 </header>
-
-<main>
-<section class="ddgb-hero">
-  <?php if ($hero_desktop !== ''): ?>
-  <picture class="ddgb-hero__media" aria-hidden="true">
-    <?php if ($hero_mobile !== ''): ?><source media="(max-width:767px)" srcset="<?php echo esc_url($hero_mobile); ?>"><?php endif; ?>
-    <img src="<?php echo esc_url($hero_desktop); ?>" width="1920" height="1080" alt="" fetchpriority="high" decoding="async">
-  </picture>
-  <?php endif; ?>
-  <div class="ddgb-hero__scrim" aria-hidden="true"></div>
-  <div class="ddgb-shell ddgb-hero__content">
-    <p class="ddgb-eyebrow">THƯƠNG HIỆU TRONG HỆ SINH THÁI ĐĂNG DƯƠNG GROUP</p>
+<main id="main-content">
+<section class="ddg-hero"><div class="ddg-shell ddg-hero-grid">
+  <div class="ddg-hero-copy">
+    <p class="ddg-kicker">THƯƠNG HIỆU TRONG HỆ SINH THÁI ĐĂNG DƯƠNG GROUP</p>
     <h1><?php echo esc_html($brand['title']); ?></h1>
-    <p class="ddgb-hero__tagline"><?php echo esc_html($brand['territory']); ?></p>
-    <a class="ddgb-btn" href="#products">Khám phá sản phẩm</a>
+    <p class="ddg-direct-answer"><?php echo esc_html($brand['territory']); ?></p>
+    <div class="ddg-actions"><a class="ddg-btn" href="#products">Khám phá sản phẩm</a><a class="ddg-btn ddg-btn--ghost" href="<?php echo esc_url(network_home_url('/lien-he/')); ?>">Liên hệ tư vấn</a></div>
   </div>
-</section>
+  <div class="ddg-hero-visual"><?php if (!empty($visual_products[0]['image'])): ?><img src="<?php echo esc_url($visual_products[0]['image']); ?>" width="900" height="900" loading="eager" fetchpriority="high" decoding="async" alt="<?php echo esc_attr($brand['title'] . ' - sản phẩm'); ?>"><?php else: ?><div class="ddg-panel ddg-placeholder"><strong><?php echo esc_html($brand['title']); ?></strong></div><?php endif; ?></div>
+</div></section>
 
-<?php if ($key === 'one-today') { self::render_one_today($brand, $products, $visual_products, $lookbook, $factory, $evidence_count); }
-else { self::render_generic($key, $brand, $products, $visual_products, $lookbook, $factory, $evidence_count); } ?>
+<section id="story" class="ddg-section"><div class="ddg-shell">
+<?php self::section_heading('CÂU CHUYỆN THƯƠNG HIỆU', 'Một thương hiệu với câu chuyện rõ ràng', $brand['story']); ?>
+<div class="ddg-two-col"><div class="ddg-panel"><p><?php echo esc_html($brand['story']); ?></p></div><div class="ddg-panel"><h3>Trong hệ sinh thái Đăng Dương Group</h3><p><?php echo esc_html($brand['title']); ?> được giới thiệu như một thương hiệu riêng, với danh mục sản phẩm được kết nối từ hệ thống sản phẩm của Group.</p></div></div>
+</div></section>
 
-<?php self::network_cta($key, $brand['title']); ?>
+<section id="products" class="ddg-section ddg-section--soft"><div class="ddg-shell">
+<?php self::section_heading('SẢN PHẨM THƯƠNG HIỆU', 'Các sản phẩm ' . $brand['title'], 'Danh mục hiển thị theo dữ liệu sản phẩm đang được đồng bộ trên hệ thống.'); ?>
+<?php self::render_product_cards($visual_products, 12); ?>
+</div></section>
+
+<section id="company" class="ddg-section"><div class="ddg-shell">
+<?php self::section_heading('ĐĂNG DƯƠNG GROUP', 'Giới thiệu công ty', 'Đăng Dương Group xây dựng hệ sinh thái thương hiệu và sản phẩm mỹ phẩm với trọng tâm là dữ liệu rõ ràng, trải nghiệm nhất quán và khả năng hợp tác.'); ?>
+<div class="ddg-two-col"><div class="ddg-panel"><h3>Từ thương hiệu đến sản phẩm</h3><p>Website corporate của Đăng Dương Group tổ chức câu chuyện doanh nghiệp, năng lực, thương hiệu và sản phẩm trong một hệ thống thống nhất.</p></div><div class="ddg-panel"><h3>Khám phá hệ sinh thái</h3><p>Xem thêm năng lực, danh mục sản phẩm và các thương hiệu khác của Đăng Dương Group.</p><a class="ddg-text-link" href="<?php echo esc_url(network_home_url('/thuong-hieu/')); ?>">Xem hệ sinh thái thương hiệu →</a></div></div>
+</div></section>
+
+<section id="contact" class="ddg-footer-cta"><div class="ddg-shell ddg-footer-cta__grid">
+<div><p class="ddg-kicker">ĐĂNG DƯƠNG GROUP</p><h2>Khám phá <?php echo esc_html($brand['title']); ?> và kết nối cùng chúng tôi</h2><p>Liên hệ để được tư vấn về sản phẩm, phân phối hoặc hợp tác.</p></div>
+<a class="ddg-btn ddg-btn--light" href="<?php echo esc_url(network_home_url('/lien-he/')); ?>">Liên hệ tư vấn</a>
+</div></section>
 </main>
-
-<footer class="ddgb-footer">
-  <div class="ddgb-shell ddgb-footer__grid">
-    <div><?php self::logo(); ?><p><?php echo esc_html($brand['title']); ?> · Một thương hiệu trong hệ sinh thái Đăng Dương Group.</p></div>
-    <div><h2>Khám phá</h2><a href="#story">Câu chuyện</a><a href="#products">Sản phẩm</a><a href="#routine">Routine</a></div>
-    <div><h2>Đăng Dương Group</h2><a href="<?php echo esc_url(network_home_url('/')); ?>">Trang chủ Group</a><a href="<?php echo esc_url(network_home_url('/thuong-hieu/')); ?>">Hệ sinh thái thương hiệu</a><a href="<?php echo esc_url(network_home_url('/lien-he/')); ?>">Liên hệ</a></div>
-  </div>
-  <div class="ddgb-shell ddgb-footer__bottom">© <?php echo esc_html(wp_date('Y')); ?> <?php echo esc_html($brand['title']); ?> · Đăng Dương Group.</div>
-</footer>
+<footer class="ddg-footer"><div class="ddg-shell ddg-footer-grid">
+<div><?php self::logo(); ?><p><?php echo esc_html($brand['title']); ?> · Một thương hiệu trong hệ sinh thái Đăng Dương Group.</p></div>
+<div><h3>Khám phá</h3><a href="#story">Câu chuyện</a><a href="#products">Sản phẩm</a><a href="#company">Đăng Dương Group</a></div>
+<div><h3>Đăng Dương Group</h3><a href="<?php echo esc_url(network_home_url('/')); ?>">Trang chủ Group</a><a href="<?php echo esc_url(network_home_url('/thuong-hieu/')); ?>">Hệ sinh thái thương hiệu</a></div>
+</div><div class="ddg-shell ddg-footer-bottom">© <?php echo esc_html(wp_date('Y')); ?> <?php echo esc_html($brand['title']); ?> · Đăng Dương Group.</div></footer>
 <?php wp_footer(); ?>
-</body>
-</html><?php
+</body></html><?php
     }
 
-    private static function render_one_today(array $brand, array $products, array $visual_products, array $lookbook, string $factory, int $evidence_count): void {
-        $groups = self::product_group_counts($products);
-        ?>
-<section id="story" class="ddgb-section ddgb-story-section">
-  <div class="ddgb-shell ddgb-story">
-    <div>
-      <p class="ddgb-eyebrow">BRAND STORY</p>
-      <h2>Chăm sóc da dễ hiểu hơn khi mỗi bước có một vai trò rõ</h2>
-    </div>
-    <div>
-      <p class="ddgb-lead"><?php echo esc_html($brand['story']); ?></p>
-      <p>One Today trên website không bắt đầu bằng một lời hứa quá mức. Người dùng có thể đi từ nhu cầu, xem nhóm sản phẩm, hiểu vị trí trong routine rồi mới mở trang chi tiết của từng sản phẩm.</p>
-    </div>
-  </div>
-</section>
 
-<section class="ddgb-manifesto">
-  <div class="ddgb-shell">
-    <span>ONE TODAY MANIFESTO</span>
-    <strong>Everyday Beauty</strong>
-    <p>Một routine rõ ràng, gọn và phù hợp với nhu cầu thực tế luôn có giá trị hơn việc xếp thật nhiều sản phẩm vào cùng một bước.</p>
-  </div>
-</section>
 
-<section id="needs" class="ddgb-section ddgb-section--soft">
-  <div class="ddgb-shell">
-    <header class="ddgb-heading">
-      <p class="ddgb-eyebrow">KHÁM PHÁ THEO NHU CẦU</p>
-      <h2>Bắt đầu từ bước bạn đang cần</h2>
-      <p>Các nhóm dưới đây dùng để điều hướng theo phân loại sản phẩm hiện có, không thay thế tư vấn chuyên môn và không phải cam kết hiệu quả.</p>
-    </header>
-    <div class="ddgb-need-grid">
-      <article><span>01</span><h3>Làm sạch</h3><p>Nhóm sữa rửa mặt và sản phẩm làm sạch định kỳ.</p></article>
-      <article><span>02</span><h3>Chăm sóc da mặt</h3><p>Các sản phẩm dạng kem thuộc nhóm chăm sóc da mặt.</p></article>
-      <article><span>03</span><h3>Chống nắng</h3><p>Nhóm sản phẩm mang định danh SPF50+ trong danh mục đã đối chiếu.</p></article>
-      <article><span>04</span><h3>Chăm sóc body</h3><p>Các sản phẩm dành cho routine chăm sóc cơ thể.</p></article>
-    </div>
-  </div>
-</section>
 
-<section class="ddgb-section ddgb-categories-section">
-  <div class="ddgb-shell">
-    <header class="ddgb-heading">
-      <p class="ddgb-eyebrow">DANH MỤC ONE TODAY</p>
-      <h2>Các nhóm sản phẩm đang có trên hệ thống</h2>
-    </header>
-    <div class="ddgb-category-strip">
-      <?php foreach ($groups as $name => $count): ?>
-      <div><strong><?php echo esc_html((string)$count); ?></strong><span><?php echo esc_html($name); ?></span></div>
-      <?php endforeach; ?>
-    </div>
-  </div>
-</section>
-
-<section id="products" class="ddgb-section ddgb-products-section">
-  <div class="ddgb-shell">
-    <header class="ddgb-heading">
-      <p class="ddgb-eyebrow">SẢN PHẨM ONE TODAY</p>
-      <h2>Khám phá sản phẩm bằng hình ảnh thật</h2>
-      <p>Ưu tiên hiển thị sản phẩm đã có media đúng SKU. Danh mục đầy đủ vẫn được giữ bên dưới để không bỏ sót sản phẩm đang public.</p>
-    </header>
-
-    <?php self::render_product_cards($visual_products, 12); ?>
-
-    <div class="ddgb-catalog">
-      <h3>Danh mục đầy đủ</h3>
-      <div class="ddgb-catalog__grid">
-        <?php foreach ($products as $product): ?>
-        <a href="<?php echo esc_url($product['url']); ?>">
-          <strong><?php echo esc_html($product['title']); ?></strong>
-          <span><?php echo esc_html(trim($product['group'] . ($product['pack'] !== '' ? ' · ' . $product['pack'] : ''))); ?></span>
-        </a>
-        <?php endforeach; ?>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section id="routine" class="ddgb-section ddgb-routine-section">
-  <div class="ddgb-shell">
-    <header class="ddgb-heading">
-      <p class="ddgb-eyebrow">ROUTINE GỢI Ý</p>
-      <h2>Một cấu trúc đơn giản để dễ theo dõi</h2>
-      <p>Routine chỉ mô tả thứ tự vai trò cơ bản. Cách dùng cụ thể của từng sản phẩm cần theo nhãn và nội dung đã được duyệt.</p>
-    </header>
-    <div class="ddgb-routine-grid">
-      <article>
-        <span>BUỔI SÁNG</span>
-        <ol><li>Làm sạch phù hợp với thói quen cá nhân.</li><li>Chọn một bước chăm sóc nếu cần.</li><li>Hoàn tất với nhóm chống nắng theo hướng dẫn trên nhãn.</li></ol>
-      </article>
-      <article>
-        <span>BUỔI TỐI</span>
-        <ol><li>Làm sạch.</li><li>Chọn một sản phẩm chăm sóc mục tiêu.</li><li>Giữ routine gọn, tránh chồng nhiều sản phẩm có vai trò gần nhau.</li></ol>
-      </article>
-    </div>
-  </div>
-</section>
-
-<section id="lookbook" class="ddgb-section ddgb-lookbook-section">
-  <div class="ddgb-shell">
-    <header class="ddgb-heading">
-      <p class="ddgb-eyebrow">LOOKBOOK</p>
-      <h2>One Today trong những điểm chạm hằng ngày</h2>
-      <p>Lookbook dùng media thương hiệu và media sản phẩm thật; thông tin quan trọng vẫn được trình bày bằng HTML.</p>
-    </header>
-    <?php self::render_lookbook($lookbook); ?>
-  </div>
-</section>
-
-<section class="ddgb-section ddgb-assurance-section">
-  <div class="ddgb-shell ddgb-assurance-card">
-    <div class="ddgb-assurance-card__media">
-      <?php if ($factory !== ''): ?><img src="<?php echo esc_url($factory); ?>" width="1200" height="760" alt="Đăng Dương Group" loading="lazy" decoding="async"><?php endif; ?>
-    </div>
-    <div class="ddgb-assurance-card__copy">
-      <p class="ddgb-eyebrow">ĐĂNG DƯƠNG GROUP</p>
-      <h2>Được kết nối với hệ sinh thái Đăng Dương Group</h2>
-      <p>One Today được vận hành trong cùng hệ sinh thái quản trị thương hiệu, sản phẩm, media và hồ sơ của Đăng Dương Group. Các thông tin kỹ thuật hoặc chứng nhận chỉ được công bố khi có hồ sơ phù hợp.</p>
-      <div class="ddgb-proof-pills">
-        <span><?php echo esc_html((string)count($products)); ?> sản phẩm đang public</span>
-        <span><?php echo esc_html((string)$evidence_count); ?> sản phẩm có hồ sơ đối chiếu</span>
-      </div>
-      <a class="ddgb-text-link" href="<?php echo esc_url(network_home_url('/ve-dang-duong-group/')); ?>">Về Đăng Dương Group →</a>
-    </div>
-  </div>
-</section>
-        <?php
-    }
-
-    private static function render_generic(string $key, array $brand, array $products, array $visual_products, array $lookbook, string $factory, int $evidence_count): void {
-        ?>
-<section id="story" class="ddgb-section">
-  <div class="ddgb-shell ddgb-story">
-    <div><p class="ddgb-eyebrow">BRAND STORY</p><h2><?php echo esc_html($brand['territory']); ?></h2></div>
-    <div><p class="ddgb-lead"><?php echo esc_html($brand['story']); ?></p><p>Landing được kết nối với danh mục sản phẩm chính thức của Đăng Dương Group để hiển thị đúng thương hiệu và đúng thông tin sản phẩm.</p></div>
-  </div>
-</section>
-
-<section id="products" class="ddgb-section ddgb-section--soft">
-  <div class="ddgb-shell">
-    <header class="ddgb-heading"><p class="ddgb-eyebrow">PRODUCTS</p><h2>Sản phẩm <?php echo esc_html($brand['title']); ?></h2><p>Danh mục được đồng bộ từ main network theo đúng thương hiệu.</p></header>
-    <?php self::render_product_cards($visual_products, 12); ?>
-  </div>
-</section>
-
-<section id="routine" class="ddgb-section">
-  <div class="ddgb-shell ddgb-proof">
-    <div><p class="ddgb-eyebrow">HỒ SƠ SẢN PHẨM</p><h2>Thông tin được quản lý theo từng sản phẩm</h2></div>
-    <p>Thông tin nhận diện, quy cách và hồ sơ liên quan được quản lý theo từng SKU. Nội dung công dụng chi tiết chỉ hiển thị khi đã có nguồn phù hợp.</p>
-  </div>
-</section>
-
-<section id="lookbook" class="ddgb-section">
-  <div class="ddgb-shell">
-    <header class="ddgb-heading"><p class="ddgb-eyebrow">LOOKBOOK</p><h2>Thế giới hình ảnh <?php echo esc_html($brand['title']); ?></h2></header>
-    <?php self::render_lookbook($lookbook); ?>
-  </div>
-</section>
-
-<section class="ddgb-section ddgb-assurance-section">
-  <div class="ddgb-shell ddgb-assurance-card">
-    <div class="ddgb-assurance-card__media"><?php if ($factory !== ''): ?><img src="<?php echo esc_url($factory); ?>" width="1200" height="760" alt="Đăng Dương Group" loading="lazy" decoding="async"><?php endif; ?></div>
-    <div class="ddgb-assurance-card__copy"><p class="ddgb-eyebrow">ĐĂNG DƯƠNG GROUP</p><h2>Kết nối với hệ sinh thái Đăng Dương Group</h2><p>Thương hiệu sử dụng cùng nguyên tắc quản trị sản phẩm, media và hồ sơ trong network.</p><div class="ddgb-proof-pills"><span><?php echo esc_html((string)count($products)); ?> sản phẩm</span><span><?php echo esc_html((string)$evidence_count); ?> hồ sơ đối chiếu</span></div></div>
-  </div>
-</section>
-        <?php
-    }
 
     private static function render_product_cards(array $products, int $limit): void {
-        echo '<div class="ddgb-product-grid">';
-        if (!$products) {
-            echo '<div class="ddgb-empty">Media sản phẩm đang được hoàn thiện. Vui lòng xem danh mục đầy đủ bên dưới.</div>';
-        }
+        echo '<div class="ddg-product-grid">';
+        if (!$products) echo '<div class="ddg-empty">Danh mục sản phẩm đang được cập nhật.</div>';
         foreach (array_slice($products, 0, $limit) as $p) {
-            echo '<article class="ddgb-product-card"><a href="' . esc_url($p['url']) . '">';
-            echo '<div class="ddgb-product-card__media"><img src="' . esc_url($p['image']) . '" width="600" height="600" alt="' . esc_attr($p['title'] . ' - ' . $p['brand']) . '" loading="lazy" decoding="async"></div>';
-            echo '<p>' . esc_html($p['brand']) . '</p><h3>' . esc_html($p['title']) . '</h3>';
-            if ($p['pack'] !== '') { echo '<span>' . esc_html($p['pack']) . '</span>'; }
-            echo '</a></article>';
+            echo '<article class="ddg-product-card"><a href="' . esc_url($p['url']) . '">';
+            if ($p['image'] !== '') echo '<div class="ddg-product-card__media"><img src="' . esc_url($p['image']) . '" width="600" height="600" alt="' . esc_attr($p['title'] . ' - ' . $p['brand']) . '" loading="lazy" decoding="async"></div>';
+            echo '<div class="ddg-product-card__body"><p class="ddg-kicker">' . esc_html($p['brand']) . '</p><h3>' . esc_html($p['title']) . '</h3>';
+            if ($p['pack'] !== '') echo '<span>' . esc_html($p['pack']) . '</span>';
+            echo '</div></a></article>';
         }
         echo '</div>';
     }
@@ -638,6 +463,12 @@ else { self::render_generic($key, $brand, $products, $visual_products, $lookbook
         return 'https://dangduonggroup.com/wp-content/uploads/2026/08/232323my-pham-dang-duong-1.jpg';
     }
 
+    private static function section_heading(string $eyebrow, string $title, string $text = ''): void {
+        echo '<div class="ddg-section-heading"><p class="ddg-kicker">' . esc_html($eyebrow) . '</p><h2>' . esc_html($title) . '</h2>';
+        if ($text !== '') echo '<p>' . esc_html($text) . '</p>';
+        echo '</div>';
+    }
+
     private static function network_cta(string $brand_key, string $brand_title): void {
         $title = (string)get_site_option('ddg_network_cta_title', 'Cùng phát triển thương hiệu với Đăng Dương Group');
         $desc = (string)get_site_option('ddg_network_cta_description', 'Gửi nhu cầu để đội ngũ tiếp nhận và chuyển đến đúng đầu mối phụ trách.');
@@ -716,27 +547,16 @@ else { self::render_generic($key, $brand, $products, $visual_products, $lookbook
     }
 
     private static function logo(): void {
-        $current = get_current_blog_id();
-        $main = get_main_site_id();
-        if ($current !== $main) { switch_to_blog($main); }
-
-        $logo_id = (int)get_theme_mod('custom_logo');
-        $img = '';
+        $home = network_home_url('/');
+        $logo_id = (int)get_site_option('custom_logo');
         if ($logo_id > 0) {
-            $img = (string)wp_get_attachment_image($logo_id, 'full', false, [
-                'class' => 'ddgb-logo-img',
-                'loading' => 'eager',
-                'decoding' => 'async',
-                'alt' => 'Đăng Dương Group',
-            ]);
+            $alt = trim((string)get_post_meta($logo_id, '_wp_attachment_image_alt', true)) ?: 'Đăng Dương Group';
+            $img = wp_get_attachment_image($logo_id, 'full', false, ['class'=>'ddg-official-logo','alt'=>$alt,'loading'=>'eager','decoding'=>'async']);
+            if ($img) { echo '<a class="ddg-logo ddg-logo--official" href="' . esc_url($home) . '" aria-label="Đăng Dương Group">' . $img . '</a>'; return; }
         }
-
-        if ($current !== $main) { restore_current_blog(); }
-        if ($img !== '') {
-            echo '<a class="ddgb-logo" href="' . esc_url(network_home_url('/')) . '" aria-label="Đăng Dương Group">' . $img . '</a>';
-            return;
-        }
-        echo '<a class="ddgb-logo ddgb-logo--text" href="' . esc_url(network_home_url('/')) . '">Đăng Dương Group</a>';
+        $icon = get_site_icon_url(256);
+        if ($icon) { echo '<a class="ddg-logo ddg-logo--official" href="' . esc_url($home) . '" aria-label="Đăng Dương Group"><img class="ddg-official-logo" src="' . esc_url($icon) . '" width="256" height="256" alt="Đăng Dương Group"></a>'; return; }
+        echo '<a class="ddg-logo ddg-logo--fallback" href="' . esc_url($home) . '" aria-label="Đăng Dương Group"><strong>Đăng Dương Group</strong></a>';
     }
 
     private static function normalize(string $text): string {
