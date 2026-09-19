@@ -614,7 +614,7 @@ final class Bizrise_DDG_Page_System {
         $brand = self::brand($id);
         $pack = self::pack($id);
         $allowed = self::publish_allowed($id);
-        $thumb = (int)get_post_thumbnail_id($id);
+        $thumb = self::product_primary_image_id($id);
         $mobile = (int)get_post_meta($id, '_ddg_mobile_image_id', true);
         $highlights = self::product_highlights($id, $allowed);
         $claim = self::product_claim($id, $allowed);
@@ -746,6 +746,41 @@ final class Bizrise_DDG_Page_System {
   </div>
 </section>
 <?php
+    }
+
+    private static function product_primary_image_id(int $id): int {
+        foreach (['_ddg_pc_image_id', '_thumbnail_id', '_ddg_image_id'] as $key) {
+            $media_id = (int)get_post_meta($id, $key, true);
+            if ($media_id > 0 && wp_attachment_is_image($media_id)) return $media_id;
+        }
+
+        $thumb = (int)get_post_thumbnail_id($id);
+        if ($thumb > 0 && wp_attachment_is_image($thumb)) return $thumb;
+
+        $master_key = trim((string)get_post_meta($id, '_bizrise_ddg_master_key', true));
+        if ($master_key !== '') {
+            global $wpdb;
+            $legacy_id = (int)$wpdb->get_var($wpdb->prepare(
+                "SELECT p.ID
+                 FROM {$wpdb->posts} p
+                 INNER JOIN {$wpdb->postmeta} pm ON pm.post_id = p.ID
+                 WHERE p.post_type IN ('bizrise_product','ddg_product')
+                   AND pm.meta_key = %s
+                   AND pm.meta_value = %s
+                 ORDER BY p.ID ASC LIMIT 1",
+                '_bizrise_ddg_master_key',
+                $master_key
+            ));
+            if ($legacy_id > 0) {
+                foreach (['_ddg_pc_image_id', '_thumbnail_id', '_ddg_image_id'] as $key) {
+                    $media_id = (int)get_post_meta($legacy_id, $key, true);
+                    if ($media_id > 0 && wp_attachment_is_image($media_id)) return $media_id;
+                }
+                $legacy_thumb = (int)get_post_thumbnail_id($legacy_id);
+                if ($legacy_thumb > 0 && wp_attachment_is_image($legacy_thumb)) return $legacy_thumb;
+            }
+        }
+        return 0;
     }
 
     private static function product_highlights(int $id, bool $allowed): array {
