@@ -2,14 +2,14 @@
 /**
  * Plugin Name: Bizrise DDG Content Publication
  * Description: Publishes Product Truth gated WooCommerce products and renders DDG corporate/product pages before homepage linking.
- * Version: 1.1.0
+ * Version: 1.2.0
  * Author: Bizrise Framework
  * Requires PHP: 8.0
  */
 if (!defined('ABSPATH')) { exit; }
 
 final class Bizrise_DDG_Content_Publication {
-    private const VERSION = '1.1.0';
+    private const VERSION = '1.2.0';
     private const SYNC_OPTION = 'bizrise_ddg_content_publication_sync_version';
     private const REPORT_OPTION = 'bizrise_ddg_content_publication_report';
 
@@ -181,15 +181,204 @@ final class Bizrise_DDG_Content_Publication {
     private static function filter_buttons(string $type): void { echo '<button type="button" class="is-active" data-filter-type="'.esc_attr($type).'" data-filter-value="">Tất cả</button>'; $items=$type==='brand'?self::brand_names():self::benefit_names(); foreach ($items as $item) echo '<button type="button" data-filter-type="'.esc_attr($type).'" data-filter-value="'.esc_attr(sanitize_title($item)).'">'.esc_html($item).'</button>'; }
 
     private static function render_product(int $id): void {
-        $name=get_the_title($id); $brand=self::brand($id); $group=self::group($id); $pack=self::pack($id); $benefit=self::benefit_keyword($group); $gallery=self::gallery_ids($id); $docs=self::document_ids($id); $claims_verified=(string)get_post_meta($id,'_bizrise_ddg_claims_verified',true)==='1';
+        $name=get_the_title($id);
+        $brand=self::brand($id);
+        $group=self::group($id);
+        $pack=self::pack($id);
+        $benefit=self::benefit_keyword($group);
+        $gallery=self::gallery_ids($id);
+        $docs=self::document_ids($id);
+        $evidence_images=self::evidence_image_ids($id);
+        $claims_verified=(string)get_post_meta($id,'_bizrise_ddg_claims_verified',true)==='1';
+        $benefits_html=$claims_verified?trim((string)get_post_meta($id,'_ddg_benefits_html',true)):'';
+        $overview_content=trim((string)get_post_field('post_content',$id));
+        $brand_url=$brand!==''?self::brand_url($brand):home_url('/thuong-hieu/');
+
         self::shell_start($name,'product'); ?>
 <nav class="ddgc-shell ddgc-breadcrumb" aria-label="Breadcrumb"><a href="<?php echo esc_url(home_url('/')); ?>">Trang chủ</a><span>/</span><a href="<?php echo esc_url(home_url('/san-pham/')); ?>">Sản phẩm</a><span>/</span><span><?php echo esc_html($name); ?></span></nav>
-<section class="ddgc-product-hero"><div class="ddgc-shell ddgc-product-layout"><div class="ddgc-gallery" data-ddgc-gallery><div class="ddgc-gallery-thumbs" aria-label="Ảnh sản phẩm"><?php foreach ($gallery as $index=>$media_id): ?><button type="button" class="<?php echo $index===0?'is-active':''; ?>" data-gallery-media="<?php echo esc_attr((string)$media_id); ?>"><?php echo wp_get_attachment_image($media_id,'thumbnail',false,['loading'=>'lazy','alt'=>'']); ?></button><?php endforeach; ?></div><div class="ddgc-product-media" data-gallery-stage><?php echo self::product_picture($id); ?></div></div><div class="ddgc-product-summary"><p class="ddgc-eyebrow"><?php echo esc_html($brand ?: 'ĐĂNG DƯƠNG GROUP'); ?></p><h1><?php echo esc_html($name); ?></h1><p class="ddgc-direct-answer"><?php echo esc_html(self::product_direct_answer($id)); ?></p><dl class="ddgc-facts"><?php if ($brand!==''): ?><div><dt>Thương hiệu</dt><dd><?php echo esc_html($brand); ?></dd></div><?php endif; ?><?php if ($group!==''): ?><div><dt>Nhóm sản phẩm</dt><dd><?php echo esc_html($group); ?></dd></div><?php endif; ?><?php if ($pack!==''): ?><div><dt>Quy cách</dt><dd><?php echo esc_html($pack); ?></dd></div><?php endif; ?><div><dt>Công dụng</dt><dd><?php echo esc_html($benefit); ?></dd></div><div><dt>Dữ liệu</dt><dd>Product Truth · PUBLISH_ALLOWED</dd></div></dl><div class="ddgc-actions"><a class="ddgc-btn" href="<?php echo esc_url(home_url('/lien-he/')); ?>">Liên hệ tư vấn</a><a class="ddgc-btn ddgc-btn--ghost" href="<?php echo esc_url(home_url('/san-pham/')); ?>">Xem sản phẩm khác</a></div><div class="ddgc-mini-proof"><span>Đúng SKU</span><span>Đúng thương hiệu</span><span>Hồ sơ đã đối chiếu</span></div></div></div></section>
-<section class="ddgc-section"><div class="ddgc-shell"><div class="ddgc-product-split"><article><p class="ddgc-eyebrow">MÔ TẢ SẢN PHẨM</p><h2><?php echo esc_html($name); ?></h2><p><?php echo esc_html(self::safe_excerpt($name,$brand,$group,$pack)); ?></p></article><article><p class="ddgc-eyebrow">VAI TRÒ TRONG ROUTINE</p><h2><?php echo esc_html(self::routine_role($benefit)); ?></h2><p>Vị trí trong routine được trình bày theo nhóm sản phẩm. Hướng dẫn chi tiết chỉ hiển thị khi có tài liệu đã duyệt.</p></article></div></div></section>
-<?php if ($claims_verified && trim((string)get_post_field('post_content',$id))!==''): ?><section class="ddgc-section ddgc-section--soft"><div class="ddgc-shell"><header class="ddgc-heading ddgc-heading--left"><p>THÔNG TIN ĐÃ DUYỆT</p><h2>Công dụng, thành phần và hướng dẫn</h2></header><article class="ddgc-prose"><?php echo apply_filters('the_content',get_post_field('post_content',$id)); ?></article></div></section><?php endif; ?>
-<section class="ddgc-section ddgc-section--soft"><div class="ddgc-shell"><header class="ddgc-heading ddgc-heading--left"><p>TÀI LIỆU SẢN PHẨM</p><h2>Hồ sơ công bố đã đối chiếu</h2></header><?php self::documents($id,$docs); ?></div></section>
-<section class="ddgc-section"><div class="ddgc-shell"><header class="ddgc-heading ddgc-heading--left"><p>CÂU HỎI THƯỜNG GẶP</p><h2>Thông tin cần biết</h2></header><div class="ddgc-faq"><details><summary>Sản phẩm này thuộc thương hiệu nào?</summary><p><?php echo esc_html($brand!==''?'Sản phẩm thuộc thương hiệu '.$brand.'.':'Thông tin thương hiệu đang được quản lý trong Product Truth.'); ?></p></details><details><summary>Thông tin công dụng được lấy từ đâu?</summary><p>Trang chỉ công bố claim chi tiết khi có nguồn đã được duyệt. Tên sản phẩm hoặc wording legacy không tự động trở thành claim marketing.</p></details><details><summary>Ảnh trên trang có đúng sản phẩm không?</summary><p>Product detail chỉ public khi media gate có ảnh desktop 1:1 và mobile 9:16 được gắn cho đúng SKU.</p></details></div></div></section>
-<section class="ddgc-section ddgc-section--soft"><div class="ddgc-shell"><header class="ddgc-heading"><p>SẢN PHẨM LIÊN QUAN</p><h2>Khám phá thêm từ <?php echo esc_html($brand ?: 'Đăng Dương Group'); ?></h2></header><?php self::product_grid(4,false,$id,$brand); ?></div></section><?php self::shell_end(); }
+
+<section class="ddgc-product-hero">
+  <div class="ddgc-shell ddgc-product-layout">
+    <div class="ddgc-gallery" data-ddgc-gallery>
+      <div class="ddgc-gallery-thumbs" aria-label="Ảnh sản phẩm">
+        <?php foreach ($gallery as $index=>$media_id): ?>
+          <button type="button" class="<?php echo $index===0?'is-active':''; ?>" data-gallery-media="<?php echo esc_attr((string)$media_id); ?>"><?php echo wp_get_attachment_image($media_id,'thumbnail',false,['loading'=>'lazy','alt'=>self::product_alt($id)]); ?></button>
+        <?php endforeach; ?>
+      </div>
+      <div class="ddgc-product-media" data-gallery-stage><?php echo self::product_picture($id); ?></div>
+    </div>
+
+    <div class="ddgc-product-summary">
+      <p class="ddgc-eyebrow"><?php echo esc_html($brand ?: 'ĐĂNG DƯƠNG GROUP'); ?></p>
+      <h1><?php echo esc_html($name); ?></h1>
+      <p class="ddgc-direct-answer"><?php echo esc_html(self::product_direct_answer($id)); ?></p>
+
+      <div class="ddgc-highlight-box">
+        <p class="ddgc-eyebrow">ĐIỂM NỔI BẬT</p>
+        <ul class="ddgc-highlight-list">
+          <li><?php echo esc_html($benefit); ?></li>
+          <?php if ($brand!==''): ?><li>Thuộc thương hiệu <?php echo esc_html($brand); ?></li><?php endif; ?>
+          <?php if ($pack!==''): ?><li>Quy cách <?php echo esc_html($pack); ?></li><?php endif; ?>
+          <li>Dữ liệu sản phẩm đã qua Product Truth và Media Gate</li>
+        </ul>
+      </div>
+
+      <dl class="ddgc-facts">
+        <?php if ($brand!==''): ?><div><dt>Thương hiệu</dt><dd><a class="ddgc-text-link" href="<?php echo esc_url($brand_url); ?>"><?php echo esc_html($brand); ?></a></dd></div><?php endif; ?>
+        <?php if ($group!==''): ?><div><dt>Nhóm sản phẩm</dt><dd><?php echo esc_html($group); ?></dd></div><?php endif; ?>
+        <?php if ($pack!==''): ?><div><dt>Quy cách</dt><dd><?php echo esc_html($pack); ?></dd></div><?php endif; ?>
+        <div><dt>Công dụng</dt><dd><?php echo esc_html($benefit); ?></dd></div>
+        <div><dt>Dữ liệu</dt><dd>Product Truth · PUBLISH_ALLOWED</dd></div>
+      </dl>
+
+      <div class="ddgc-actions">
+        <a class="ddgc-btn" href="<?php echo esc_url(home_url('/lien-he/')); ?>">Liên hệ đặt hàng</a>
+        <a class="ddgc-btn ddgc-btn--ghost" href="<?php echo esc_url($brand_url); ?>">Xem thương hiệu</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="ddgc-section">
+  <div class="ddgc-shell ddgc-product-detail-layout">
+    <div class="ddgc-product-detail-main">
+      <article class="ddgc-detail-block">
+        <p class="ddgc-eyebrow">MÔ TẢ CHI TIẾT</p>
+        <h2>Mô tả sản phẩm</h2>
+        <?php if ($claims_verified && $overview_content!==''): ?>
+          <div class="ddgc-prose"><?php echo apply_filters('the_content',$overview_content); ?></div>
+        <?php else: ?>
+          <p><?php echo esc_html(self::safe_excerpt($name,$brand,$group,$pack)); ?></p>
+          <p class="ddgc-muted-note">Nội dung mô tả chi tiết chỉ hiển thị từ dữ liệu đã được xác minh và cho phép xuất bản.</p>
+        <?php endif; ?>
+      </article>
+
+      <article class="ddgc-detail-block ddgc-detail-block--claim">
+        <p class="ddgc-eyebrow">CÔNG DỤNG CÔNG BỐ</p>
+        <h2>Công dụng</h2>
+        <?php if ($benefits_html!==''): ?>
+          <div class="ddgc-prose"><?php echo wp_kses_post($benefits_html); ?></div>
+        <?php else: ?>
+          <p>Thông tin công dụng chi tiết chỉ được công bố khi có Approved Claim hoặc tài liệu sản phẩm đã được duyệt.</p>
+        <?php endif; ?>
+      </article>
+
+      <article id="product-publication" class="ddgc-detail-block ddgc-detail-block--publication">
+        <div class="ddgc-publication-heading">
+          <div>
+            <p class="ddgc-eyebrow">THÔNG TIN CÔNG BỐ</p>
+            <h2>Phiếu công bố & tài liệu xác minh</h2>
+          </div>
+          <p>Tài liệu công bố được đặt ngay bên dưới mô tả và công dụng công bố, tách khỏi ảnh đại diện sản phẩm.</p>
+        </div>
+
+        <?php if ($evidence_images): ?>
+          <div class="ddgc-publication-images">
+            <?php foreach ($evidence_images as $image_id):
+              $full=wp_get_attachment_image_src((int)$image_id,'full');
+              if (!$full) continue;
+            ?>
+              <figure>
+                <img src="<?php echo esc_url($full[0]); ?>" width="<?php echo esc_attr((string)$full[1]); ?>" height="<?php echo esc_attr((string)$full[2]); ?>" alt="<?php echo esc_attr('Phiếu công bố - '.$name); ?>" loading="lazy" decoding="async">
+                <figcaption><?php echo esc_html(get_the_title((int)$image_id) ?: 'Tài liệu công bố'); ?></figcaption>
+              </figure>
+            <?php endforeach; ?>
+          </div>
+        <?php else: ?>
+          <div class="ddgc-doc-card ddgc-doc-card--static">
+            <strong>Hồ sơ công bố đã được ghi nhận</strong>
+            <?php $filename=trim((string)get_post_meta($id,'_bizrise_ddg_evidence_filename',true)); if($filename!==''): ?><span><?php echo esc_html($filename); ?></span><?php endif; ?>
+          </div>
+        <?php endif; ?>
+
+        <?php if ($docs): ?>
+          <div class="ddgc-doc-grid">
+            <?php foreach ($docs as $doc_id):
+              $url=wp_get_attachment_url((int)$doc_id);
+              if (!$url) continue;
+            ?>
+              <a class="ddgc-doc-card" href="<?php echo esc_url($url); ?>" target="_blank" rel="noopener noreferrer">
+                <strong><?php echo esc_html(get_the_title((int)$doc_id) ?: 'Tài liệu sản phẩm'); ?></strong>
+                <span><?php echo wp_attachment_is_image((int)$doc_id) ? 'Mở ảnh tài liệu →' : 'Mở tài liệu →'; ?></span>
+              </a>
+            <?php endforeach; ?>
+          </div>
+        <?php endif; ?>
+      </article>
+    </div>
+
+    <aside class="ddgc-product-detail-aside">
+      <div class="ddgc-detail-side-card">
+        <p class="ddgc-eyebrow">THƯƠNG HIỆU</p>
+        <h2><?php echo esc_html($brand ?: 'Đăng Dương Group'); ?></h2>
+        <p>Khám phá câu chuyện thương hiệu và toàn bộ danh mục sản phẩm thuộc thương hiệu.</p>
+        <a class="ddgc-btn" href="<?php echo esc_url($brand_url); ?>">Xem trang thương hiệu</a>
+      </div>
+
+      <div class="ddgc-detail-side-card">
+        <p class="ddgc-eyebrow">HỒ SƠ XÁC MINH</p>
+        <h2><?php echo esc_html($evidence_images ? 'Có ảnh công bố' : 'Đã ghi nhận hồ sơ'); ?></h2>
+        <p>Thông tin công bố không được dùng làm ảnh đại diện. Media công bố chỉ xuất hiện trong khu vực hồ sơ.</p>
+        <a class="ddgc-text-link" href="#product-publication">Xem hồ sơ ↓</a>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<section class="ddgc-section ddgc-section--soft">
+  <div class="ddgc-shell">
+    <div class="ddgc-product-cta">
+      <div>
+        <p class="ddgc-eyebrow">LIÊN HỆ ĐẶT HÀNG</p>
+        <h2>Trao đổi về <?php echo esc_html($name); ?></h2>
+        <p>Liên hệ Đăng Dương Group để được tư vấn về sản phẩm, phân phối hoặc nhu cầu hợp tác.</p>
+      </div>
+      <div class="ddgc-actions">
+        <a class="ddgc-btn" href="<?php echo esc_url(home_url('/lien-he/')); ?>">Liên hệ đặt hàng</a>
+        <a class="ddgc-btn ddgc-btn--ghost" href="<?php echo esc_url(home_url('/san-pham/')); ?>">Xem sản phẩm khác</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="ddgc-section ddgc-section--soft">
+  <div class="ddgc-shell">
+    <header class="ddgc-heading ddgc-heading--left"><p>SẢN PHẨM LIÊN QUAN</p><h2>Khám phá thêm từ <?php echo esc_html($brand ?: 'Đăng Dương Group'); ?></h2></header>
+    <?php self::product_grid(4,false,$id,$brand); ?>
+  </div>
+</section>
+<?php self::shell_end(); }
+
+    private static function evidence_image_ids(int $id): array {
+        $ids=[];
+        foreach (self::document_ids($id) as $doc_id) {
+            if (wp_attachment_is_image((int)$doc_id)) $ids[]=(int)$doc_id;
+        }
+        $filename=trim((string)get_post_meta($id,'_bizrise_ddg_evidence_filename',true));
+        if ($filename!=='') {
+            $filename=wp_basename(parse_url($filename,PHP_URL_PATH) ?: $filename);
+            global $wpdb;
+            $like='%'.$wpdb->esc_like($filename);
+            $found=(int)$wpdb->get_var($wpdb->prepare(
+                "SELECT pm.post_id FROM {$wpdb->postmeta} pm INNER JOIN {$wpdb->posts} p ON p.ID=pm.post_id WHERE pm.meta_key='_wp_attached_file' AND (pm.meta_value=%s OR pm.meta_value LIKE %s) AND p.post_type='attachment' ORDER BY pm.post_id DESC LIMIT 1",
+                $filename,$like
+            ));
+            if($found && wp_attachment_is_image($found)) $ids[]=$found;
+        }
+        return array_values(array_unique(array_filter(array_map('intval',$ids))));
+    }
+
+    private static function brand_url(string $brand): string {
+        $fallback=add_query_arg('brand',$brand,home_url('/thuong-hieu/'));
+        if(!is_multisite() || trim($brand)==='') return $fallback;
+        $normalized=self::normalize($brand);
+        $sites=get_sites(['number'=>200,'public'=>1,'archived'=>0,'deleted'=>0,'spam'=>0]);
+        foreach($sites as $site){
+            $haystack=self::normalize((string)$site->domain.' '.(string)$site->path.' '.(string)$site->blogname);
+            if($normalized!=='' && str_contains($haystack,$normalized)) return get_home_url((int)$site->blog_id,'/');
+        }
+        return $fallback;
+    }
 
     private static function documents(int $id,array $docs): void { if ($docs) { echo '<div class="ddgc-doc-grid">'; foreach ($docs as $doc_id) { $url=wp_get_attachment_url($doc_id); if (!$url) continue; echo '<a class="ddgc-doc-card" href="'.esc_url($url).'" target="_blank" rel="noopener"><strong>'.esc_html(get_the_title($doc_id) ?: 'Tài liệu sản phẩm').'</strong><span>Xem tài liệu →</span></a>'; } echo '</div>'; return; } $filename=trim((string)get_post_meta($id,'_bizrise_ddg_evidence_filename',true)); $received=trim((string)get_post_meta($id,'_bizrise_ddg_evidence_received_at',true)); echo '<div class="ddgc-doc-card ddgc-doc-card--static"><strong>Hồ sơ công bố sản phẩm mỹ phẩm</strong>'; if ($filename!=='') echo '<span>'.esc_html($filename).'</span>'; if ($received!=='') echo '<small>Đã tiếp nhận: '.esc_html($received).'</small>'; echo '</div>'; }
 
